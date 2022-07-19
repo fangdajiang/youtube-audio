@@ -19,7 +19,6 @@ var (
 
 func SendLocalAudioFile(localFilePath string) error {
 	log.Infof("%s will be sent", localFilePath)
-	// Global variables
 	var err error
 
 	// Get the TOKEN and the CHAT_ID
