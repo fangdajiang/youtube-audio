@@ -17,7 +17,7 @@ var (
 	botChatId string //tg channel's username only
 )
 
-func SendLocalAudioFile(localFilePath string) error {
+func SendLocalAudioFile(localFilePath string, fileCaption string) error {
 	log.Infof("%s will be sent", localFilePath)
 	var err error
 
@@ -41,6 +41,7 @@ func SendLocalAudioFile(localFilePath string) error {
 	}
 
 	msg := tgbotapi.NewAudioToChannel(botChatId, tgbotapi.FilePath(localFilePath))
+	msg.Caption = fileCaption
 
 	message, err := bot.Send(msg)
 	if err != nil {
