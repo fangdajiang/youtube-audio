@@ -15,19 +15,20 @@ func main() {
 }
 
 func process() {
-	audioFilePath, caption, err := fetchVideo()
+	audioFile, err := fetchAudio()
 	if err != nil {
 		log.Fatalf("%s", err)
 	}
 
-	err = handler.SendLocalAudioFile(audioFilePath, caption)
+	err = sendAudio(audioFile)
 	if err != nil {
 		log.Fatalf("%s", err)
 	}
 
+	handler.Cleanup(audioFile)
 }
 
-func fetchVideo() (string, string, error) {
+func fetchAudio() (handler.Parcel, error) {
 	// Add a flag
 	var videoUrl string
 	flag.StringVar(&videoUrl, "video-url", "", "This video will be downloaded.")
@@ -36,12 +37,11 @@ func fetchVideo() (string, string, error) {
 	return handler.DownloadYouTubeAudio(videoUrl)
 }
 
-//TODO moved to test
-func sendAudio() error {
-	// Add a flag
-	var audioFilePath string
-	flag.StringVar(&audioFilePath, "audio-file", "", "This audio file will be sent.")
-	flag.Parse()
+func sendAudio(parcel handler.Parcel) error {
+	telegramBot, err := handler.GenerateTelegramBot()
+	if err != nil {
+		log.Fatalf("%s", err)
+	}
 	// Send an audio file
-	return handler.SendLocalAudioFile(audioFilePath, "test")
+	return telegramBot.Send(parcel)
 }
