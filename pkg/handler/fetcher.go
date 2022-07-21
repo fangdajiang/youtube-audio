@@ -9,12 +9,12 @@ import (
 	"os"
 )
 
-//ITag format id
+//ITagNo format id
 //  for _, f := range result.Formats() {
 //		log.Infof("format id:%s", f.FormatID)
 //	}
 
-func DownloadYouTubeAudio(mediaUrl string) (Parcel, error) {
+func DownloadYouTubeAudioToPath(mediaUrl string) (Parcel, error) {
 	var parcel Parcel
 	log.Infof("Ready to downlod media %s", mediaUrl)
 	result, err := goutubedl.New(context.Background(), mediaUrl, goutubedl.Options{})
@@ -22,10 +22,10 @@ func DownloadYouTubeAudio(mediaUrl string) (Parcel, error) {
 		log.Errorf("goutubedl error:%s", err)
 		return parcel, fmt.Errorf("goutubedl new error: %s", mediaUrl)
 	}
-	downloadedResult, err := result.Download(context.Background(), ITag)
+	downloadedResult, err := result.Download(context.Background(), ITagNo)
 	if err != nil {
 		log.Errorf("download error:%s", err)
-		return parcel, fmt.Errorf("goutubedl download error: %s, ITag: %s", mediaUrl, ITag)
+		return parcel, fmt.Errorf("goutubedl download error: %s, ITagNo: %s", mediaUrl, ITagNo)
 	}
 	defer func(downloadedResult *goutubedl.DownloadResult) {
 		_ = downloadedResult.Close()
@@ -35,19 +35,20 @@ func DownloadYouTubeAudio(mediaUrl string) (Parcel, error) {
 	if err != nil {
 		return parcel, err
 	}
-	audioFilePath := fmt.Sprintf("%s%s", ResourceStorePath, validMediaFileName)
-	parcel.filePath = audioFilePath
-	parcel.caption = result.Info.Title
+	parcel = GenerateParcel(fmt.Sprintf("%s%s", ResourceStorePath, validMediaFileName), result.Info.Title)
 	log.Debugf("parcel: %v", parcel)
 
-	f, err := os.Create(audioFilePath)
+	parcelFile, err := os.Create(parcel.filePath)
 	if err != nil {
 		log.Fatal(err)
 	}
-	io.Copy(f, downloadedResult)
+	written, err := io.Copy(parcelFile, downloadedResult)
+	if err != nil {
+		log.Fatalf("copy error: %s, parcel: %s, written: %v", err, parcel, written)
+	}
 	defer func(f *os.File) {
 		_ = f.Close()
-	}(f)
+	}(parcelFile)
 
 	return parcel, nil
 }

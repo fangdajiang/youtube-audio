@@ -10,10 +10,10 @@ import (
 const (
 	EnvTokenName                          string = "TOKEN"
 	EnvChatIdName                         string = "CHAT_ID"
-	AudioFileExtensionName                string = ".ogg"
 	IllegalCharacterReplacementInFilename string = "_"
 	FilenameMaxLength                     int    = 512
-	ITag                                  string = "249"
+	ITagNo                                string = "249"
+	AudioFileExtensionName                string = ".ogg"
 	ResourceStorePath                     string = "/tmp/"
 )
 
@@ -33,6 +33,14 @@ func FilenamifyMediaTitle(title string) (string, error) {
 	return validMediaFileName, nil
 }
 
+func GenerateParcel(filePath string, caption string) Parcel {
+	parcel := Parcel{
+		filePath: filePath,
+		caption:  caption,
+	}
+	return parcel
+}
+
 func GenerateTelegramBot() (TelegramBot, error) {
 	var err error
 	var telegramBot TelegramBot
@@ -50,7 +58,6 @@ func GenerateTelegramBot() (TelegramBot, error) {
 		log.Errorf("%s", err)
 		return telegramBot, fmt.Errorf("reading env %s vars error", EnvChatIdName)
 	}
-	log.Infof("chat id string: %s", botChatId)
 	telegramBot.ChatId = botChatId
 
 	return telegramBot, nil

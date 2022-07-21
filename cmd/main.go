@@ -34,7 +34,7 @@ func fetchAudio() (handler.Parcel, error) {
 	flag.StringVar(&videoUrl, "video-url", "", "This video will be downloaded.")
 	flag.Parse()
 	// download a video
-	return handler.DownloadYouTubeAudio(videoUrl)
+	return handler.DownloadYouTubeAudioToPath(videoUrl)
 }
 
 func sendAudio(parcel handler.Parcel) error {
