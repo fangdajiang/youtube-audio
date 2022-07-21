@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/flytam/filenamify"
 	log "github.com/sirupsen/logrus"
+	"strconv"
 	"youtube-audio/pkg/util"
 )
 
@@ -11,21 +12,22 @@ const (
 	DateTimeFormat                        string = "2006-01-02 15:04:05"
 	EnvTokenName                          string = "BOT_TOKEN"
 	EnvChatIdName                         string = "CHAT_ID"
+	EnvBotChatIdName                      string = "BOT_CHAT_ID"
 	EnvYouTubeKeyName                     string = "YOUTUBE_KEY"
 	IllegalCharacterReplacementInFilename string = "_"
 	FilenameMaxLength                     int    = 512
-	ITagNo                                string = "249"
 	AudioFileExtensionName                string = ".ogg"
 	ResourceStorePath                     string = "/tmp/"
 	YouTubeMaxResults                     int64  = 5
 	YouTubePrefixUrl                      string = "https://www.youtube.com/watch?v="
 	YouTubeChannelId                      string = "UU8UCbiPrm2zN9nZHKdTevZA"
+	WarningMessageTemplate                string = "FAILED TO SEND AUDIO %s TO THE CHANNEL."
 )
 
 var YouTubePart = []string{"snippet"}
 
-func MakeYouTubeRawUrl(videoId string) string {
-	return YouTubePrefixUrl + videoId
+func MakeYouTubeRawUrl(videoMetaData VideoMetaData) string {
+	return YouTubePrefixUrl + videoMetaData.VideoId
 }
 
 func FilenamifyMediaTitle(title string) (string, error) {
@@ -46,8 +48,8 @@ func FilenamifyMediaTitle(title string) (string, error) {
 
 func GenerateParcel(filePath string, caption string) Parcel {
 	parcel := Parcel{
-		filePath: filePath,
-		caption:  caption,
+		FilePath: filePath,
+		Caption:  caption,
 	}
 	return parcel
 }
@@ -78,12 +80,20 @@ func GenerateTelegramBot() (TelegramBot, error) {
 	}
 	telegramBot.Token = botToken
 
-	botChatId, err := util.GetEnvVariable(EnvChatIdName)
+	channelChatId, err := util.GetEnvVariable(EnvChatIdName)
 	if err != nil {
 		log.Errorf("%s", err)
 		return telegramBot, fmt.Errorf("reading env %s vars error", EnvChatIdName)
 	}
-	telegramBot.ChatId = botChatId
+	telegramBot.ChannelChatId = channelChatId
+
+	botChatId, err := util.GetEnvVariable(EnvBotChatIdName)
+	if err != nil {
+		log.Errorf("%s", err)
+		return telegramBot, fmt.Errorf("reading env %s vars error", EnvBotChatIdName)
+	}
+	intBotChatId, _ := strconv.ParseInt(botChatId, 10, 64)
+	telegramBot.BotChatId = intBotChatId
 
 	return telegramBot, nil
 }

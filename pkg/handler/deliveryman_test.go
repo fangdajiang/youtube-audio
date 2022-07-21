@@ -41,7 +41,7 @@ func TestTelegramBot_RetrieveUpdates(t *testing.T) {
 func TestTelegramBot_Send(t *testing.T) {
 	r := require.New(t)
 
-	f, err := os.Create(parcel.filePath)
+	f, err := os.Create(parcel.FilePath)
 	r.NoError(err)
 	defer func(f *os.File) {
 		_ = f.Close()
@@ -57,4 +57,19 @@ func TestTelegramBot_Send(t *testing.T) {
 }
 
 func TestCleanup(t *testing.T) {
+}
+
+func TestTelegramBot_SendWarningMessage(t *testing.T) {
+	r := require.New(t)
+
+	f, err := os.Create(parcel.FilePath)
+	r.NoError(err)
+	defer func(f *os.File) {
+		_ = f.Close()
+	}(f)
+	_, err = f.WriteString("Hello Test")
+	r.NoError(err)
+
+	telegramBot.SendWarningMessage(parcel)
+	Cleanup(parcel)
 }

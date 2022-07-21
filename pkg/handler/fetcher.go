@@ -3,12 +3,14 @@ package handler
 import (
 	"context"
 	"fmt"
+	"github.com/kkdai/youtube/v2"
 	log "github.com/sirupsen/logrus"
 	"github.com/wader/goutubedl"
 	"google.golang.org/api/option"
 	youtubeapi "google.golang.org/api/youtube/v3"
 	"io"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -21,31 +23,40 @@ type YouTubeCredentials struct {
 	Key string
 }
 
-func GetVideoIdsBy(playlistId string) []string {
+type VideoMetaData struct {
+	VideoId string
+	ITag    string
+}
+
+func GetVideoIdsBy(playlistId string) []VideoMetaData {
 	youTubeCredentials, err := GenerateYouTubeCredentials()
 	if err != nil {
-		return []string{}
+		return []VideoMetaData{}
 	}
 
 	ctx := context.Background()
 	svc, err := youtubeapi.NewService(ctx, option.WithScopes(youtubeapi.YoutubeReadonlyScope), option.WithAPIKey(youTubeCredentials.Key))
 	if err != nil {
 		log.Errorf("new service error:%v", err)
-		return []string{}
+		return []VideoMetaData{}
 	}
 
-	var videoIds []string
+	var videoMetaDataArray []VideoMetaData
 	playlistResponse := playlistItemsList(svc, YouTubePart, playlistId, YouTubeMaxResults)
 
 	for _, playlistItem := range playlistResponse.Items {
 		title := playlistItem.Snippet.Title
-		videoId := playlistItem.Snippet.ResourceId.VideoId
-		log.Infof("%v, (%v)\r\n", title, videoId)
+		publishedAt := playlistItem.Snippet.PublishedAt
+		position := playlistItem.Snippet.Position
 
-		videoIds = append(videoIds, videoId)
+		videoId := playlistItem.Snippet.ResourceId.VideoId
+		log.Infof("%v, (%v) on %v at %v\r\n", title, videoId, position, publishedAt)
+
+		videoMetaData := VideoMetaData{videoId, "123"}
+		videoMetaDataArray = append(videoMetaDataArray, videoMetaData)
 	}
 
-	return videoIds
+	return videoMetaDataArray
 }
 
 func playlistItemsList(service *youtubeapi.Service, part []string, playlistId string, maxResults int64) *youtubeapi.PlaylistItemListResponse {
@@ -63,6 +74,23 @@ func playlistItemsList(service *youtubeapi.Service, part []string, playlistId st
 	return response
 }
 
+func RetrieveFirstAudioITag(mediaUrl string) (int, error) {
+	client := youtube.Client{}
+
+	video, err := client.GetVideo(mediaUrl)
+	if err != nil {
+		return -1, fmt.Errorf("retrieve first audio track error:%s, mediaUrl:%s", err, mediaUrl)
+	}
+	for i, f := range video.Formats {
+		log.Infof("i: %v, ItagNo:%v, FPS:%v, QL:%s, AQ:%s, AC:%v, MimeType:%s",
+			i, f.ItagNo, f.FPS, f.QualityLabel, f.AudioQuality, f.AudioChannels, f.MimeType)
+		if f.FPS == 0 {
+			return f.ItagNo, nil
+		}
+	}
+	return -1, fmt.Errorf("audio track not found:%s", mediaUrl)
+}
+
 func DownloadYouTubeAudioToPath(mediaUrl string) (Parcel, error) {
 	var parcel Parcel
 	log.Infof("Ready to downlod media %s at %s", mediaUrl, time.Now().Format(DateTimeFormat))
@@ -71,10 +99,11 @@ func DownloadYouTubeAudioToPath(mediaUrl string) (Parcel, error) {
 		log.Errorf("goutubedl error:%s", err)
 		return parcel, fmt.Errorf("goutubedl new error: %s", mediaUrl)
 	}
-	downloadedResult, err := result.Download(context.Background(), ITagNo)
+	iTagNo, err := RetrieveFirstAudioITag(mediaUrl)
+	downloadedResult, err := result.Download(context.Background(), strconv.Itoa(iTagNo))
 	if err != nil {
 		log.Errorf("download error:%s", err)
-		return parcel, fmt.Errorf("goutubedl download error: %s, ITagNo: %s", mediaUrl, ITagNo)
+		return parcel, fmt.Errorf("goutubedl download error: %s, ITagNo: %v", mediaUrl, iTagNo)
 	}
 	defer func(downloadedResult *goutubedl.DownloadResult) {
 		_ = downloadedResult.Close()
@@ -88,15 +117,15 @@ func DownloadYouTubeAudioToPath(mediaUrl string) (Parcel, error) {
 	parcel = GenerateParcel(fmt.Sprintf("%s%s", ResourceStorePath, validMediaFileName), result.Info.Title)
 	log.Debugf("parcel: %v", parcel)
 
-	log.Infof("ready to CREATE media file %s at %s", parcel.filePath, time.Now().Format(DateTimeFormat))
-	parcelFile, err := os.Create(parcel.filePath)
-	log.Infof("media file %s CREATED at %s", parcel.filePath, time.Now().Format(DateTimeFormat))
+	log.Infof("ready to CREATE media file %s at %s", parcel.FilePath, time.Now().Format(DateTimeFormat))
+	parcelFile, err := os.Create(parcel.FilePath)
+	log.Infof("media file %s CREATED at %s", parcel.FilePath, time.Now().Format(DateTimeFormat))
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Infof("ready to COPY media file %s at %s", parcel.filePath, time.Now().Format(DateTimeFormat))
+	log.Infof("ready to COPY media file %s at %s", parcel.FilePath, time.Now().Format(DateTimeFormat))
 	written, err := io.Copy(parcelFile, downloadedResult)
-	log.Infof("media file %s COPIED at %s", parcel.filePath, time.Now().Format(DateTimeFormat))
+	log.Infof("media file %s COPIED at %s", parcel.FilePath, time.Now().Format(DateTimeFormat))
 	if err != nil {
 		log.Fatalf("copy error: %s, parcel: %s, written: %v", err, parcel, written)
 	}

@@ -14,9 +14,9 @@ func main() {
 }
 
 func process() {
-	videoIds := handler.GetVideoIdsBy(handler.YouTubeChannelId)
-	for _, videoId := range videoIds {
-		rawUrl := handler.MakeYouTubeRawUrl(videoId)
+	videoMetaDataArray := handler.GetVideoIdsBy(handler.YouTubeChannelId)
+	for _, videoMetaData := range videoMetaDataArray {
+		rawUrl := handler.MakeYouTubeRawUrl(videoMetaData)
 		audioFile, err := fetchAudio(rawUrl)
 		if err != nil {
 			log.Fatalf("%s", err)
@@ -24,6 +24,9 @@ func process() {
 
 		err = sendAudio(audioFile)
 		if err != nil {
+			log.Warnf("Failed to send file %s to telegram channel", audioFile.FilePath)
+			audioFile.Caption = audioFile.Caption + fmt.Sprintf("%s", err)
+			sendMessage(audioFile)
 			log.Fatalf("%s", err)
 		}
 
@@ -45,4 +48,13 @@ func sendAudio(parcel handler.Parcel) error {
 	}
 	// Send an audio file
 	return telegramBot.Send(parcel)
+}
+
+func sendMessage(parcel handler.Parcel) {
+	telegramBot, err := handler.GenerateTelegramBot()
+	if err != nil {
+		log.Fatalf("%s", err)
+	}
+	telegramBot.SendWarningMessage(parcel)
+	handler.Cleanup(parcel)
 }
