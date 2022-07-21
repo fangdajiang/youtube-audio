@@ -7,6 +7,16 @@ import (
 	"testing"
 )
 
+func TestYoutube_GetVideosByPlaylistId(t *testing.T) {
+	r := require.New(t)
+
+	videoIds := GetVideoIdsBy("UU8UCbiPrm2zN9nZHKdTevZA")
+	r.Len(videoIds, 5)
+
+	for _, videoId := range videoIds {
+		log.Infof("videoId: %s", videoId)
+	}
+}
 func TestFilenamifyMediaTitle(t *testing.T) {
 	r := require.New(t)
 

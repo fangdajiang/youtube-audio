@@ -24,6 +24,7 @@ func Cleanup(parcel Parcel) {
 	} else {
 		log.Infof("downloaded file cleaned up %s", parcel.filePath)
 	}
+	log.Infof("file %s has been removed", parcel.filePath)
 }
 
 func (t *TelegramBot) Send(parcel Parcel) error {
@@ -44,7 +45,7 @@ func (t *TelegramBot) Send(parcel Parcel) error {
 		log.Errorf("%s", err)
 		return fmt.Errorf("sending audio error")
 	}
-	log.Debugf("audio sent response: %#v", message)
+	log.Infof("audio %s has been sent response: %#v", parcel.filePath, message)
 
 	return nil
 }

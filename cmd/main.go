@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"youtube-audio/pkg/handler"
@@ -15,26 +14,28 @@ func main() {
 }
 
 func process() {
-	audioFile, err := fetchAudio()
-	if err != nil {
-		log.Fatalf("%s", err)
-	}
+	videoIds := handler.GetVideoIdsBy(handler.YouTubeChannelId)
+	for _, videoId := range videoIds {
+		rawUrl := handler.MakeYouTubeRawUrl(videoId)
+		audioFile, err := fetchAudio(rawUrl)
+		if err != nil {
+			log.Fatalf("%s", err)
+		}
 
-	err = sendAudio(audioFile)
-	if err != nil {
-		log.Fatalf("%s", err)
-	}
+		err = sendAudio(audioFile)
+		if err != nil {
+			log.Fatalf("%s", err)
+		}
 
-	handler.Cleanup(audioFile)
+		handler.Cleanup(audioFile)
+
+		log.Infof("\r\n")
+	}
 }
 
-func fetchAudio() (handler.Parcel, error) {
-	// Add a flag
-	var videoUrl string
-	flag.StringVar(&videoUrl, "video-url", "", "This video will be downloaded.")
-	flag.Parse()
+func fetchAudio(rawUrl string) (handler.Parcel, error) {
 	// download a video
-	return handler.DownloadYouTubeAudioToPath(videoUrl)
+	return handler.DownloadYouTubeAudioToPath(rawUrl)
 }
 
 func sendAudio(parcel handler.Parcel) error {

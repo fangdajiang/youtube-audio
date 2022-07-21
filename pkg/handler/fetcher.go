@@ -5,8 +5,11 @@ import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"github.com/wader/goutubedl"
+	"google.golang.org/api/option"
+	youtubeapi "google.golang.org/api/youtube/v3"
 	"io"
 	"os"
+	"time"
 )
 
 //ITagNo format id
@@ -14,9 +17,55 @@ import (
 //		log.Infof("format id:%s", f.FormatID)
 //	}
 
+type YouTubeCredentials struct {
+	Key string
+}
+
+func GetVideoIdsBy(playlistId string) []string {
+	youTubeCredentials, err := GenerateYouTubeCredentials()
+	if err != nil {
+		return []string{}
+	}
+
+	ctx := context.Background()
+	svc, err := youtubeapi.NewService(ctx, option.WithScopes(youtubeapi.YoutubeReadonlyScope), option.WithAPIKey(youTubeCredentials.Key))
+	if err != nil {
+		log.Errorf("new service error:%v", err)
+		return []string{}
+	}
+
+	var videoIds []string
+	playlistResponse := playlistItemsList(svc, YouTubePart, playlistId, YouTubeMaxResults)
+
+	for _, playlistItem := range playlistResponse.Items {
+		title := playlistItem.Snippet.Title
+		videoId := playlistItem.Snippet.ResourceId.VideoId
+		log.Infof("%v, (%v)\r\n", title, videoId)
+
+		videoIds = append(videoIds, videoId)
+	}
+
+	return videoIds
+}
+
+func playlistItemsList(service *youtubeapi.Service, part []string, playlistId string, maxResults int64) *youtubeapi.PlaylistItemListResponse {
+	call := service.PlaylistItems.List(part)
+	call = call.PlaylistId(playlistId)
+	if maxResults > 0 && maxResults <= 50 {
+		call = call.MaxResults(maxResults)
+	} else {
+		log.Warnf("illegal maxResults error:%v", maxResults)
+	}
+	response, err := call.Do()
+	if err != nil {
+		log.Fatalf("get playlist items error:%v, playlistId:%s", err, playlistId)
+	}
+	return response
+}
+
 func DownloadYouTubeAudioToPath(mediaUrl string) (Parcel, error) {
 	var parcel Parcel
-	log.Infof("Ready to downlod media %s", mediaUrl)
+	log.Infof("Ready to downlod media %s at %s", mediaUrl, time.Now().Format("2006-01-02 15:04:05"))
 	result, err := goutubedl.New(context.Background(), mediaUrl, goutubedl.Options{})
 	if err != nil {
 		log.Errorf("goutubedl error:%s", err)
@@ -30,6 +79,7 @@ func DownloadYouTubeAudioToPath(mediaUrl string) (Parcel, error) {
 	defer func(downloadedResult *goutubedl.DownloadResult) {
 		_ = downloadedResult.Close()
 	}(downloadedResult)
+	log.Infof("downloaded media %s at %s", result.Info.Title, time.Now().Format("2006-01-02 15:04:05"))
 
 	validMediaFileName, err := FilenamifyMediaTitle(result.Info.Title)
 	if err != nil {

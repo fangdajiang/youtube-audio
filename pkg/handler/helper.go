@@ -8,14 +8,24 @@ import (
 )
 
 const (
-	EnvTokenName                          string = "TOKEN"
+	EnvTokenName                          string = "BOT_TOKEN"
 	EnvChatIdName                         string = "CHAT_ID"
+	EnvYouTubeKeyName                     string = "YOUTUBE_KEY"
 	IllegalCharacterReplacementInFilename string = "_"
 	FilenameMaxLength                     int    = 512
 	ITagNo                                string = "249"
 	AudioFileExtensionName                string = ".ogg"
 	ResourceStorePath                     string = "/tmp/"
+	YouTubeMaxResults                     int64  = 5
+	YouTubePrefixUrl                      string = "https://www.youtube.com/watch?v="
+	YouTubeChannelId                      string = "UU8UCbiPrm2zN9nZHKdTevZA"
 )
+
+var YouTubePart = []string{"snippet"}
+
+func MakeYouTubeRawUrl(videoId string) string {
+	return YouTubePrefixUrl + videoId
+}
 
 func FilenamifyMediaTitle(title string) (string, error) {
 	rawMediaTitle := fmt.Sprintf("%s%s", title, AudioFileExtensionName)
@@ -39,6 +49,20 @@ func GenerateParcel(filePath string, caption string) Parcel {
 		caption:  caption,
 	}
 	return parcel
+}
+
+func GenerateYouTubeCredentials() (YouTubeCredentials, error) {
+	var err error
+	var youTubeCredentials YouTubeCredentials
+
+	youtubeKey, err := util.GetEnvVariable(EnvYouTubeKeyName)
+	if err != nil {
+		log.Errorf("%s", err)
+		return youTubeCredentials, fmt.Errorf("reading env %s vars error", EnvYouTubeKeyName)
+	}
+	youTubeCredentials.Key = youtubeKey
+
+	return youTubeCredentials, nil
 }
 
 func GenerateTelegramBot() (TelegramBot, error) {

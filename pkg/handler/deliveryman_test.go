@@ -1,6 +1,8 @@
 package handler
 
 import (
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"os"
 	"testing"
@@ -12,16 +14,32 @@ const (
 	LocalFileCaption string = "春眠不觉晓"
 )
 
-func TestCleanup(t *testing.T) {
+var (
+	telegramBot TelegramBot
+	parcel      Parcel
+)
+
+func init() {
+	log.Infof("initing deliveryman test")
+
+	telegramBot, _ = GenerateTelegramBot()
+	parcel = GenerateParcel(LocalFilePath, LocalFileCaption+time.Now().Format("2006-01-02 15:04:05"))
+
+}
+
+func TestTelegramBot_RetrieveUpdates(t *testing.T) {
+	r := require.New(t)
+
+	bot, err := tgbotapi.NewBotAPI(telegramBot.Token)
+	r.NoError(err)
+	bot.Debug = true
+
+	log.Printf("Authorized on account %s", bot.Self.UserName)
+
 }
 
 func TestTelegramBot_Send(t *testing.T) {
 	r := require.New(t)
-
-	telegramBot, err := GenerateTelegramBot()
-	r.NoError(err)
-
-	parcel := GenerateParcel(LocalFilePath, LocalFileCaption+time.Now().Format("2006-01-02 15:04:05"))
 
 	f, err := os.Create(parcel.filePath)
 	r.NoError(err)
@@ -36,4 +54,7 @@ func TestTelegramBot_Send(t *testing.T) {
 
 	Cleanup(parcel)
 
+}
+
+func TestCleanup(t *testing.T) {
 }
