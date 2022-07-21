@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestYoutube_GetVideosByPlaylistId(t *testing.T) {
+func TestGetVideoIdsBy(t *testing.T) {
 	r := require.New(t)
 
 	videoIds := GetVideoIdsBy("UU8UCbiPrm2zN9nZHKdTevZA")
@@ -16,17 +16,6 @@ func TestYoutube_GetVideosByPlaylistId(t *testing.T) {
 	for _, videoId := range videoIds {
 		log.Infof("videoId: %s", videoId)
 	}
-}
-func TestFilenamifyMediaTitle(t *testing.T) {
-	r := require.New(t)
-
-	mediaTitle := "中文abc/标题\\_123!_def`_gh'_done"
-
-	namifiedMediaTitle, err := FilenamifyMediaTitle(mediaTitle)
-	r.NoError(err)
-	r.Greater(len(namifiedMediaTitle), len(mediaTitle))
-	log.Infof("mediaTitle: %v", len(mediaTitle))
-	log.Infof("namifiedMediaTitle: %v", len(namifiedMediaTitle))
 }
 
 func TestYoutube_GetItagInfo(t *testing.T) {
@@ -42,4 +31,14 @@ func TestYoutube_GetItagInfo(t *testing.T) {
 		log.Infof("ItagNo:%v, FPS:%v, VQ:%s, AQ:%s, Size:%v, MimeType:%s",
 			f.ItagNo, f.FPS, f.QualityLabel, f.AudioQuality, f.ContentLength, f.MimeType)
 	}
+}
+
+func TestDownloadYouTubeAudioToPath(t *testing.T) {
+	r := require.New(t)
+
+	parcel, err := DownloadYouTubeAudioToPath("https://www.youtube.com/watch?v=gqVnTo7aLEE")
+	r.NoError(err)
+	r.Equal("摸着石头过河，后来呢？/王剑每日观察/短视频", parcel.caption)
+
+	Cleanup(parcel)
 }

@@ -65,7 +65,7 @@ func playlistItemsList(service *youtubeapi.Service, part []string, playlistId st
 
 func DownloadYouTubeAudioToPath(mediaUrl string) (Parcel, error) {
 	var parcel Parcel
-	log.Infof("Ready to downlod media %s at %s", mediaUrl, time.Now().Format("2006-01-02 15:04:05"))
+	log.Infof("Ready to downlod media %s at %s", mediaUrl, time.Now().Format(DateTimeFormat))
 	result, err := goutubedl.New(context.Background(), mediaUrl, goutubedl.Options{})
 	if err != nil {
 		log.Errorf("goutubedl error:%s", err)
@@ -79,7 +79,7 @@ func DownloadYouTubeAudioToPath(mediaUrl string) (Parcel, error) {
 	defer func(downloadedResult *goutubedl.DownloadResult) {
 		_ = downloadedResult.Close()
 	}(downloadedResult)
-	log.Infof("downloaded media %s at %s", result.Info.Title, time.Now().Format("2006-01-02 15:04:05"))
+	log.Infof("media %s downloaded at %s", result.Info.Title, time.Now().Format(DateTimeFormat))
 
 	validMediaFileName, err := FilenamifyMediaTitle(result.Info.Title)
 	if err != nil {
@@ -88,11 +88,15 @@ func DownloadYouTubeAudioToPath(mediaUrl string) (Parcel, error) {
 	parcel = GenerateParcel(fmt.Sprintf("%s%s", ResourceStorePath, validMediaFileName), result.Info.Title)
 	log.Debugf("parcel: %v", parcel)
 
+	log.Infof("ready to CREATE media file %s at %s", parcel.filePath, time.Now().Format(DateTimeFormat))
 	parcelFile, err := os.Create(parcel.filePath)
+	log.Infof("media file %s CREATED at %s", parcel.filePath, time.Now().Format(DateTimeFormat))
 	if err != nil {
 		log.Fatal(err)
 	}
+	log.Infof("ready to COPY media file %s at %s", parcel.filePath, time.Now().Format(DateTimeFormat))
 	written, err := io.Copy(parcelFile, downloadedResult)
+	log.Infof("media file %s COPIED at %s", parcel.filePath, time.Now().Format(DateTimeFormat))
 	if err != nil {
 		log.Fatalf("copy error: %s, parcel: %s, written: %v", err, parcel, written)
 	}

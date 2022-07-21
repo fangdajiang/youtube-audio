@@ -28,7 +28,7 @@ func Cleanup(parcel Parcel) {
 }
 
 func (t *TelegramBot) Send(parcel Parcel) error {
-	log.Infof("%s will be sent", parcel.filePath)
+	log.Infof("%s is going to be sent", parcel.filePath)
 	var err error
 
 	bot, err := tgbotapi.NewBotAPI(t.Token)
@@ -45,7 +45,7 @@ func (t *TelegramBot) Send(parcel Parcel) error {
 		log.Errorf("%s", err)
 		return fmt.Errorf("sending audio error")
 	}
-	log.Infof("audio %s has been sent response: %#v", parcel.filePath, message)
+	log.Infof("audio %s has been sent, response: %#v", parcel.filePath, message)
 
 	return nil
 }

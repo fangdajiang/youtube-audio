@@ -8,6 +8,7 @@ import (
 )
 
 const (
+	DateTimeFormat                        string = "2006-01-02 15:04:05"
 	EnvTokenName                          string = "BOT_TOKEN"
 	EnvChatIdName                         string = "CHAT_ID"
 	EnvYouTubeKeyName                     string = "YOUTUBE_KEY"
