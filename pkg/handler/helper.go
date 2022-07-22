@@ -16,18 +16,20 @@ const (
 	EnvYouTubeKeyName                     string = "YOUTUBE_KEY"
 	IllegalCharacterReplacementInFilename string = "_"
 	FilenameMaxLength                     int    = 512
-	AudioFileExtensionName                string = ".ogg"
+	UploadAudioMaxLength                  int64  = 52428800
+	AudioFileExtensionName                string = ".webm"
 	ResourceStorePath                     string = "/tmp/"
-	YouTubeMaxResults                     int64  = 5
+	YouTubeMaxResults                     int64  = 1
 	YouTubePrefixUrl                      string = "https://www.youtube.com/watch?v="
 	YouTubeChannelId                      string = "UU8UCbiPrm2zN9nZHKdTevZA"
-	WarningMessageTemplate                string = "FAILED TO SEND AUDIO %s TO THE CHANNEL."
+	FailedToSendAudioWarningTemplate      string = "FAILED TO SEND AUDIO %s TO THE CHANNEL"
+	FailedToDownloadAudioWarningTemplate  string = "FAILED TO DOWNLOAD AUDIO %s"
 )
 
 var YouTubePart = []string{"snippet"}
 
-func MakeYouTubeRawUrl(videoMetaData VideoMetaData) string {
-	return YouTubePrefixUrl + videoMetaData.VideoId
+func MakeYouTubeRawUrl(videoId string) string {
+	return YouTubePrefixUrl + videoId
 }
 
 func FilenamifyMediaTitle(title string) (string, error) {

@@ -25,11 +25,11 @@ func TestYoutube_GetItagInfo(t *testing.T) {
 	url := "https://www.youtube.com/watch?v=I-4CCOLvE1g"
 	video, err := client.GetVideo(url)
 	r.NoError(err)
-	//r.Len(video.Formats, 13)
+	r.Len(video.Formats, 24)
 
 	for i, f := range video.Formats {
-		log.Infof("i: %v, ItagNo:%v, FPS:%v, QL:%s, AQ:%s, AC:%v, MimeType:%s",
-			i, f.ItagNo, f.FPS, f.QualityLabel, f.AudioQuality, f.AudioChannels, f.MimeType)
+		log.Infof("i: %v, ItagNo:%v, ADM:%s, FPS:%v, QL:%s, AQ:%s, AC:%v, AverBit:%v, Bit:%v, Size:%v",
+			i, f.ItagNo, f.ApproxDurationMs, f.FPS, f.QualityLabel, f.AudioQuality, f.AudioChannels, f.AverageBitrate, f.Bitrate, f.ContentLength)
 	}
 }
 
@@ -43,10 +43,10 @@ func TestDownloadYouTubeAudioToPath(t *testing.T) {
 	Cleanup(parcel)
 }
 
-func TestRetrieveFirstAudioITag(t *testing.T) {
+func TestRetrieveITagOfMinimumAudioSize(t *testing.T) {
 	r := require.New(t)
 
-	iTagNo, err := RetrieveFirstAudioITag("https://www.youtube.com/watch?v=BTDt-OSzFZc")
+	iTagNo, err := RetrieveITagOfMinimumAudioSize("https://www.youtube.com/watch?v=BTDt-OSzFZc")
 	r.NoError(err)
-	r.Equal(140, iTagNo)
+	r.Equal(249, iTagNo)
 }

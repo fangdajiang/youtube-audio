@@ -24,24 +24,34 @@ type YouTubeCredentials struct {
 }
 
 type VideoMetaData struct {
-	VideoId string
-	ITag    string
+	FPS              int
+	ITagNo           int
+	Bitrate          int
+	AverageBitrate   int
+	ContentLength    int64
+	ApproxDurationMs string
+	AudioChannels    int
 }
 
-func GetVideoIdsBy(playlistId string) []VideoMetaData {
+type PlaylistVideosMetaData struct {
+	VideoId string
+	RawUrl  string
+}
+
+func GetVideoIdsBy(playlistId string) []PlaylistVideosMetaData {
 	youTubeCredentials, err := GenerateYouTubeCredentials()
 	if err != nil {
-		return []VideoMetaData{}
+		return []PlaylistVideosMetaData{}
 	}
 
 	ctx := context.Background()
 	svc, err := youtubeapi.NewService(ctx, option.WithScopes(youtubeapi.YoutubeReadonlyScope), option.WithAPIKey(youTubeCredentials.Key))
 	if err != nil {
 		log.Errorf("new service error:%v", err)
-		return []VideoMetaData{}
+		return []PlaylistVideosMetaData{}
 	}
 
-	var videoMetaDataArray []VideoMetaData
+	var playlistVideosMetaDataArray []PlaylistVideosMetaData
 	playlistResponse := playlistItemsList(svc, YouTubePart, playlistId, YouTubeMaxResults)
 
 	for _, playlistItem := range playlistResponse.Items {
@@ -52,11 +62,11 @@ func GetVideoIdsBy(playlistId string) []VideoMetaData {
 		videoId := playlistItem.Snippet.ResourceId.VideoId
 		log.Infof("%v, (%v) on %v at %v\r\n", title, videoId, position, publishedAt)
 
-		videoMetaData := VideoMetaData{videoId, "123"}
-		videoMetaDataArray = append(videoMetaDataArray, videoMetaData)
+		videoMetaData := PlaylistVideosMetaData{videoId, MakeYouTubeRawUrl(videoId)}
+		playlistVideosMetaDataArray = append(playlistVideosMetaDataArray, videoMetaData)
 	}
 
-	return videoMetaDataArray
+	return playlistVideosMetaDataArray
 }
 
 func playlistItemsList(service *youtubeapi.Service, part []string, playlistId string, maxResults int64) *youtubeapi.PlaylistItemListResponse {
@@ -74,21 +84,67 @@ func playlistItemsList(service *youtubeapi.Service, part []string, playlistId st
 	return response
 }
 
-func RetrieveFirstAudioITag(mediaUrl string) (int, error) {
+func RetrieveITagOfMinimumAudioSize(mediaUrl string) (int, error) {
 	client := youtube.Client{}
 
 	video, err := client.GetVideo(mediaUrl)
+	log.Infof("video duration: %vs", video.Duration.Seconds())
 	if err != nil {
-		return -1, fmt.Errorf("retrieve first audio track error:%s, mediaUrl:%s", err, mediaUrl)
+		return -1, fmt.Errorf("failed to get video, error:%s, mediaUrl:%s", err, mediaUrl)
 	}
-	for i, f := range video.Formats {
-		log.Infof("i: %v, ItagNo:%v, FPS:%v, QL:%s, AQ:%s, AC:%v, MimeType:%s",
-			i, f.ItagNo, f.FPS, f.QualityLabel, f.AudioQuality, f.AudioChannels, f.MimeType)
+	var videoMetaDataArray []VideoMetaData
+	for _, f := range video.Formats {
+		log.Infof("ItagNo:%v, ADM:%s, FPS:%v, QL:%s, AQ:%s, AC:%v, AverBit:%v, Bit:%v, Size:%v",
+			f.ItagNo, f.ApproxDurationMs, f.FPS, f.QualityLabel, f.AudioQuality, f.AudioChannels, f.AverageBitrate, f.Bitrate, f.ContentLength)
 		if f.FPS == 0 {
-			return f.ItagNo, nil
+			videoMetaData := VideoMetaData{f.FPS, f.ItagNo, f.Bitrate, f.AverageBitrate, f.ContentLength,
+				f.ApproxDurationMs, f.AudioChannels}
+			bitrate := videoMetaData.AverageBitrate
+			if bitrate == 0 {
+				// Some formats don't have the average bitrate
+				bitrate = videoMetaData.Bitrate
+			}
+			size := videoMetaData.ContentLength
+			if size == 0 {
+				// Some formats don't have this information
+				size = int64(float64(bitrate) * video.Duration.Seconds() / 8)
+				videoMetaData.ContentLength = size
+			}
+			videoMetaDataArray = append(videoMetaDataArray, videoMetaData)
 		}
 	}
-	return -1, fmt.Errorf("audio track not found:%s", mediaUrl)
+	maxSizeVideoMetaData := VideoMetaData{}
+	minSizeVideoMetaData := VideoMetaData{
+		FPS:              0,
+		ITagNo:           0,
+		Bitrate:          0,
+		AverageBitrate:   0,
+		ContentLength:    UploadAudioMaxLength,
+		ApproxDurationMs: "",
+		AudioChannels:    0,
+	}
+	if len(videoMetaDataArray) == 0 {
+		return -1, fmt.Errorf("audio track not found:%s", mediaUrl)
+	} else if len(videoMetaDataArray) == 1 {
+		log.Infof("Found only 1 audio track for %s, iTagNo: %v at %s", mediaUrl, videoMetaDataArray[0].ITagNo, time.Now().Format(DateTimeFormat))
+		minSizeVideoMetaData = videoMetaDataArray[0]
+	} else {
+		log.Infof("Found %v audio tracks for %s, at %s", len(videoMetaDataArray), mediaUrl, time.Now().Format(DateTimeFormat))
+		for _, v := range videoMetaDataArray {
+			if v.ContentLength < minSizeVideoMetaData.ContentLength {
+				minSizeVideoMetaData = v
+			} else {
+				maxSizeVideoMetaData = v
+			}
+		}
+		log.Infof("maxSizeVideoMetaData: %v", maxSizeVideoMetaData)
+	}
+	log.Infof("minSizeVideoMetaData: %v", minSizeVideoMetaData)
+	if UploadAudioMaxLength < minSizeVideoMetaData.ContentLength {
+		return -1, fmt.Errorf("the min size %v of audio track exceeds the max %v, url:%s",
+			maxSizeVideoMetaData.ContentLength, UploadAudioMaxLength, mediaUrl)
+	}
+	return minSizeVideoMetaData.ITagNo, nil
 }
 
 func DownloadYouTubeAudioToPath(mediaUrl string) (Parcel, error) {
@@ -99,7 +155,7 @@ func DownloadYouTubeAudioToPath(mediaUrl string) (Parcel, error) {
 		log.Errorf("goutubedl error:%s", err)
 		return parcel, fmt.Errorf("goutubedl new error: %s", mediaUrl)
 	}
-	iTagNo, err := RetrieveFirstAudioITag(mediaUrl)
+	iTagNo, err := RetrieveITagOfMinimumAudioSize(mediaUrl)
 	downloadedResult, err := result.Download(context.Background(), strconv.Itoa(iTagNo))
 	if err != nil {
 		log.Errorf("download error:%s", err)
@@ -108,7 +164,7 @@ func DownloadYouTubeAudioToPath(mediaUrl string) (Parcel, error) {
 	defer func(downloadedResult *goutubedl.DownloadResult) {
 		_ = downloadedResult.Close()
 	}(downloadedResult)
-	log.Infof("media %s downloaded at %s", result.Info.Title, time.Now().Format(DateTimeFormat))
+	log.Infof("downloading media %s from %s", result.Info.Title, time.Now().Format(DateTimeFormat))
 
 	validMediaFileName, err := FilenamifyMediaTitle(result.Info.Title)
 	if err != nil {
@@ -125,7 +181,7 @@ func DownloadYouTubeAudioToPath(mediaUrl string) (Parcel, error) {
 	}
 	log.Infof("ready to COPY media file %s at %s", parcel.FilePath, time.Now().Format(DateTimeFormat))
 	written, err := io.Copy(parcelFile, downloadedResult)
-	log.Infof("media file %s COPIED at %s", parcel.FilePath, time.Now().Format(DateTimeFormat))
+	log.Infof("media file %s DOWNLOADED & COPIED till %s", parcel.FilePath, time.Now().Format(DateTimeFormat))
 	if err != nil {
 		log.Fatalf("copy error: %s, parcel: %s, written: %v", err, parcel, written)
 	}

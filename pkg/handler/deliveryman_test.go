@@ -70,6 +70,6 @@ func TestTelegramBot_SendWarningMessage(t *testing.T) {
 	_, err = f.WriteString("Hello Test")
 	r.NoError(err)
 
-	telegramBot.SendWarningMessage(parcel)
+	telegramBot.SendWarningMessage(parcel.Caption, FailedToSendAudioWarningTemplate)
 	Cleanup(parcel)
 }

@@ -40,6 +40,7 @@ func (t *TelegramBot) Send(parcel Parcel) error {
 
 	msg := tgbotapi.NewAudioToChannel(t.ChannelChatId, tgbotapi.FilePath(parcel.FilePath))
 	msg.Caption = parcel.Caption
+	msg.Caption = parcel.Caption
 
 	message, err := bot.Send(msg)
 	if err != nil {
@@ -51,8 +52,8 @@ func (t *TelegramBot) Send(parcel Parcel) error {
 	return nil
 }
 
-func (t *TelegramBot) SendWarningMessage(parcel Parcel) {
-	log.Warnf("Ready to send warning message about %s to telegram bot", parcel.Caption)
+func (t *TelegramBot) SendWarningMessage(desc string, warningMessage string) {
+	log.Warnf("Ready to send warning message about %s to telegram bot", desc)
 	var err error
 
 	bot, err := tgbotapi.NewBotAPI(t.Token)
@@ -60,7 +61,7 @@ func (t *TelegramBot) SendWarningMessage(parcel Parcel) {
 		log.Fatalf("building msg bot error %s", err)
 	}
 
-	msg := tgbotapi.NewMessage(t.BotChatId, fmt.Sprintf(WarningMessageTemplate, parcel.Caption))
+	msg := tgbotapi.NewMessage(t.BotChatId, fmt.Sprintf(warningMessage, desc))
 
 	_, err = bot.Send(msg)
 	if err != nil {

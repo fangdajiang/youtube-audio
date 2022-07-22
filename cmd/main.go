@@ -16,18 +16,20 @@ func main() {
 func process() {
 	videoMetaDataArray := handler.GetVideoIdsBy(handler.YouTubeChannelId)
 	for _, videoMetaData := range videoMetaDataArray {
-		rawUrl := handler.MakeYouTubeRawUrl(videoMetaData)
-		audioFile, err := fetchAudio(rawUrl)
+		audioFile, err := fetchAudio(videoMetaData.RawUrl)
 		if err != nil {
-			log.Fatalf("%s", err)
+			log.Warnf("Failed to download audio url %s from YouTube, error: %v", videoMetaData.RawUrl, err)
+			sendMessage(videoMetaData.RawUrl, handler.FailedToDownloadAudioWarningTemplate)
+			continue
 		}
 
 		err = sendAudio(audioFile)
 		if err != nil {
-			log.Warnf("Failed to send file %s to telegram channel", audioFile.FilePath)
+			log.Warnf("Failed to send file %s to telegram channel, error: %v", audioFile.FilePath, err)
 			audioFile.Caption = audioFile.Caption + fmt.Sprintf("%s", err)
-			sendMessage(audioFile)
-			log.Fatalf("%s", err)
+			sendMessage(audioFile.Caption, handler.FailedToSendAudioWarningTemplate)
+			handler.Cleanup(audioFile)
+			continue
 		}
 
 		handler.Cleanup(audioFile)
@@ -50,11 +52,10 @@ func sendAudio(parcel handler.Parcel) error {
 	return telegramBot.Send(parcel)
 }
 
-func sendMessage(parcel handler.Parcel) {
+func sendMessage(desc string, warningMessage string) {
 	telegramBot, err := handler.GenerateTelegramBot()
 	if err != nil {
 		log.Fatalf("%s", err)
 	}
-	telegramBot.SendWarningMessage(parcel)
-	handler.Cleanup(parcel)
+	telegramBot.SendWarningMessage(desc, warningMessage)
 }
