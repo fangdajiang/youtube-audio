@@ -4,54 +4,55 @@
     "bot_chat_id": "{{env `BOT_CHAT_ID`}}",
     "chat_id": "{{env `CHAT_ID`}}",
     "youtube_key": "{{env `YOUTUBE_KEY`}}",
-    "app_name": "youtube-audio",
-    "youtube_dl_name": "server/youtube-dl",
-    "configure_file_name": "server/configure.sh",
-    "start_file_name": "server/start.sh",
-    "app_source_file": "../youtube-audio",
-    "youtube_dl_dest_file": "/usr/local/sbin/youtube-dl",
-    "configure_file": "/configure.sh",
-    "start_file": "/start.sh",
-    "deployment_dir": "/",
+    "youtube_dl_source_file": "server/youtube-dl",
+    "configure_source_file": "server/configure.sh",
+    "start_source_file": "server/start.sh",
+    "app_source_file": "youtube-audio",
+    "app_target_file": "/youtube-audio",
+    "youtube_dl_target_file": "/usr/local/sbin/youtube-dl",
+    "configure_target_file": "/configure.sh",
+    "start_target_file": "/start.sh",
     "tmp_dir": "/tmp"
   },
   "builders": [{
     "type":"docker",
-    "image":"centos:centos7.9.2009",
+    "image":"centos:centos7.9.2022.07",
     "commit": true,
+    "pull": false,
     "changes": [
       "ENV BOT_TOKEN {{ user `bot_token` }}",
       "ENV BOT_CHAT_ID {{ user `bot_chat_id` }}",
       "ENV CHAT_ID {{ user `chat_id` }}",
-      "ENV YOUTUBE_KEY {{ user `youtube_key` }}"
+      "ENV YOUTUBE_KEY {{ user `youtube_key` }}",
+      "ENTRYPOINT /youtube-audio"
     ]
   }],
   "provisioners": [
     {
       "type": "file",
       "source": "{{user `app_source_file`}}",
-      "destination": "{{user `deployment_dir`}}{{user `app_name`}}"
+      "destination": "{{user `app_target_file`}}"
     },
     {
       "type": "file",
-      "source": "{{user `youtube_dl_name`}}",
-      "destination": "{{user `youtube_dl_dest_file`}}"
+      "source": "{{user `youtube_dl_source_file`}}",
+      "destination": "{{user `youtube_dl_target_file`}}"
     },
     {
       "type": "file",
-      "source": "{{user `configure_file_name`}}",
-      "destination": "{{user `configure_file`}}"
+      "source": "{{user `configure_source_file`}}",
+      "destination": "{{user `configure_target_file`}}"
     },
     {
       "type": "file",
-      "source": "{{user `start_file_name`}}",
-      "destination": "{{user `start_file`}}"
+      "source": "{{user `start_source_file`}}",
+      "destination": "{{user `start_target_file`}}"
     },
     {
       "type": "shell",
       "scripts": [
-        "{{user `configure_file_name`}}",
-        "{{user `start_file_name`}}"
+        "{{user `configure_source_file`}}",
+        "{{user `start_source_file`}}"
       ],
       "environment_vars": [
         "FOO={{ user `tmp_dir` }}"
@@ -63,7 +64,9 @@
       {
         "type": "docker-tag",
         "repository": "youtube-audio",
-        "tag": "v0.1.0"
+        "tags": [
+          "v0.1.0"
+        ]
       }
     ]
   ]

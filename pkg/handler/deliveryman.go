@@ -34,16 +34,18 @@ func (t *TelegramBot) Send(parcel Parcel) error {
 
 	bot, err := tgbotapi.NewBotAPI(t.Token)
 	if err != nil {
-		log.Errorf("%s", err)
+		log.Errorf("new bot error, %s", err)
 		return fmt.Errorf("building bot error")
 	}
 
+	log.Infof("ready to new audio to channel")
 	msg := tgbotapi.NewAudioToChannel(t.ChannelChatId, tgbotapi.FilePath(parcel.FilePath))
 	msg.Caption = parcel.Caption
+	log.Infof("ready to send audio")
 
 	_, err = bot.Send(msg)
 	if err != nil {
-		log.Errorf("%s", err)
+		log.Errorf("bot send error, %s", err)
 		return fmt.Errorf("sending audio error: %s", err)
 	}
 	log.Infof("audio %s has been sent", parcel.FilePath)
