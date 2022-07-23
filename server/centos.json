@@ -1,0 +1,33 @@
+{
+  "variables": {
+    "tmp_dir": "/tmp"
+  },
+  "builders": [{
+    "type":"docker",
+    "image":"centos:centos7.9.2009",
+    "commit": true
+  }],
+  "provisioners": [
+    {
+      "type": "shell",
+      "inline": [
+        "curl -L https://mirrors.aliyun.com/repo/Centos-7.repo -o /etc/yum.repos.d/CentOS-Base.repo",
+        "yum clean all",
+        "yum makecache",
+        "yum update -y"
+      ],
+      "environment_vars": [
+        "FOO={{ user `tmp_dir` }}"
+      ]
+    }
+  ],
+  "post-processors": [
+    [
+      {
+        "type": "docker-tag",
+        "repository": "centos",
+        "tag": "centos7.9.2022.07"
+      }
+    ]
+  ]
+}

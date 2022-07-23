@@ -40,14 +40,13 @@ func (t *TelegramBot) Send(parcel Parcel) error {
 
 	msg := tgbotapi.NewAudioToChannel(t.ChannelChatId, tgbotapi.FilePath(parcel.FilePath))
 	msg.Caption = parcel.Caption
-	msg.Caption = parcel.Caption
 
-	message, err := bot.Send(msg)
+	_, err = bot.Send(msg)
 	if err != nil {
 		log.Errorf("%s", err)
 		return fmt.Errorf("sending audio error: %s", err)
 	}
-	log.Infof("audio %s has been sent, response: %#v", parcel.FilePath, message)
+	log.Infof("audio %s has been sent", parcel.FilePath)
 
 	return nil
 }
