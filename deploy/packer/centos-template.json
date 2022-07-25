@@ -1,11 +1,10 @@
 {
   "variables": {
-    "docker_id": "{{env `DOCKER_ID`}}",
     "tmp_dir": "/tmp"
   },
   "builders": [{
     "type":"docker",
-    "image":"centos:centos7.9.2022.07",
+    "image":"centos:centos7.9.2009",
     "commit": true,
     "pull": false
   }],
@@ -13,7 +12,7 @@
     {
       "type": "shell",
       "inline": [
-        "echo 'What a Wonderful World'"
+        "curl -L https://mirrors.aliyun.com/repo/Centos-7.repo -o /etc/yum.repos.d/CentOS-Base.repo && yum clean all && yum makecache && yum update -y"
       ],
       "environment_vars": [
         "FOO={{ user `tmp_dir` }}"
@@ -24,7 +23,7 @@
     [
       {
         "type": "docker-tag",
-        "repository": "{{user `docker_id`}}/centos",
+        "repository": "centos",
         "tag": "centos7.9.2022.07"
       }
     ]

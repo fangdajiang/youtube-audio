@@ -9,33 +9,32 @@
     "youtube_dl_source_file": "dependency/youtube-dl",
     "configure_source_file": "deploy/script/configure.sh",
     "start_source_file": "deploy/script/start.sh",
-    "app_source_file": "youtube-audio",
+    "youtube_audio_source_file": "youtube-audio",
 
-    "app_target_file": "/youtube-audio",
     "youtube_dl_target_file": "/usr/local/sbin/youtube-dl",
     "configure_target_file": "/configure.sh",
     "start_target_file": "/start.sh",
+    "youtube_audio_target_file": "/youtube-audio",
 
     "tmp_dir": "/tmp"
   },
   "builders": [{
     "type":"docker",
-    "image":"centos:centos7.9.2022.07",
+    "image":"{centos:centos7.9.2022.07",
     "commit": true,
     "pull": false,
     "changes": [
       "ENV BOT_TOKEN {{ user `bot_token` }}",
       "ENV BOT_CHAT_ID {{ user `bot_chat_id` }}",
       "ENV CHAT_ID {{ user `chat_id` }}",
-      "ENV YOUTUBE_KEY {{ user `youtube_key` }}",
-      "ENTRYPOINT /youtube-audio"
+      "ENV YOUTUBE_KEY {{ user `youtube_key` }}"
     ]
   }],
   "provisioners": [
     {
       "type": "file",
-      "source": "{{user `app_source_file`}}",
-      "destination": "{{user `app_target_file`}}"
+      "source": "{{user `youtube_audio_source_file`}}",
+      "destination": "{{user `youtube_audio_target_file`}}"
     },
     {
       "type": "file",
