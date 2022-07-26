@@ -1,0 +1,57 @@
+{
+  "variables": {
+    "access_key": "{{env `ALICLOUD_ACCESS_KEY`}}",
+    "secret_key": "{{env `ALICLOUD_SECRET_KEY`}}",
+
+    "bot_token": "{{env `BOT_TOKEN`}}",
+    "bot_chat_id": "{{env `BOT_CHAT_ID`}}",
+    "chat_id": "{{env `CHAT_ID`}}",
+    "youtube_key": "{{env `YOUTUBE_KEY`}}",
+
+    "youtube_dl_source_file": "dependency/youtube-dl",
+    "youtube_audio_source_file": "youtube-audio",
+
+    "youtube_dl_target_file": "/usr/local/sbin/youtube-dl",
+    "youtube_audio_target_file": "/youtube-audio"
+  },
+  "builders": [{
+    "type":"alicloud-ecs",
+    "access_key":"{{user `access_key`}}",
+    "secret_key":"{{user `secret_key`}}",
+    "region":"cn-hongkong",
+    "image_name":"centos_youtube_audio",
+    "source_image":"centos_7_9_x64_20G_alibase_20220629.vhd",
+    "ssh_username":"root",
+    "instance_type":"ecs.t5-lc1m2.small",
+    "internet_charge_type":"PayByTraffic",
+    "io_optimized":"true",
+    "run_tags": {
+      "Managed by": "Packer",
+      "Built by": "Packer"
+    }
+  }],
+  "provisioners": [
+    {
+      "type": "file",
+      "source": "{{user `youtube_audio_source_file`}}",
+      "destination": "{{user `youtube_audio_target_file`}}"
+    },
+    {
+      "type": "file",
+      "source": "{{user `youtube_dl_source_file`}}",
+      "destination": "{{user `youtube_dl_target_file`}}"
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "echo 'export BOT_TOKEN={{user `bot_token`}}' >> ~/.bash_profile",
+        "echo 'export BOT_CHAT_ID={{user `bot_chat_id`}}' >> ~/.bash_profile",
+        "echo 'export CHAT_ID={{user `chat_id`}}' >> ~/.bash_profile",
+        "echo 'export YOUTUBE_KEY={{user `youtube_key`}}' >> ~/.bash_profile"
+      ],
+      "environment_vars": [
+        "FOO={{ user `tmp_dir` }}"
+      ]
+    }
+  ]
+}
