@@ -141,21 +141,25 @@ func RetrieveITagOfMinimumAudioSize(mediaUrl string) (int, error) {
 	}
 	log.Infof("minSizeVideoMetaData: %v", minSizeVideoMetaData)
 	if UploadAudioMaxLength < minSizeVideoMetaData.ContentLength {
-		return -1, fmt.Errorf("the min size %v of audio track exceeds the max %v, url:%s",
-			maxSizeVideoMetaData.ContentLength, UploadAudioMaxLength, mediaUrl)
+		return -1, fmt.Errorf("the min size %v of audio track EXCEEDS the max %v, url:%s",
+			minSizeVideoMetaData.ContentLength, UploadAudioMaxLength, mediaUrl)
 	}
 	return minSizeVideoMetaData.ITagNo, nil
 }
 
 func DownloadYouTubeAudioToPath(mediaUrl string) (Parcel, error) {
 	var parcel Parcel
-	log.Infof("Ready to downlod media %s at %s", mediaUrl, time.Now().Format(DateTimeFormat))
+	log.Infof("Ready to download media %s at %s", mediaUrl, time.Now().Format(DateTimeFormat))
 	result, err := goutubedl.New(context.Background(), mediaUrl, goutubedl.Options{})
 	if err != nil {
 		log.Errorf("goutubedl error:%s", err)
 		return parcel, fmt.Errorf("goutubedl new error: %s", mediaUrl)
 	}
 	iTagNo, err := RetrieveITagOfMinimumAudioSize(mediaUrl)
+	if err != nil {
+		log.Errorf("retrieve iTag error, iTagNo: %v, error: %s", iTagNo, err)
+		return parcel, fmt.Errorf("goutubedl download error: %s, ITagNo: %v", mediaUrl, iTagNo)
+	}
 	downloadedResult, err := result.Download(context.Background(), strconv.Itoa(iTagNo))
 	if err != nil {
 		log.Errorf("download error:%s", err)
