@@ -20,11 +20,11 @@ sudo chmod a+rx /usr/local/bin/youtube-dl
 ```
 > * 从源码安装
 ```shell
+# 拷贝 dependency/youtube-dl 到 $PATH
+# 设置环境变量 BOT_TOKEN, BOT_CHAT_ID, CHAT_ID, YOUTUBE_KEY
 git clone https://github.com/fangdajiang/youtube-audio.git
 cd youtube-audio
 go run ./cmd/main.go
-# 拷贝 dependency/youtube-dl 到 $PATH
-# 设置环境变量 BOT_TOKEN, BOT_CHAT_ID, CHAT_ID, YOUTUBE_KEY
 ```
 > * 通过 Packer(Docker) 安装并推到 Docker Hub 中
 ```shell
@@ -32,8 +32,10 @@ go run ./cmd/main.go
 packer build deploy/packer/local.json
 ```
 > * 通过 Terraform 安装
-1,
-...
+```shell
+# 还须设置环境变量 ALICLOUD_ACCESS_KEY 和 ALICLOUD_SECRET_KEY
+packer build deploy/packer/alicloud.json
+```
 
 ## 例子
 Docker:
@@ -43,7 +45,6 @@ docker run -it xxx
 ```
 Terraform:
 ```shell
-packer build deploy/packer/alicloud.json
 # 在云平台上获取所生成的镜像 ID
 cd deploy/terraform
 terraform init/plan/apply
