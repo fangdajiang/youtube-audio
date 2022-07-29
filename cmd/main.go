@@ -22,6 +22,11 @@ func process() {
 			sendMessage(videoMetaData.RawUrl, handler.FailedToDownloadAudioWarningTemplate)
 			continue
 		}
+		if !handler.IsAudioValid(audioFile) {
+			log.Warnf("Downloaded audio url %s from YouTube is NOT valid, error: %v", videoMetaData.RawUrl, err)
+			sendMessage(audioFile.FilePath, handler.InvalidDownloadedAudioWarningTemplate)
+			continue
+		}
 
 		err = sendAudio(audioFile)
 		if err != nil {

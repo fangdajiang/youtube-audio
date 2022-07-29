@@ -18,6 +18,21 @@ type TelegramBot struct {
 	BotChatId     int64  //tg bot chat id
 }
 
+func IsAudioValid(parcel Parcel) bool {
+	// exists?
+	audioExists, err := FileExists(parcel.FilePath)
+	if !audioExists {
+		log.Fatalf("downloaded file does NOT exist: %s, %v", parcel.FilePath, err)
+	}
+	// empty?
+	audioFileInfo, _ := os.Stat(parcel.FilePath)
+	log.Infof("audioFileInfo size: %v", audioFileInfo.Size())
+	if audioFileInfo.Size() < 1024 {
+		log.Fatalf("downloaded file is (almost) EMPTY: %s, size: %v", parcel.FilePath, audioFileInfo.Size())
+	}
+	return true
+}
+
 func Cleanup(parcel Parcel) {
 	err := os.Remove(parcel.FilePath)
 	if err != nil {

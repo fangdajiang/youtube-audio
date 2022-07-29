@@ -10,10 +10,10 @@
 
 ## 构建
 > * 依赖
-Go 1.17+
-Python 2.7.5+
-Packer
-(Docker, Terraform, [Linux 仓库设置](https://www.hashicorp.com/blog/announcing-the-hashicorp-linux-repository))
+    -> Go 1.17+
+    -> Python 2.7.5+
+    -> Packer
+    -> (Docker, Terraform, [Linux 仓库设置](https://www.hashicorp.com/blog/announcing-the-hashicorp-linux-repository))
 ```shell
 sudo curl -L https://yt-dl.org/downloads/latest/youtube-dl -o /usr/local/bin/youtube-dl
 sudo chmod a+rx /usr/local/bin/youtube-dl
@@ -33,7 +33,7 @@ packer build deploy/packer/local.json
 ```
 > * 通过 Terraform 安装
 ```shell
-# 还须设置环境变量 ALICLOUD_ACCESS_KEY 和 ALICLOUD_SECRET_KEY
+# 还须设置环境变量 ALICLOUD_ACCESS_KEY, ALICLOUD_SECRET_KEY, ALICLOUD_REGION
 packer build deploy/packer/alicloud.json
 ```
 

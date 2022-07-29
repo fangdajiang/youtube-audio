@@ -1,9 +1,11 @@
 package handler
 
 import (
+	"errors"
 	"fmt"
 	"github.com/flytam/filenamify"
 	log "github.com/sirupsen/logrus"
+	"os"
 	"strconv"
 	"youtube-audio/pkg/util"
 )
@@ -24,9 +26,21 @@ const (
 	YouTubeChannelId                      string = "UU8UCbiPrm2zN9nZHKdTevZA"
 	FailedToSendAudioWarningTemplate      string = "FAILED TO SEND AUDIO %s TO THE CHANNEL"
 	FailedToDownloadAudioWarningTemplate  string = "FAILED TO DOWNLOAD AUDIO %s"
+	InvalidDownloadedAudioWarningTemplate string = "INVALID DOWNLOADED FILE %s"
 )
 
 var YouTubePart = []string{"snippet"}
+
+func FileExists(name string) (bool, error) {
+	_, err := os.Stat(name)
+	if err == nil {
+		return true, nil
+	}
+	if errors.Is(err, os.ErrNotExist) {
+		return false, nil
+	}
+	return false, err
+}
 
 func MakeYouTubeRawUrl(videoId string) string {
 	return YouTubePrefixUrl + videoId

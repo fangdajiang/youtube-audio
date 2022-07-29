@@ -46,7 +46,7 @@ func TestDownloadYouTubeAudioToPath(t *testing.T) {
 func TestRetrieveITagOfMinimumAudioSize(t *testing.T) {
 	r := require.New(t)
 
-	iTagNo, err := RetrieveITagOfMinimumAudioSize("https://www.youtube.com/watch?v=BTDt-OSzFZc")
+	iTagNo, err := RetrieveITagOfMinimumAudioSize("https://www.youtube.com/watch?v=UozrJ_jqAME")
 	r.NoError(err)
 	r.Equal(249, iTagNo)
 }

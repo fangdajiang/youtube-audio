@@ -9,29 +9,10 @@ resource "alicloud_vpc" "vpc" {
   cidr_block = "172.16.0.0/12"
 }
 
-data "alicloud_instance_types" "instance_type" {
-  instance_type_family = "ecs.n1"
-  cpu_core_count       = "1"
-  memory_size          = "2"
-}
-
-data "alicloud_zones" "default" {
-  available_disk_category     = "cloud_efficiency"
-  available_resource_creation = "VSwitch"
-  available_instance_type = data.alicloud_instance_types.instance_type.instance_types[0].id
-}
-
 resource "alicloud_vswitch" "vsw" {
   vpc_id            = alicloud_vpc.vpc.id
   cidr_block        = "172.16.0.0/21"
   zone_id = data.alicloud_zones.default.zones[0].id
-}
-
-resource "alicloud_security_group" "sg" {
-  name = "audio"
-  security_group_type = "normal"
-  vpc_id = alicloud_vpc.vpc.id
-  description = "Terraform created."
 }
 
 resource "alicloud_instance" "youtube-audio" {
@@ -59,6 +40,25 @@ resource "alicloud_instance" "youtube-audio" {
   internet_charge_type = "PayByTraffic"
 }
 
+data "alicloud_zones" "default" {
+  available_disk_category     = "cloud_efficiency"
+  available_resource_creation = "VSwitch"
+  available_instance_type = data.alicloud_instance_types.instance_type.instance_types[0].id
+}
+
+data "alicloud_instance_types" "instance_type" {
+  instance_type_family = "ecs.n1"
+  cpu_core_count       = "1"
+  memory_size          = "2"
+}
+
+resource "alicloud_security_group" "sg" {
+  name = "audio"
+  security_group_type = "normal"
+  vpc_id = alicloud_vpc.vpc.id
+  description = "Terraform created."
+}
+
 resource "alicloud_security_group_rule" "icmp" {
   description       = "ping allowed"
   type              = "ingress"
@@ -70,12 +70,16 @@ resource "alicloud_security_group_rule" "icmp" {
   security_group_id = alicloud_security_group.sg.id
   cidr_ip           = "0.0.0.0/0"
 }
-resource "alicloud_security_group_rule" "only_ssh" {
+resource "alicloud_security_group_rule" "allow_22" {
   description       = "ssh only"
   type              = "ingress"
+  # tcp/udp/icmp,gre,all
   ip_protocol       = "tcp"
+  # the default value is internet
   nic_type          = "intranet"
+  # accept/drop
   policy            = "accept"
+  # Default to "-1/-1". When the protocol is tcp or udp, each side port number range from 1 to 65535 and '-1/-1' will be invalid. For example, 1/200 means that the range of the port numbers is 1-200. Other protocols' 'port_range' can only be "-1/-1", and other values will be invalid
   port_range        = "22/22"
   priority          = 100
   security_group_id = alicloud_security_group.sg.id

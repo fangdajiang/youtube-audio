@@ -17,3 +17,13 @@ func TestFilenamifyMediaTitle(t *testing.T) {
 	log.Infof("mediaTitle: %v", len(mediaTitle))
 	log.Infof("namifiedMediaTitle: %v", len(namifiedMediaTitle))
 }
+
+func TestFileExists(t *testing.T) {
+	r := require.New(t)
+
+	filePath := "/tmp/test.txt"
+
+	exists, err := FileExists(filePath)
+	r.NoError(err)
+	r.True(exists, "file NOT exists: %s", filePath)
+}
