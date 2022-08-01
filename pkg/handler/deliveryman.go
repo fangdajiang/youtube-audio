@@ -18,6 +18,23 @@ type TelegramBot struct {
 	BotChatId     int64  //tg bot chat id
 }
 
+func SendAudio(parcel Parcel) error {
+	telegramBot, err := GenerateTelegramBot()
+	if err != nil {
+		log.Fatalf("%s", err)
+	}
+	// Send an audio file
+	return telegramBot.Send(parcel)
+}
+
+func SendMessage(desc string, warningMessage string) {
+	telegramBot, err := GenerateTelegramBot()
+	if err != nil {
+		log.Fatalf("%s", err)
+	}
+	telegramBot.SendWarningMessage(desc, warningMessage)
+}
+
 func IsAudioValid(parcel Parcel) bool {
 	// exists?
 	audioExists, err := FileExists(parcel.FilePath)

@@ -1,0 +1,20 @@
+{
+  "channels": [
+    {
+      "owner": "YouTube",
+      "prefixUrl": "https://www.youtube.com/watch?v=",
+      "mediaExtension": ".webm",
+      "downloadedFilesPath": "/tmp/",
+      "scopes": [
+        {
+          "id": "UU8UCbiPrm2zN9nZHKdTevZA",
+          "maxResultsCount": 1
+        },
+        {
+          "id": "%E5%BE%B7%E5%9B%BD%E8%87%AA%E5%B9%B2%E4%BA%94",
+          "maxResultsCount": 1
+        }
+      ]
+    }
+  ]
+}

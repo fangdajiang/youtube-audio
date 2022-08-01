@@ -21,11 +21,13 @@ const (
 	IllegalCharacterReplacementInFilename string = "_"
 	FilenameMaxLength                     int    = 512
 	UploadAudioMaxLength                  int64  = 52428800
-	AudioFileExtensionName                string = ".webm"
-	ResourceStorePath                     string = "/tmp/"
-	YouTubeMaxResults                     int64  = 1
-	YouTubePrefixUrl                      string = "https://www.youtube.com/watch?v="
-	YouTubeChannelId                      string = "UU8UCbiPrm2zN9nZHKdTevZA"
+
+	AudioFileExtensionName string = ".webm"
+	ResourceStorePath      string = "/tmp/"
+	YouTubeMaxResults      int64  = 1
+	YouTubePrefixUrl       string = "https://www.youtube.com/watch?v="
+	YouTubeChannelId       string = "UU8UCbiPrm2zN9nZHKdTevZA"
+
 	FailedToSendAudioWarningTemplate      string = "FAILED TO SEND AUDIO %s TO THE CHANNEL"
 	FailedToDownloadAudioWarningTemplate  string = "FAILED TO DOWNLOAD AUDIO %s"
 	InvalidDownloadedAudioWarningTemplate string = "INVALID DOWNLOADED FILE %s"

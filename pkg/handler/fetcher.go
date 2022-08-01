@@ -38,6 +38,39 @@ type PlaylistVideosMetaData struct {
 	RawUrl  string
 }
 
+func ProcessOneVideo(videoUrl string) {
+	audioFile, err := fetchAudio(videoUrl)
+	if err != nil {
+		log.Warnf("Failed to download audio url %s from YouTube, error: %v", videoUrl, err)
+		SendMessage(videoUrl, FailedToDownloadAudioWarningTemplate)
+		return
+	}
+	if !IsAudioValid(audioFile) {
+		log.Warnf("Downloaded audio url %s from YouTube is NOT valid, error: %v", videoUrl, err)
+		SendMessage(audioFile.FilePath, InvalidDownloadedAudioWarningTemplate)
+		return
+	}
+
+	err = SendAudio(audioFile)
+
+	if err != nil {
+		log.Warnf("Failed to send file %s to telegram channel, error: %v", audioFile.FilePath, err)
+		audioFile.Caption = audioFile.Caption + fmt.Sprintf("%s", err)
+		SendMessage(audioFile.Caption, FailedToSendAudioWarningTemplate)
+		Cleanup(audioFile)
+		return
+	}
+
+	Cleanup(audioFile)
+
+	log.Infof("\r\n")
+}
+
+func fetchAudio(rawUrl string) (Parcel, error) {
+	// download a video
+	return DownloadYouTubeAudioToPath(rawUrl)
+}
+
 func GetVideoIdsBy(playlistId string) []PlaylistVideosMetaData {
 	youTubeCredentials, err := GenerateYouTubeCredentials()
 	if err != nil {
