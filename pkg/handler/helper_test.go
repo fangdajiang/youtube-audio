@@ -4,7 +4,20 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"testing"
+	"time"
 )
+
+func TestGetLocalDateTime(t *testing.T) {
+	r := require.New(t)
+
+	publishedAt := "2022-07-31T14:29:03Z"
+	remotePublishedAt, err := time.Parse(YouTubeDateTimeFormat, publishedAt)
+	r.NoError(err)
+	localPublishedAt := GetLocalDateTime(publishedAt)
+
+	log.Infof("remotePublishedAt:%s, localPublishedAt: %s", remotePublishedAt.Format(DateTimeFormat), localPublishedAt)
+
+}
 
 func TestFilenamifyMediaTitle(t *testing.T) {
 	r := require.New(t)

@@ -57,10 +57,12 @@ func GetVideoIdsBy(playlistId string) []PlaylistVideosMetaData {
 	for _, playlistItem := range playlistResponse.Items {
 		title := playlistItem.Snippet.Title
 		publishedAt := playlistItem.Snippet.PublishedAt
-		position := playlistItem.Snippet.Position
+		localPublishedAt := GetLocalDateTime(publishedAt)
+		channelTitle := playlistItem.Snippet.ChannelTitle
+		channelId := playlistItem.Snippet.ChannelId
 
 		videoId := playlistItem.Snippet.ResourceId.VideoId
-		log.Infof("%v, (%v) on %v at %v\r\n", title, videoId, position, publishedAt)
+		log.Infof("%s(%s) from %s(%s) was published at %s\r\n", title, videoId, channelTitle, channelId, localPublishedAt)
 
 		videoMetaData := PlaylistVideosMetaData{videoId, MakeYouTubeRawUrl(videoId)}
 		playlistVideosMetaDataArray = append(playlistVideosMetaDataArray, videoMetaData)
@@ -87,8 +89,9 @@ func playlistItemsList(service *youtubeapi.Service, part []string, playlistId st
 func RetrieveITagOfMinimumAudioSize(mediaUrl string) (int, error) {
 	client := youtube.Client{}
 
+	log.Infof("Ready to get video: %s at %s", mediaUrl, time.Now().Format(DateTimeFormat))
 	video, err := client.GetVideo(mediaUrl)
-	log.Infof("video duration: %vs", video.Duration.Seconds())
+	log.Infof("video duration: %vs at %s", video.Duration.Seconds(), time.Now().Format(DateTimeFormat))
 	if err != nil {
 		return -1, fmt.Errorf("failed to get video, error:%s, mediaUrl:%s", err, mediaUrl)
 	}

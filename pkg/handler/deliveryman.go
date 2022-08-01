@@ -28,7 +28,8 @@ func IsAudioValid(parcel Parcel) bool {
 	audioFileInfo, _ := os.Stat(parcel.FilePath)
 	log.Infof("audioFileInfo size: %v", audioFileInfo.Size())
 	if audioFileInfo.Size() < 1024 {
-		log.Fatalf("downloaded file is (almost) EMPTY: %s, size: %v", parcel.FilePath, audioFileInfo.Size())
+		log.Errorf("downloaded file is (almost) EMPTY: %s, size: %v", parcel.FilePath, audioFileInfo.Size())
+		return false
 	}
 	return true
 }

@@ -7,11 +7,13 @@ import (
 	log "github.com/sirupsen/logrus"
 	"os"
 	"strconv"
+	"time"
 	"youtube-audio/pkg/util"
 )
 
 const (
 	DateTimeFormat                        string = "2006-01-02 15:04:05"
+	YouTubeDateTimeFormat                 string = "2006-01-02T15:04:05Z"
 	EnvTokenName                          string = "BOT_TOKEN"
 	EnvChatIdName                         string = "CHAT_ID"
 	EnvBotChatIdName                      string = "BOT_CHAT_ID"
@@ -30,6 +32,16 @@ const (
 )
 
 var YouTubePart = []string{"snippet"}
+
+func GetLocalDateTime(formattedDateTime string) string {
+	youtubeTime, err := time.Parse(YouTubeDateTimeFormat, formattedDateTime)
+	if err != nil {
+		log.Errorf("parse youtube datetime error:%s, formattedDateTime: %s with format: %s", err, formattedDateTime, YouTubeDateTimeFormat)
+		return formattedDateTime
+	}
+	loc, _ := time.LoadLocation("Asia/Shanghai")
+	return youtubeTime.In(loc).Format(DateTimeFormat)
+}
 
 func FileExists(name string) (bool, error) {
 	_, err := os.Stat(name)
