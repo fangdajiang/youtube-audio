@@ -22,7 +22,8 @@ func init() {
 }
 
 func process() {
-	videoMetaDataArray := handler.GetVideoIdsBy(handler.YouTubeChannelId)
+	videoMetaDataArray := handler.GetYouTubeChannelsAllVideos()
+	log.Infof("total videos: %v", len(videoMetaDataArray))
 
 	for i, videoMetaData := range videoMetaDataArray {
 		size := len(videoMetaDataArray)

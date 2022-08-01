@@ -6,6 +6,14 @@ import (
 	"time"
 )
 
+func TestMergeArray(t *testing.T) {
+	var arr1 = []int{1, 2, 3}
+	var arr2 = []int{4, 5, 6}
+	var arr3 = []int{7, 8, 9}
+	var s1 = append(append(arr1, arr2...), arr3...) //note ...
+	fmt.Printf("s1: %v\n", s1)
+}
+
 func say(s string) {
 	for i := 0; i < 5; i++ {
 		time.Sleep(100 * time.Millisecond)

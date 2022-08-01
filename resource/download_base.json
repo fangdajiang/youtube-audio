@@ -8,11 +8,12 @@
       "scopes": [
         {
           "id": "UU8UCbiPrm2zN9nZHKdTevZA",
-          "maxResultsCount": 1
+          "maxResultsCount": 3
         },
         {
-          "id": "%E5%BE%B7%E5%9B%BD%E8%87%AA%E5%B9%B2%E4%BA%94",
-          "maxResultsCount": 1
+          "id": "PLKFNuj0yup6ng8YSmsM5aUFrtIkDQfjIM",
+          "maxResultsCount": 3,
+          "sortByPosition": false
         }
       ]
     }

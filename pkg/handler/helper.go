@@ -6,6 +6,7 @@ import (
 	"github.com/flytam/filenamify"
 	log "github.com/sirupsen/logrus"
 	"os"
+	"sort"
 	"strconv"
 	"time"
 	"youtube-audio/pkg/util"
@@ -21,19 +22,57 @@ const (
 	IllegalCharacterReplacementInFilename string = "_"
 	FilenameMaxLength                     int    = 512
 	UploadAudioMaxLength                  int64  = 52428800
-
-	AudioFileExtensionName string = ".webm"
-	ResourceStorePath      string = "/tmp/"
-	YouTubeMaxResults      int64  = 1
-	YouTubePrefixUrl       string = "https://www.youtube.com/watch?v="
-	YouTubeChannelId       string = "UU8UCbiPrm2zN9nZHKdTevZA"
-
+	YouTubeDefaultMaxResults              int64  = 1
+	FetchYouTubeMaxResultsLimit           int64  = 50
 	FailedToSendAudioWarningTemplate      string = "FAILED TO SEND AUDIO %s TO THE CHANNEL"
 	FailedToDownloadAudioWarningTemplate  string = "FAILED TO DOWNLOAD AUDIO %s"
 	InvalidDownloadedAudioWarningTemplate string = "INVALID DOWNLOADED FILE %s"
 )
 
 var YouTubePart = []string{"snippet"}
+
+func GetYouTubeChannelsAllVideos() PlaylistVideosMetaDataArray {
+	var playlistVideosMetaDataArray PlaylistVideosMetaDataArray
+	for _, sp := range GetYouTubeChannels().Scopes {
+		videoMetaDataArray := GetVideoMetaDataArrayBy(sp.Id)
+		if sp.SortByPosition {
+			log.Infof("SORT the playlist:%s", sp.Id)
+			sort.Sort(videoMetaDataArray)
+		}
+		playlistVideosMetaDataArray = append(playlistVideosMetaDataArray, videoMetaDataArray...)
+	}
+	return playlistVideosMetaDataArray
+}
+
+func GetYouTubeChannels() util.ChannelProps {
+	youtube := util.ChannelProps{}
+	for _, cp := range util.MediaChannels {
+		if cp.Owner == "YouTube" {
+			youtube = cp
+			break
+		}
+		continue
+	}
+	if youtube.Owner == "" {
+		log.Fatalf("getting youtube channel from json error, util.MediaChannels:%v", util.MediaChannels)
+	}
+	return youtube
+}
+
+func GetYouTubeChannelMaxResultsCount(playlistId string) int64 {
+	youtube := GetYouTubeChannels()
+	for _, scope := range youtube.Scopes {
+		if scope.Id == playlistId {
+			return scope.MaxResultsCount
+		}
+
+		continue
+	}
+	if youtube.Owner == "" {
+		log.Fatalf("getting youtube channel max results count from json error, scopes:%v", youtube.Scopes)
+	}
+	return 1
+}
 
 func GetLocalDateTime(formattedDateTime string) string {
 	youtubeTime, err := time.Parse(YouTubeDateTimeFormat, formattedDateTime)
@@ -57,11 +96,11 @@ func FileExists(name string) (bool, error) {
 }
 
 func MakeYouTubeRawUrl(videoId string) string {
-	return YouTubePrefixUrl + videoId
+	return GetYouTubeChannels().PrefixUrl + videoId
 }
 
 func FilenamifyMediaTitle(title string) (string, error) {
-	rawMediaTitle := fmt.Sprintf("%s%s", title, AudioFileExtensionName)
+	rawMediaTitle := fmt.Sprintf("%s%s", title, GetYouTubeChannels().MediaExtension)
 	log.Infof("rawMediaTitle %s", rawMediaTitle)
 	validMediaFileName, err := filenamify.Filenamify(rawMediaTitle, filenamify.Options{
 		Replacement: IllegalCharacterReplacementInFilename,

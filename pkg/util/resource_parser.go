@@ -7,8 +7,8 @@ import (
 )
 
 const (
-	DownloadBaseJsonPath    string = "resource/download_base.json"
-	DownloadHistoryJsonPath string = "resource/download_history.json"
+	DownloadBaseJsonPath    string = "./resource/download_base.json"
+	DownloadHistoryJsonPath string = "./resource/download_history.json"
 )
 
 var MediaChannels []ChannelProps
@@ -22,7 +22,8 @@ type HistoryProps struct {
 
 type ScopeProps struct {
 	Id              string
-	MaxResultsCount int
+	MaxResultsCount int64
+	SortByPosition  bool
 }
 
 type ChannelProps struct {

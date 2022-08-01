@@ -34,8 +34,20 @@ type VideoMetaData struct {
 }
 
 type PlaylistVideosMetaData struct {
-	VideoId string
-	RawUrl  string
+	VideoId  string
+	RawUrl   string
+	Position int64
+}
+type PlaylistVideosMetaDataArray []*PlaylistVideosMetaData
+
+func (s PlaylistVideosMetaDataArray) Len() int {
+	return len(s)
+}
+func (s PlaylistVideosMetaDataArray) Less(i, j int) bool {
+	return s[i].Position > s[j].Position
+}
+func (s PlaylistVideosMetaDataArray) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
 }
 
 func ProcessOneVideo(videoUrl string) {
@@ -71,47 +83,58 @@ func fetchAudio(rawUrl string) (Parcel, error) {
 	return DownloadYouTubeAudioToPath(rawUrl)
 }
 
-func GetVideoIdsBy(playlistId string) []PlaylistVideosMetaData {
+func GetVideoMetaDataArrayBy(playlistId string) PlaylistVideosMetaDataArray {
 	youTubeCredentials, err := GenerateYouTubeCredentials()
 	if err != nil {
-		return []PlaylistVideosMetaData{}
+		return PlaylistVideosMetaDataArray{}
 	}
 
 	ctx := context.Background()
 	svc, err := youtubeapi.NewService(ctx, option.WithScopes(youtubeapi.YoutubeReadonlyScope), option.WithAPIKey(youTubeCredentials.Key))
 	if err != nil {
 		log.Errorf("new service error:%v", err)
-		return []PlaylistVideosMetaData{}
+		return PlaylistVideosMetaDataArray{}
 	}
 
-	var playlistVideosMetaDataArray []PlaylistVideosMetaData
-	playlistResponse := playlistItemsList(svc, YouTubePart, playlistId, YouTubeMaxResults)
+	var playlistVideosMetaDataArray PlaylistVideosMetaDataArray
+	playlistResponse := playlistItemsList(svc, YouTubePart, playlistId, GetYouTubeChannelMaxResultsCount(playlistId))
 
 	for _, playlistItem := range playlistResponse.Items {
-		title := playlistItem.Snippet.Title
 		publishedAt := playlistItem.Snippet.PublishedAt
+		title := playlistItem.Snippet.Title
 		localPublishedAt := GetLocalDateTime(publishedAt)
 		channelTitle := playlistItem.Snippet.ChannelTitle
 		channelId := playlistItem.Snippet.ChannelId
 
 		videoId := playlistItem.Snippet.ResourceId.VideoId
-		log.Infof("%s(%s) from %s(%s) was published at %s\r\n", title, videoId, channelTitle, channelId, localPublishedAt)
+		position := playlistItem.Snippet.Position
+		//log.Infof("%v", playlistItem.Snippet)
+		log.Infof("%s(%s) from %s(%s) on position %v was published at %s\r\n", title, videoId, channelTitle, channelId, position, localPublishedAt)
 
-		videoMetaData := PlaylistVideosMetaData{videoId, MakeYouTubeRawUrl(videoId)}
-		playlistVideosMetaDataArray = append(playlistVideosMetaDataArray, videoMetaData)
+		videoMetaData := PlaylistVideosMetaData{videoId, MakeYouTubeRawUrl(videoId), position}
+		playlistVideosMetaDataArray = append(playlistVideosMetaDataArray, &videoMetaData)
 	}
 
 	return playlistVideosMetaDataArray
 }
 
+//type queryParamOpt struct {
+//	key, value string
+//}
+
+//func (qp queryParamOpt) Get() (string, string) {
+//	return qp.key, qp.value
+//}
+
 func playlistItemsList(service *youtubeapi.Service, part []string, playlistId string, maxResults int64) *youtubeapi.PlaylistItemListResponse {
 	call := service.PlaylistItems.List(part)
 	call = call.PlaylistId(playlistId)
-	if maxResults > 0 && maxResults <= 50 {
-		call = call.MaxResults(maxResults)
-	} else {
-		log.Warnf("illegal maxResults error:%v", maxResults)
+	if maxResults <= 0 || maxResults > FetchYouTubeMaxResultsLimit {
+		log.Errorf("illegal maxResults error:%v", maxResults)
+		maxResults = YouTubeDefaultMaxResults
 	}
+	call = call.MaxResults(maxResults)
+	//lastUpdated := queryParamOpt{key: "order", value: "time"}
 	response, err := call.Do()
 	if err != nil {
 		log.Fatalf("get playlist items error:%v, playlistId:%s", err, playlistId)
@@ -160,12 +183,12 @@ func RetrieveITagOfMinimumAudioSize(mediaUrl string) (int, error) {
 		AudioChannels:    0,
 	}
 	if len(videoMetaDataArray) == 0 {
-		return -1, fmt.Errorf("audio track not found:%s", mediaUrl)
+		return -1, fmt.Errorf("proper audio track not found:%s", mediaUrl)
 	} else if len(videoMetaDataArray) == 1 {
-		log.Infof("Found only 1 audio track for %s, iTagNo: %v at %s", mediaUrl, videoMetaDataArray[0].ITagNo, time.Now().Format(DateTimeFormat))
+		log.Infof("Found only 1 proper audio track for %s, iTagNo: %v at %s", mediaUrl, videoMetaDataArray[0].ITagNo, time.Now().Format(DateTimeFormat))
 		minSizeVideoMetaData = videoMetaDataArray[0]
 	} else {
-		log.Infof("Found %v audio tracks for %s, at %s", len(videoMetaDataArray), mediaUrl, time.Now().Format(DateTimeFormat))
+		log.Infof("Found %v proper audio tracks for %s, at %s", len(videoMetaDataArray), mediaUrl, time.Now().Format(DateTimeFormat))
 		for _, v := range videoMetaDataArray {
 			if v.ContentLength < minSizeVideoMetaData.ContentLength {
 				minSizeVideoMetaData = v
@@ -210,7 +233,7 @@ func DownloadYouTubeAudioToPath(mediaUrl string) (Parcel, error) {
 	if err != nil {
 		return parcel, err
 	}
-	parcel = GenerateParcel(fmt.Sprintf("%s%s", ResourceStorePath, validMediaFileName), result.Info.Title)
+	parcel = GenerateParcel(fmt.Sprintf("%s%s", GetYouTubeChannels().DownloadedFilesPath, validMediaFileName), result.Info.Title)
 	log.Debugf("parcel: %v", parcel)
 
 	log.Infof("ready to CREATE media file %s at %s", parcel.FilePath, time.Now().Format(DateTimeFormat))
