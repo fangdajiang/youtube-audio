@@ -7,6 +7,6 @@ import (
 
 func TestInitResources(t *testing.T) {
 	InitResources()
-	log.Infof("channel: %v", MediaChannels[0])
+	log.Infof("base: %v", MediaBase[0])
 	log.Infof("history: %v", MediaHistory[0])
 }

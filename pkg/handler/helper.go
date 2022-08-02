@@ -31,9 +31,9 @@ const (
 
 var YouTubePart = []string{"snippet"}
 
-func GetYouTubeChannelsAllVideos() PlaylistVideosMetaDataArray {
+func GetYouTubePlaylistsAllVideos() PlaylistVideosMetaDataArray {
 	var playlistVideosMetaDataArray PlaylistVideosMetaDataArray
-	for _, sp := range GetYouTubeChannels().Scopes {
+	for _, sp := range GetYouTubePlaylists().Params {
 		videoMetaDataArray := GetVideoMetaDataArrayBy(sp.Id)
 		if sp.SortByPosition {
 			log.Infof("SORT the playlist:%s", sp.Id)
@@ -44,9 +44,9 @@ func GetYouTubeChannelsAllVideos() PlaylistVideosMetaDataArray {
 	return playlistVideosMetaDataArray
 }
 
-func GetYouTubeChannels() util.ChannelProps {
-	youtube := util.ChannelProps{}
-	for _, cp := range util.MediaChannels {
+func GetYouTubePlaylists() util.BaseProps {
+	youtube := util.BaseProps{}
+	for _, cp := range util.MediaBase {
 		if cp.Owner == "YouTube" {
 			youtube = cp
 			break
@@ -54,22 +54,20 @@ func GetYouTubeChannels() util.ChannelProps {
 		continue
 	}
 	if youtube.Owner == "" {
-		log.Fatalf("getting youtube channel from json error, util.MediaChannels:%v", util.MediaChannels)
+		log.Fatalf("getting youtube playlists from json error, util.MediaBase:%v", util.MediaBase)
 	}
 	return youtube
 }
 
-func GetYouTubeChannelMaxResultsCount(playlistId string) int64 {
-	youtube := GetYouTubeChannels()
-	for _, scope := range youtube.Scopes {
+func GetYouTubePlaylistMaxResultsCount(playlistId string) int64 {
+	youtube := GetYouTubePlaylists()
+	for _, scope := range youtube.Params {
 		if scope.Id == playlistId {
 			return scope.MaxResultsCount
 		}
-
-		continue
 	}
 	if youtube.Owner == "" {
-		log.Fatalf("getting youtube channel max results count from json error, scopes:%v", youtube.Scopes)
+		log.Fatalf("getting youtube playlist max results count from json error, scopes:%v", youtube.Params)
 	}
 	return 1
 }
@@ -96,11 +94,11 @@ func FileExists(name string) (bool, error) {
 }
 
 func MakeYouTubeRawUrl(videoId string) string {
-	return GetYouTubeChannels().PrefixUrl + videoId
+	return GetYouTubePlaylists().PrefixUrl + videoId
 }
 
 func FilenamifyMediaTitle(title string) (string, error) {
-	rawMediaTitle := fmt.Sprintf("%s%s", title, GetYouTubeChannels().MediaExtension)
+	rawMediaTitle := fmt.Sprintf("%s%s", title, GetYouTubePlaylists().MediaExtension)
 	log.Infof("rawMediaTitle %s", rawMediaTitle)
 	validMediaFileName, err := filenamify.Filenamify(rawMediaTitle, filenamify.Options{
 		Replacement: IllegalCharacterReplacementInFilename,

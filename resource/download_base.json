@@ -1,19 +1,18 @@
 {
-  "channels": [
+  "playlists": [
     {
       "owner": "YouTube",
       "prefixUrl": "https://www.youtube.com/watch?v=",
       "mediaExtension": ".webm",
       "downloadedFilesPath": "/tmp/",
-      "scopes": [
+      "params": [
         {
-          "id": "UU8UCbiPrm2zN9nZHKdTevZA",
-          "maxResultsCount": 3
+          "id": "PL_gom9iTTcZrCXj4niVYgAdkTbybJpQQR",
+          "maxResultsCount": 1
         },
         {
-          "id": "PLKFNuj0yup6ng8YSmsM5aUFrtIkDQfjIM",
-          "maxResultsCount": 3,
-          "sortByPosition": false
+          "id": "PLvV_WiuPV7_VY3oDS1OiOQccDywoPIyIw",
+          "maxResultsCount": 3
         }
       ]
     }

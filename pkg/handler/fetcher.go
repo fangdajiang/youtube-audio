@@ -83,21 +83,32 @@ func fetchAudio(rawUrl string) (Parcel, error) {
 	return DownloadYouTubeAudioToPath(rawUrl)
 }
 
-func GetVideoMetaDataArrayBy(playlistId string) PlaylistVideosMetaDataArray {
+func GetYouTubeService() (*youtubeapi.Service, error) {
 	youTubeCredentials, err := GenerateYouTubeCredentials()
 	if err != nil {
-		return PlaylistVideosMetaDataArray{}
+		log.Errorf("generate youtube credentials error:%v", err)
+		return nil, err
 	}
 
 	ctx := context.Background()
 	svc, err := youtubeapi.NewService(ctx, option.WithScopes(youtubeapi.YoutubeReadonlyScope), option.WithAPIKey(youTubeCredentials.Key))
 	if err != nil {
 		log.Errorf("new service error:%v", err)
-		return PlaylistVideosMetaDataArray{}
+		return nil, err
 	}
 
+	return svc, nil
+}
+
+func GetVideoMetaDataArrayBy(playlistId string) PlaylistVideosMetaDataArray {
 	var playlistVideosMetaDataArray PlaylistVideosMetaDataArray
-	playlistResponse := playlistItemsList(svc, YouTubePart, playlistId, GetYouTubeChannelMaxResultsCount(playlistId))
+	svc, err := GetYouTubeService()
+	if err != nil {
+		log.Errorf("get youtube service error:%v", err)
+		return playlistVideosMetaDataArray
+	}
+
+	playlistResponse := playlistItemsList(svc, YouTubePart, playlistId, GetYouTubePlaylistMaxResultsCount(playlistId))
 
 	for _, playlistItem := range playlistResponse.Items {
 		publishedAt := playlistItem.Snippet.PublishedAt
@@ -108,7 +119,6 @@ func GetVideoMetaDataArrayBy(playlistId string) PlaylistVideosMetaDataArray {
 
 		videoId := playlistItem.Snippet.ResourceId.VideoId
 		position := playlistItem.Snippet.Position
-		//log.Infof("%v", playlistItem.Snippet)
 		log.Infof("%s(%s) from %s(%s) on position %v was published at %s\r\n", title, videoId, channelTitle, channelId, position, localPublishedAt)
 
 		videoMetaData := PlaylistVideosMetaData{videoId, MakeYouTubeRawUrl(videoId), position}
@@ -233,7 +243,7 @@ func DownloadYouTubeAudioToPath(mediaUrl string) (Parcel, error) {
 	if err != nil {
 		return parcel, err
 	}
-	parcel = GenerateParcel(fmt.Sprintf("%s%s", GetYouTubeChannels().DownloadedFilesPath, validMediaFileName), result.Info.Title)
+	parcel = GenerateParcel(fmt.Sprintf("%s%s", GetYouTubePlaylists().DownloadedFilesPath, validMediaFileName), result.Info.Title)
 	log.Debugf("parcel: %v", parcel)
 
 	log.Infof("ready to CREATE media file %s at %s", parcel.FilePath, time.Now().Format(DateTimeFormat))

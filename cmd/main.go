@@ -17,12 +17,12 @@ func main() {
 
 func init() {
 	util.InitResources()
-	log.Infof("channel: %v", util.MediaChannels[0])
+	log.Infof("base: %v", util.MediaBase[0])
 	log.Infof("history: %v", util.MediaHistory[0])
 }
 
 func process() {
-	videoMetaDataArray := handler.GetYouTubeChannelsAllVideos()
+	videoMetaDataArray := handler.GetYouTubePlaylistsAllVideos()
 	log.Infof("total videos: %v", len(videoMetaDataArray))
 
 	for i, videoMetaData := range videoMetaDataArray {

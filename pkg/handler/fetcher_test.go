@@ -5,16 +5,39 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"testing"
+	"youtube-audio/pkg/util"
 )
+
+func init() {
+	util.InitResources()
+}
+
+func TestFindChannelId(t *testing.T) {
+	r := require.New(t)
+	svc, err := GetYouTubeService()
+	r.NoError(err)
+
+	channelAlias := "德国自干五"
+	queryType := "channel"
+
+	call := svc.Search.List(YouTubePart)
+	call = call.Q(channelAlias).Type(queryType)
+	response, err := call.Do()
+	r.NoError(err)
+	log.Infof("len: %v", len(response.Items))
+	for _, item := range response.Items {
+		log.Infof("channelId: %s, channelTitle: %s, description: %s, ", item.Snippet.ChannelId, item.Snippet.ChannelTitle, item.Snippet.Description)
+	}
+
+}
 
 func TestGetVideoMetaDataArrayBy(t *testing.T) {
 	r := require.New(t)
 
-	playlistId := "PLKFNuj0yup6ng8YSmsM5aUFrtIkDQfjIM"
-	//playlistId := "PLD_nomDtqAAftttx00BRUDCzDlqyAPRoG"
+	playlistId := "PL_gom9iTTcZrCXj4niVYgAdkTbybJpQQR"
 
 	playlistVideosMetaDataArray := GetVideoMetaDataArrayBy(playlistId)
-	maxResultsCount := GetYouTubeChannelMaxResultsCount(playlistId)
+	maxResultsCount := GetYouTubePlaylistMaxResultsCount(playlistId)
 
 	r.Len(playlistVideosMetaDataArray, int(maxResultsCount))
 

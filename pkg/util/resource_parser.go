@@ -7,11 +7,11 @@ import (
 )
 
 const (
-	DownloadBaseJsonPath    string = "./resource/download_base.json"
-	DownloadHistoryJsonPath string = "./resource/download_history.json"
+	DownloadBaseJsonPath    string = "/Users/fangdajiang/IdeaProjects/youtube-audio/resource/download_base.json"
+	DownloadHistoryJsonPath string = "/Users/fangdajiang/IdeaProjects/youtube-audio/resource/download_history.json"
 )
 
-var MediaChannels []ChannelProps
+var MediaBase []BaseProps
 var MediaHistory []HistoryProps
 
 type HistoryProps struct {
@@ -20,29 +20,29 @@ type HistoryProps struct {
 	Urls               []string
 }
 
-type ScopeProps struct {
+type ParamItems struct {
 	Id              string
 	MaxResultsCount int64
 	SortByPosition  bool
 }
 
-type ChannelProps struct {
+type BaseProps struct {
 	Owner               string
 	PrefixUrl           string
 	MediaExtension      string
 	DownloadedFilesPath string
-	Scopes              []ScopeProps
+	Params              []ParamItems
 }
 
 type DownloadBase struct {
-	Channels []ChannelProps
+	Playlists []BaseProps
 }
 
 type DownloadHistory struct {
-	Channels []HistoryProps
+	Playlists []HistoryProps
 }
 
-func (dh *DownloadHistory) DecodeChannelJson(jsonPath string) {
+func (dh *DownloadHistory) DecodePlaylistJson(jsonPath string) {
 	resourceJson, _ := os.Open(jsonPath)
 	defer func(file *os.File) {
 		_ = file.Close()
@@ -54,7 +54,7 @@ func (dh *DownloadHistory) DecodeChannelJson(jsonPath string) {
 	}
 }
 
-func (db *DownloadBase) DecodeChannelJson(jsonPath string) {
+func (db *DownloadBase) DecodePlaylistJson(jsonPath string) {
 	resourceJson, _ := os.Open(jsonPath)
 	defer func(file *os.File) {
 		_ = file.Close()
@@ -68,10 +68,10 @@ func (db *DownloadBase) DecodeChannelJson(jsonPath string) {
 
 func InitResources() {
 	downloadBase := DownloadBase{}
-	downloadBase.DecodeChannelJson(DownloadBaseJsonPath)
-	MediaChannels = downloadBase.Channels
+	downloadBase.DecodePlaylistJson(DownloadBaseJsonPath)
+	MediaBase = downloadBase.Playlists
 
 	downloadHistory := DownloadHistory{}
-	downloadHistory.DecodeChannelJson(DownloadHistoryJsonPath)
-	MediaHistory = downloadHistory.Channels
+	downloadHistory.DecodePlaylistJson(DownloadHistoryJsonPath)
+	MediaHistory = downloadHistory.Playlists
 }
