@@ -2,17 +2,17 @@
   "playlists": [
     {
       "owner": "YouTube",
-      "prefixUrl": "https://www.youtube.com/watch?v=",
-      "mediaExtension": ".webm",
-      "downloadedFilesPath": "/tmp/",
+      "prefix_url": "https://www.youtube.com/watch?v=",
+      "media_extension": ".webm",
+      "downloaded_files_path": "/tmp/",
       "params": [
         {
           "id": "PL_gom9iTTcZrCXj4niVYgAdkTbybJpQQR",
-          "maxResultsCount": 1
+          "max_results_count": 1
         },
         {
           "id": "PL_gom9iTTcZo-QvnJ680oGGpwKaymGwpv",
-          "maxResultsCount": 1
+          "max_results_count": 1
         }
       ]
     }

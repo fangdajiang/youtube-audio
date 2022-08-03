@@ -7,71 +7,95 @@ import (
 )
 
 const (
-	DownloadBaseJsonPath    string = "/Users/fangdajiang/IdeaProjects/youtube-audio/resource/download_base.json"
-	DownloadHistoryJsonPath string = "/Users/fangdajiang/IdeaProjects/youtube-audio/resource/download_history.json"
+	FetchBaseJsonPath        string = "/Users/fangdajiang/IdeaProjects/youtube-audio/resource/fetch_base.json"
+	FetchHistoryJsonPath     string = "/Users/fangdajiang/IdeaProjects/youtube-audio/resource/fetch_history.json"
+	TempFetchHistoryJsonPath string = "/Users/fangdajiang/IdeaProjects/youtube-audio/resource/tmp_fetch_history.json"
 )
 
 var MediaBase []BaseProps
 var MediaHistory []HistoryProps
 
+type FetchItems struct {
+	Datetime  string   `json:"datetime"`
+	Timestamp int64    `json:"timestamp"`
+	Urls      []string `json:"urls"`
+}
+
+type SubscriberItems struct {
+	Id        int64      `json:"id"`
+	LastFetch FetchItems `json:"last_fetch"`
+	NextFetch FetchItems `json:"next_fetch"`
+}
+
 type HistoryProps struct {
-	Id                 string
-	LastDownloadedTime string
-	Urls               []string
+	Id          string            `json:"id"`
+	Subscribers []SubscriberItems `json:"subscribers"`
 }
 
 type ParamItems struct {
-	Id              string
-	MaxResultsCount int64
-	SortByPosition  bool
+	Id              string `json:"id"`
+	MaxResultsCount int64  `json:"max_results_count"`
+	SortByPosition  bool   `json:"sort_by_position"`
 }
 
 type BaseProps struct {
-	Owner               string
-	PrefixUrl           string
-	MediaExtension      string
-	DownloadedFilesPath string
+	Owner               string `json:"owner"`
+	PrefixUrl           string `json:"prefix_url"`
+	MediaExtension      string `json:"media_extension"`
+	DownloadedFilesPath string `json:"downloaded_files_path"`
 	Params              []ParamItems
 }
 
-type DownloadBase struct {
-	Playlists []BaseProps
+type FetchBase struct {
+	Playlists []BaseProps `json:"playlists"`
 }
 
-type DownloadHistory struct {
-	Playlists []HistoryProps
+type FetchHistory struct {
+	Playlists []HistoryProps `json:"playlists"`
 }
 
-func (dh *DownloadHistory) DecodePlaylistJson(jsonPath string) {
-	resourceJson, _ := os.Open(jsonPath)
+func EncodePlaylistJson(jsonPath string, fetchHistory FetchHistory) {
+	resourceJson, _ := os.Create(jsonPath)
 	defer func(file *os.File) {
 		_ = file.Close()
 	}(resourceJson)
-	resourceDecoder := json.NewDecoder(resourceJson)
-	err := resourceDecoder.Decode(&dh)
+	resourceEncoder := json.NewEncoder(resourceJson)
+	err := resourceEncoder.Encode(fetchHistory)
 	if err != nil {
-		log.Fatalf("decoding json error:%v, json:%s", err, jsonPath)
+		log.Fatalf("encoding json error:%v, json:%s, fetchHistory:%v", err, jsonPath, fetchHistory)
 	}
 }
 
-func (db *DownloadBase) DecodePlaylistJson(jsonPath string) {
+func (fh *FetchHistory) DecodePlaylistJson(jsonPath string) {
 	resourceJson, _ := os.Open(jsonPath)
 	defer func(file *os.File) {
 		_ = file.Close()
 	}(resourceJson)
 	resourceDecoder := json.NewDecoder(resourceJson)
-	err := resourceDecoder.Decode(&db)
+	err := resourceDecoder.Decode(&fh)
 	if err != nil {
-		log.Fatalf("decoding json error:%v, json:%s", err, jsonPath)
+		log.Fatalf("decoding json error:%v, json path:%s", err, jsonPath)
+	}
+}
+
+func (fb *FetchBase) DecodePlaylistJson(jsonPath string) {
+	resourceJson, _ := os.Open(jsonPath)
+	defer func(file *os.File) {
+		_ = file.Close()
+	}(resourceJson)
+	resourceDecoder := json.NewDecoder(resourceJson)
+	err := resourceDecoder.Decode(&fb)
+	if err != nil {
+		log.Fatalf("decoding json error:%v, json path:%s", err, jsonPath)
 	}
 }
 
 func InitResources() {
-	downloadBase := DownloadBase{}
-	downloadBase.DecodePlaylistJson(DownloadBaseJsonPath)
-	MediaBase = downloadBase.Playlists
+	fetchBase := FetchBase{}
+	fetchBase.DecodePlaylistJson(FetchBaseJsonPath)
+	MediaBase = fetchBase.Playlists
 
-	downloadHistory := DownloadHistory{}
-	downloadHistory.DecodePlaylistJson(DownloadHistoryJsonPath)
-	MediaHistory = downloadHistory.Playlists
+	fetchHistory := FetchHistory{}
+	fetchHistory.DecodePlaylistJson(FetchHistoryJsonPath)
+	MediaHistory = fetchHistory.Playlists
 }

@@ -1,0 +1,28 @@
+{
+  "playlists": [
+    {
+      "id": "PL_gom9iTTcZo-QvnJ680oGGpwKaymGwpv",
+      "subscribers": [
+        {
+          "id": 12345,
+          "last_fetch": {
+            "datetime": "2022-08-03 15:15:40",
+            "timestamp": 1659539369,
+            "urls": [
+              "xxx",
+              "yyy"
+            ]
+          },
+          "next_fetch": {
+            "datetime": "2022-08-03 15:15:40",
+            "timestamp": 1659539369,
+            "urls": [
+              "xxx",
+              "yyy"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
