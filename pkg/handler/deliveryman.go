@@ -13,6 +13,7 @@ type Parcel struct {
 }
 
 type TelegramBot struct {
+	//sync.Mutex
 	Token         string //tg bot token, should be an admin in tg channel
 	ChannelChatId string //tg channel's username only
 	BotChatId     int64  //tg bot chat id
@@ -45,7 +46,7 @@ func IsAudioValid(parcel Parcel) bool {
 	audioFileInfo, _ := os.Stat(parcel.FilePath)
 	log.Infof("audioFileInfo size: %v", audioFileInfo.Size())
 	if audioFileInfo.Size() < 1024 {
-		log.Errorf("downloaded file is (almost) EMPTY: %s, size: %v", parcel.FilePath, audioFileInfo.Size())
+		log.Errorf("downloaded file size(%v) is not BIG enough(>= 1024B): %s", audioFileInfo.Size(), parcel.FilePath)
 		return false
 	}
 	return true
@@ -62,6 +63,9 @@ func Cleanup(parcel Parcel) {
 }
 
 func (t *TelegramBot) Send(parcel Parcel) error {
+	//t.Lock()
+	//defer t.Unlock()
+
 	log.Infof("%s is going to be sent", parcel.FilePath)
 	var err error
 
@@ -87,6 +91,9 @@ func (t *TelegramBot) Send(parcel Parcel) error {
 }
 
 func (t *TelegramBot) SendWarningMessage(desc string, warningMessage string) {
+	//t.Lock()
+	//defer t.Unlock()
+
 	log.Warnf("Ready to send warning message about %s to telegram bot", desc)
 	var err error
 

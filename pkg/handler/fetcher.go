@@ -55,12 +55,10 @@ func ProcessOneVideo(videoUrl string) {
 	if err != nil {
 		log.Warnf("Failed to download audio url %s from YouTube, error: %v", videoUrl, err)
 		SendMessage(videoUrl, FailedToDownloadAudioWarningTemplate)
-		return
 	}
 	if !IsAudioValid(audioFile) {
-		log.Warnf("Downloaded audio url %s from YouTube is NOT valid, error: %v", videoUrl, err)
+		log.Warnf("Downloaded audio url %s from YouTube is NOT valid", videoUrl)
 		SendMessage(audioFile.FilePath, InvalidDownloadedAudioWarningTemplate)
-		return
 	}
 
 	err = SendAudio(audioFile)
@@ -69,12 +67,9 @@ func ProcessOneVideo(videoUrl string) {
 		log.Warnf("Failed to send file %s to telegram channel, error: %v", audioFile.FilePath, err)
 		audioFile.Caption = audioFile.Caption + fmt.Sprintf("%s", err)
 		SendMessage(audioFile.Caption, FailedToSendAudioWarningTemplate)
-		Cleanup(audioFile)
-		return
 	}
 
 	Cleanup(audioFile)
-
 	log.Infof("\r\n")
 }
 
@@ -152,7 +147,7 @@ func playlistItemsList(service *youtubeapi.Service, part []string, playlistId st
 	return response
 }
 
-func RetrieveITagOfMinimumAudioSize(mediaUrl string) (int, error) {
+func RetrieveITagOfMinimumSizeAudio(mediaUrl string) (int, error) {
 	client := youtube.Client{}
 
 	log.Infof("Ready to get video: %s at %s", mediaUrl, time.Now().Format(DateTimeFormat))
@@ -224,7 +219,22 @@ func DownloadYouTubeAudioToPath(mediaUrl string) (Parcel, error) {
 		log.Errorf("goutubedl error:%s", err)
 		return parcel, fmt.Errorf("goutubedl new error: %s", mediaUrl)
 	}
-	iTagNo, err := RetrieveITagOfMinimumAudioSize(mediaUrl)
+
+	validMediaFileName, err := FilenamifyMediaTitle(result.Info.Title)
+	if err != nil {
+		return parcel, err
+	}
+	parcel = GenerateParcel(fmt.Sprintf("%s%s", GetYouTubePlaylists().DownloadedFilesPath, validMediaFileName), result.Info.Title)
+	log.Infof("generated parcel: %v", parcel)
+
+	log.Infof("ready to CREATE media file %s at %s", parcel.FilePath, time.Now().Format(DateTimeFormat))
+	parcelFile, err := os.Create(parcel.FilePath)
+	log.Infof("media file %s CREATED at %s", parcel.FilePath, time.Now().Format(DateTimeFormat))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	iTagNo, err := RetrieveITagOfMinimumSizeAudio(mediaUrl)
 	if err != nil {
 		log.Errorf("retrieve iTag error, iTagNo: %v, error: %s", iTagNo, err)
 		return parcel, fmt.Errorf("goutubedl download error: %s, ITagNo: %v", mediaUrl, iTagNo)
@@ -239,19 +249,6 @@ func DownloadYouTubeAudioToPath(mediaUrl string) (Parcel, error) {
 	}(downloadedResult)
 	log.Infof("downloading media %s from %s", result.Info.Title, time.Now().Format(DateTimeFormat))
 
-	validMediaFileName, err := FilenamifyMediaTitle(result.Info.Title)
-	if err != nil {
-		return parcel, err
-	}
-	parcel = GenerateParcel(fmt.Sprintf("%s%s", GetYouTubePlaylists().DownloadedFilesPath, validMediaFileName), result.Info.Title)
-	log.Debugf("parcel: %v", parcel)
-
-	log.Infof("ready to CREATE media file %s at %s", parcel.FilePath, time.Now().Format(DateTimeFormat))
-	parcelFile, err := os.Create(parcel.FilePath)
-	log.Infof("media file %s CREATED at %s", parcel.FilePath, time.Now().Format(DateTimeFormat))
-	if err != nil {
-		log.Fatal(err)
-	}
 	log.Infof("ready to COPY media file %s at %s", parcel.FilePath, time.Now().Format(DateTimeFormat))
 	written, err := io.Copy(parcelFile, downloadedResult)
 	log.Infof("media file %s DOWNLOADED & COPIED till %s", parcel.FilePath, time.Now().Format(DateTimeFormat))

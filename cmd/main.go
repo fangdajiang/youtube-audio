@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
+	"sync"
 	"time"
 	"youtube-audio/pkg/handler"
 	"youtube-audio/pkg/util"
@@ -25,13 +26,19 @@ func process() {
 	videoMetaDataArray := handler.GetYouTubePlaylistsAllVideos()
 	log.Infof("total videos: %v", len(videoMetaDataArray))
 
+	var wg sync.WaitGroup
 	for i, videoMetaData := range videoMetaDataArray {
 		size := len(videoMetaDataArray)
-
 		if i < size-1 { //have to?
-			go handler.ProcessOneVideo(videoMetaData.RawUrl)
+			wg.Add(1)
+			go func(rawUrl string) {
+				handler.ProcessOneVideo(rawUrl)
+				wg.Done()
+			}(videoMetaData.RawUrl)
 		} else {
 			handler.ProcessOneVideo(videoMetaData.RawUrl)
+			wg.Wait()
 		}
 	}
+	log.Infof("ALL %v videos proccessed", len(videoMetaDataArray))
 }
