@@ -36,12 +36,12 @@ func TestGetVideoMetaDataArrayBy(t *testing.T) {
 
 	playlistId := "PL_gom9iTTcZrCXj4niVYgAdkTbybJpQQR"
 
-	playlistVideosMetaDataArray := GetVideoMetaDataArrayBy(playlistId)
+	playlistMetaData := GetPlaylistMetaDataBy(playlistId)
 	maxResultsCount := GetYouTubePlaylistMaxResultsCount(playlistId)
 
-	r.Len(playlistVideosMetaDataArray, int(maxResultsCount))
+	r.Len(playlistMetaData.PlaylistVideoMetaDataArray, int(maxResultsCount))
 
-	for _, videoMetaData := range playlistVideosMetaDataArray {
+	for _, videoMetaData := range playlistMetaData.PlaylistVideoMetaDataArray {
 		log.Infof("videoMetaData position: %v", videoMetaData.Position)
 	}
 }

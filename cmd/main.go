@@ -23,12 +23,12 @@ func init() {
 }
 
 func process() {
-	videoMetaDataArray := handler.GetYouTubePlaylistsAllVideos()
-	log.Infof("total videos: %v", len(videoMetaDataArray))
+	playlistMetaData := handler.GetYouTubePlaylistsAllVideos()
+	log.Infof("total videos: %v", len(playlistMetaData.PlaylistVideoMetaDataArray))
 
 	var wg sync.WaitGroup
-	for i, videoMetaData := range videoMetaDataArray {
-		size := len(videoMetaDataArray)
+	for i, videoMetaData := range playlistMetaData.PlaylistVideoMetaDataArray {
+		size := len(playlistMetaData.PlaylistVideoMetaDataArray)
 		if i < size-1 { //have to?
 			wg.Add(1)
 			go func(rawUrl string) {
@@ -40,5 +40,5 @@ func process() {
 			wg.Wait()
 		}
 	}
-	log.Infof("ALL %v videos proccessed", len(videoMetaDataArray))
+	log.Infof("ALL %v videos proccessed", len(playlistMetaData.PlaylistVideoMetaDataArray))
 }

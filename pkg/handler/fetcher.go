@@ -33,21 +33,28 @@ type VideoMetaData struct {
 	AudioChannels    int
 }
 
-type PlaylistVideosMetaData struct {
+type PlaylistVideoMetaData struct {
 	VideoId  string
 	RawUrl   string
 	Position int64
 }
-type PlaylistVideosMetaDataArray []*PlaylistVideosMetaData
+type PlaylistMetaData struct {
+	PlaylistId                 string
+	PlaylistVideoMetaDataArray []*PlaylistVideoMetaData
+}
 
-func (s PlaylistVideosMetaDataArray) Len() int {
-	return len(s)
+func (s PlaylistMetaData) Len() int {
+	return len(s.PlaylistVideoMetaDataArray)
 }
-func (s PlaylistVideosMetaDataArray) Less(i, j int) bool {
-	return s[i].Position > s[j].Position
+func (s PlaylistMetaData) Less(i, j int) bool {
+	return s.PlaylistVideoMetaDataArray[i].Position > s.PlaylistVideoMetaDataArray[j].Position
 }
-func (s PlaylistVideosMetaDataArray) Swap(i, j int) {
-	s[i], s[j] = s[j], s[i]
+func (s PlaylistMetaData) Swap(i, j int) {
+	s.PlaylistVideoMetaDataArray[i], s.PlaylistVideoMetaDataArray[j] = s.PlaylistVideoMetaDataArray[j], s.PlaylistVideoMetaDataArray[i]
+}
+
+func FlushFetchHistory(parcel Parcel) {
+
 }
 
 func ProcessOneVideo(videoUrl string) {
@@ -69,6 +76,7 @@ func ProcessOneVideo(videoUrl string) {
 		SendMessage(audioFile.Caption, FailedToSendAudioWarningTemplate)
 	}
 
+	FlushFetchHistory(audioFile)
 	Cleanup(audioFile)
 	log.Infof("\r\n")
 }
@@ -95,16 +103,17 @@ func GetYouTubeService() (*youtubeapi.Service, error) {
 	return svc, nil
 }
 
-func GetVideoMetaDataArrayBy(playlistId string) PlaylistVideosMetaDataArray {
-	var playlistVideosMetaDataArray PlaylistVideosMetaDataArray
+func GetPlaylistMetaDataBy(playlistId string) PlaylistMetaData {
+	var playlistMetaData PlaylistMetaData
 	svc, err := GetYouTubeService()
 	if err != nil {
 		log.Errorf("get youtube service error:%v", err)
-		return playlistVideosMetaDataArray
+		return playlistMetaData
 	}
 
 	playlistResponse := playlistItemsList(svc, YouTubePart, playlistId, GetYouTubePlaylistMaxResultsCount(playlistId))
 
+	playlistMetaData.PlaylistId = playlistId
 	for _, playlistItem := range playlistResponse.Items {
 		publishedAt := playlistItem.Snippet.PublishedAt
 		title := playlistItem.Snippet.Title
@@ -116,11 +125,11 @@ func GetVideoMetaDataArrayBy(playlistId string) PlaylistVideosMetaDataArray {
 		position := playlistItem.Snippet.Position
 		log.Infof("%s(%s) from %s(%s) on position %v was published at %s\r\n", title, videoId, channelTitle, channelId, position, localPublishedAt)
 
-		videoMetaData := PlaylistVideosMetaData{videoId, MakeYouTubeRawUrl(videoId), position}
-		playlistVideosMetaDataArray = append(playlistVideosMetaDataArray, &videoMetaData)
+		videoMetaData := PlaylistVideoMetaData{videoId, MakeYouTubeRawUrl(videoId), position}
+		playlistMetaData.PlaylistVideoMetaDataArray = append(playlistMetaData.PlaylistVideoMetaDataArray, &videoMetaData)
 	}
 
-	return playlistVideosMetaDataArray
+	return playlistMetaData
 }
 
 //type queryParamOpt struct {

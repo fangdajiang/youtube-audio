@@ -60,6 +60,7 @@ func EncodePlaylistJson(jsonPath string, fetchHistory FetchHistory) {
 		_ = file.Close()
 	}(resourceJson)
 	resourceEncoder := json.NewEncoder(resourceJson)
+	resourceEncoder.SetIndent("", "  ")
 	err := resourceEncoder.Encode(fetchHistory)
 	if err != nil {
 		log.Fatalf("encoding json error:%v, json:%s, fetchHistory:%v", err, jsonPath, fetchHistory)

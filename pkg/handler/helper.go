@@ -31,17 +31,18 @@ const (
 
 var YouTubePart = []string{"snippet"}
 
-func GetYouTubePlaylistsAllVideos() PlaylistVideosMetaDataArray {
-	var playlistVideosMetaDataArray PlaylistVideosMetaDataArray
+func GetYouTubePlaylistsAllVideos() PlaylistMetaData {
+	var playlistMetaData PlaylistMetaData
 	for _, sp := range GetYouTubePlaylists().Params {
-		videoMetaDataArray := GetVideoMetaDataArrayBy(sp.Id)
+		videoMetaDataArray := GetPlaylistMetaDataBy(sp.Id)
 		if sp.SortByPosition {
 			log.Infof("SORT the playlist:%s", sp.Id)
 			sort.Sort(videoMetaDataArray)
 		}
-		playlistVideosMetaDataArray = append(playlistVideosMetaDataArray, videoMetaDataArray...)
+
+		playlistMetaData.PlaylistVideoMetaDataArray = append(playlistMetaData.PlaylistVideoMetaDataArray, videoMetaDataArray.PlaylistVideoMetaDataArray...)
 	}
-	return playlistVideosMetaDataArray
+	return playlistMetaData
 }
 
 func GetYouTubePlaylists() util.BaseProps {
