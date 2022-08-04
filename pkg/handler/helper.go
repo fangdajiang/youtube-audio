@@ -31,21 +31,40 @@ const (
 
 var YouTubePart = []string{"snippet"}
 
-func GetYouTubePlaylistsAllVideos() PlaylistMetaData {
-	var playlistMetaData PlaylistMetaData
-	for _, sp := range GetYouTubePlaylists().Params {
-		videoMetaDataArray := GetPlaylistMetaDataBy(sp.Id)
-		if sp.SortByPosition {
-			log.Infof("SORT the playlist:%s", sp.Id)
-			sort.Sort(videoMetaDataArray)
+func GenerateFetchHistory(playlistMetaDataArray []PlaylistMetaData) []util.HistoryProps {
+	channelChatId, _ := util.GetEnvVariable(EnvChatIdName)
+	subscriberId, _ := strconv.ParseInt(channelChatId, 10, 64)
+	var historyPropsArray []util.HistoryProps
+	for _, playlistMetaData := range playlistMetaDataArray {
+		var urls []string
+		for _, videoMetaData := range playlistMetaData.PlaylistVideoMetaDataArray {
+			urls = append(urls, videoMetaData.RawUrl)
 		}
-
-		playlistMetaData.PlaylistVideoMetaDataArray = append(playlistMetaData.PlaylistVideoMetaDataArray, videoMetaDataArray.PlaylistVideoMetaDataArray...)
+		now := time.Now()
+		lastFetch := util.FetchItems{Datetime: time.Now().Format(DateTimeFormat), Timestamp: now.Unix(), Urls: urls}
+		nextFetch := util.FetchItems{Datetime: time.Now().Format(DateTimeFormat), Timestamp: now.Unix(), Urls: urls}
+		subscriberItem := util.SubscriberItems{Id: subscriberId, LastFetch: lastFetch, NextFetch: nextFetch}
+		subscriberItems := []util.SubscriberItems{subscriberItem}
+		historyProps := util.HistoryProps{Id: playlistMetaData.PlaylistId, Subscribers: subscriberItems}
+		historyPropsArray = append(historyPropsArray, historyProps)
 	}
-	return playlistMetaData
+	return historyPropsArray
 }
 
-func GetYouTubePlaylists() util.BaseProps {
+func GetYouTubeVideosFromPlaylists() []PlaylistMetaData {
+	var playlistMetaDataArray []PlaylistMetaData
+	for _, param := range GetYouTubeFetchBase().Params {
+		playlistMetaData := GetPlaylistMetaDataBy(param.Id)
+		if param.SortByPosition {
+			log.Infof("SORT the playlist:%s", param.Id)
+			sort.Sort(playlistMetaData)
+		}
+		playlistMetaDataArray = append(playlistMetaDataArray, playlistMetaData)
+	}
+	return playlistMetaDataArray
+}
+
+func GetYouTubeFetchBase() util.BaseProps {
 	youtube := util.BaseProps{}
 	for _, cp := range util.MediaBase {
 		if cp.Owner == "YouTube" {
@@ -61,7 +80,7 @@ func GetYouTubePlaylists() util.BaseProps {
 }
 
 func GetYouTubePlaylistMaxResultsCount(playlistId string) int64 {
-	youtube := GetYouTubePlaylists()
+	youtube := GetYouTubeFetchBase()
 	for _, scope := range youtube.Params {
 		if scope.Id == playlistId {
 			return scope.MaxResultsCount
@@ -95,11 +114,11 @@ func FileExists(name string) (bool, error) {
 }
 
 func MakeYouTubeRawUrl(videoId string) string {
-	return GetYouTubePlaylists().PrefixUrl + videoId
+	return GetYouTubeFetchBase().PrefixUrl + videoId
 }
 
 func FilenamifyMediaTitle(title string) (string, error) {
-	rawMediaTitle := fmt.Sprintf("%s%s", title, GetYouTubePlaylists().MediaExtension)
+	rawMediaTitle := fmt.Sprintf("%s%s", title, GetYouTubeFetchBase().MediaExtension)
 	log.Infof("rawMediaTitle %s", rawMediaTitle)
 	validMediaFileName, err := filenamify.Filenamify(rawMediaTitle, filenamify.Options{
 		Replacement: IllegalCharacterReplacementInFilename,
@@ -114,10 +133,11 @@ func FilenamifyMediaTitle(title string) (string, error) {
 	return validMediaFileName, nil
 }
 
-func GenerateParcel(filePath string, caption string) Parcel {
+func GenerateParcel(filePath string, caption string, url string) Parcel {
 	parcel := Parcel{
 		FilePath: filePath,
 		Caption:  caption,
+		Url:      url,
 	}
 	return parcel
 }

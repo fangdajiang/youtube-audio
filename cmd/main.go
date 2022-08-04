@@ -23,13 +23,18 @@ func init() {
 }
 
 func process() {
-	playlistMetaData := handler.GetYouTubePlaylistsAllVideos()
-	log.Infof("total videos: %v", len(playlistMetaData.PlaylistVideoMetaDataArray))
+	playlistMetaDataArray := handler.GetYouTubeVideosFromPlaylists()
+	var videoMetaDataArray []*handler.PlaylistVideoMetaData
+	for _, playlistMetaData := range playlistMetaDataArray {
+		videoMetaDataArray = append(videoMetaDataArray, playlistMetaData.PlaylistVideoMetaDataArray...)
+	}
+	videosCount := len(videoMetaDataArray)
+	log.Infof("total playlists: %v, videos: %v", len(playlistMetaDataArray), videosCount)
 
 	var wg sync.WaitGroup
-	for i, videoMetaData := range playlistMetaData.PlaylistVideoMetaDataArray {
-		size := len(playlistMetaData.PlaylistVideoMetaDataArray)
-		if i < size-1 { //have to?
+	for i, videoMetaData := range videoMetaDataArray {
+		log.Infof("%v, raw url: %s", i, videoMetaData.RawUrl)
+		if i < videosCount-1 { //have to?
 			wg.Add(1)
 			go func(rawUrl string) {
 				handler.ProcessOneVideo(rawUrl)
@@ -40,5 +45,5 @@ func process() {
 			wg.Wait()
 		}
 	}
-	log.Infof("ALL %v videos proccessed", len(playlistMetaData.PlaylistVideoMetaDataArray))
+	handler.FlushFetchHistory(playlistMetaDataArray)
 }

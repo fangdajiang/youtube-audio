@@ -12,6 +12,7 @@ import (
 	"os"
 	"strconv"
 	"time"
+	"youtube-audio/pkg/util"
 )
 
 //ITagNo format id
@@ -53,8 +54,11 @@ func (s PlaylistMetaData) Swap(i, j int) {
 	s.PlaylistVideoMetaDataArray[i], s.PlaylistVideoMetaDataArray[j] = s.PlaylistVideoMetaDataArray[j], s.PlaylistVideoMetaDataArray[i]
 }
 
-func FlushFetchHistory(parcel Parcel) {
+func FlushFetchHistory(playlistMetaDataArray []PlaylistMetaData) {
+	var fetchHistory = util.FetchHistory{Playlists: GenerateFetchHistory(playlistMetaDataArray)}
+	log.Infof("fetchHistory: %v", fetchHistory)
 
+	util.EncodePlaylistJson(util.FetchHistoryJsonPath, fetchHistory)
 }
 
 func ProcessOneVideo(videoUrl string) {
@@ -76,7 +80,7 @@ func ProcessOneVideo(videoUrl string) {
 		SendMessage(audioFile.Caption, FailedToSendAudioWarningTemplate)
 	}
 
-	FlushFetchHistory(audioFile)
+	log.Infof("before cleaning up, audioFile: %v", audioFile)
 	Cleanup(audioFile)
 	log.Infof("\r\n")
 }
@@ -233,7 +237,7 @@ func DownloadYouTubeAudioToPath(mediaUrl string) (Parcel, error) {
 	if err != nil {
 		return parcel, err
 	}
-	parcel = GenerateParcel(fmt.Sprintf("%s%s", GetYouTubePlaylists().DownloadedFilesPath, validMediaFileName), result.Info.Title)
+	parcel = GenerateParcel(fmt.Sprintf("%s%s", GetYouTubeFetchBase().DownloadedFilesPath, validMediaFileName), result.Info.Title, mediaUrl)
 	log.Infof("generated parcel: %v", parcel)
 
 	log.Infof("ready to CREATE media file %s at %s", parcel.FilePath, time.Now().Format(DateTimeFormat))
@@ -262,7 +266,7 @@ func DownloadYouTubeAudioToPath(mediaUrl string) (Parcel, error) {
 	written, err := io.Copy(parcelFile, downloadedResult)
 	log.Infof("media file %s DOWNLOADED & COPIED till %s", parcel.FilePath, time.Now().Format(DateTimeFormat))
 	if err != nil {
-		log.Fatalf("copy error: %s, parcel: %s, written: %v", err, parcel, written)
+		log.Fatalf("copy error: %s, parcel: %v, written: %v", err, parcel, written)
 	}
 	defer func(f *os.File) {
 		_ = f.Close()

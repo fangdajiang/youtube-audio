@@ -12,6 +12,7 @@ import (
 const (
 	LocalFilePath    string = "/tmp/test.txt"
 	LocalFileCaption string = "春眠不觉晓"
+	UselessUrl       string = "https://www.youtube.com/watch?v=Xy8BOay7hDc"
 )
 
 var (
@@ -23,7 +24,7 @@ func init() {
 	log.Infof("initing deliveryman test")
 
 	telegramBot, _ = GenerateTelegramBot()
-	parcel = GenerateParcel(LocalFilePath, LocalFileCaption+time.Now().Format(DateTimeFormat))
+	parcel = GenerateParcel(LocalFilePath, LocalFileCaption+time.Now().Format(DateTimeFormat), UselessUrl)
 
 }
 

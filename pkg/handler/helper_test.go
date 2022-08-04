@@ -41,11 +41,14 @@ func TestFileExists(t *testing.T) {
 	r.True(exists, "file NOT exists: %s", filePath)
 }
 
-func TestGetYouTubePlaylistsAllVideos(t *testing.T) {
-	playlistVideosMetaDataArray := GetYouTubePlaylistsAllVideos()
-	log.Infof("length: %v", len(playlistVideosMetaDataArray))
-	for _, video := range playlistVideosMetaDataArray {
+func TestGetYouTubeVideosFromPlaylists(t *testing.T) {
+	playlistMetaDataArray := GetYouTubeVideosFromPlaylists()
+	log.Infof("playlists count: %v", len(playlistMetaDataArray))
+	var videoMetaDataArray []*PlaylistVideoMetaData
+	for _, playlistMetaData := range playlistMetaDataArray {
+		videoMetaDataArray = append(videoMetaDataArray, playlistMetaData.PlaylistVideoMetaDataArray...)
+	}
+	for _, video := range videoMetaDataArray {
 		log.Infof("id:%v, position:%v", video.VideoId, video.Position)
 	}
-
 }

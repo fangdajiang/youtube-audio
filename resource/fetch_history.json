@@ -1,24 +1,56 @@
 {
   "playlists": [
     {
-      "id": "PL_gom9iTTcZo-QvnJ680oGGpwKaymGwpv",
+      "id": "PL_gom9iTTcZrCXj4niVYgAdkTbybJpQQR",
       "subscribers": [
         {
-          "id": 12345,
+          "id": -1001602754734,
           "last_fetch": {
-            "datetime": "2022-08-03 15:15:40",
-            "timestamp": 1659539369,
+            "datetime": "2022-08-05 01:27:30",
+            "timestamp": 1659634050,
             "urls": [
-              "xxx",
-              "yyy"
+              "https://www.youtube.com/watch?v=_R9oBtRtM5c",
+              "https://www.youtube.com/watch?v=2Oo8WMuu0zM",
+              "https://www.youtube.com/watch?v=uNm4AElGxo8"
             ]
           },
           "next_fetch": {
-            "datetime": "2022-08-03 15:15:40",
-            "timestamp": 1659539369,
+            "datetime": "2022-08-05 01:27:30",
+            "timestamp": 1659634050,
             "urls": [
-              "xxx",
-              "yyy"
+              "https://www.youtube.com/watch?v=_R9oBtRtM5c",
+              "https://www.youtube.com/watch?v=2Oo8WMuu0zM",
+              "https://www.youtube.com/watch?v=uNm4AElGxo8"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "PL_gom9iTTcZo-QvnJ680oGGpwKaymGwpv",
+      "subscribers": [
+        {
+          "id": -1001602754734,
+          "last_fetch": {
+            "datetime": "2022-08-05 01:27:30",
+            "timestamp": 1659634050,
+            "urls": [
+              "https://www.youtube.com/watch?v=TpZTSe6d3NY",
+              "https://www.youtube.com/watch?v=sZ_n10FYj8g",
+              "https://www.youtube.com/watch?v=-TIO0_BOkP8",
+              "https://www.youtube.com/watch?v=m-nJI-EJ9mg",
+              "https://www.youtube.com/watch?v=qvKzryKr0V4"
+            ]
+          },
+          "next_fetch": {
+            "datetime": "2022-08-05 01:27:30",
+            "timestamp": 1659634050,
+            "urls": [
+              "https://www.youtube.com/watch?v=TpZTSe6d3NY",
+              "https://www.youtube.com/watch?v=sZ_n10FYj8g",
+              "https://www.youtube.com/watch?v=-TIO0_BOkP8",
+              "https://www.youtube.com/watch?v=m-nJI-EJ9mg",
+              "https://www.youtube.com/watch?v=qvKzryKr0V4"
             ]
           }
         }

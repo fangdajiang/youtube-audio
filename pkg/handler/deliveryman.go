@@ -5,11 +5,16 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	log "github.com/sirupsen/logrus"
 	"os"
+	"time"
 )
 
 type Parcel struct {
-	FilePath string
-	Caption  string
+	FilePath      string
+	Caption       string
+	Url           string
+	Sent          bool
+	SentTimestamp int64
+	SentDateTime  string
 }
 
 type TelegramBot struct {
@@ -25,7 +30,18 @@ func SendAudio(parcel Parcel) error {
 		log.Fatalf("%s", err)
 	}
 	// Send an audio file
-	return telegramBot.Send(parcel)
+	err = telegramBot.Send(parcel)
+	if err == nil {
+		postSend(parcel)
+	}
+	return err
+}
+
+func postSend(parcel Parcel) {
+	parcel.Sent = true
+	now := time.Now()
+	parcel.SentTimestamp = now.Unix()
+	parcel.SentDateTime = now.Format(DateTimeFormat)
 }
 
 func SendMessage(desc string, warningMessage string) {
