@@ -6,21 +6,18 @@
         {
           "id": -1001602754734,
           "last_fetch": {
-            "datetime": "2022-08-05 01:27:30",
-            "timestamp": 1659634050,
+            "datetime": "2022-08-06 01:22:30",
+            "timestamp": 1659720150,
             "urls": [
-              "https://www.youtube.com/watch?v=_R9oBtRtM5c",
-              "https://www.youtube.com/watch?v=2Oo8WMuu0zM",
-              "https://www.youtube.com/watch?v=uNm4AElGxo8"
+              "https://www.youtube.com/watch?v=mY-zQWD2-GM",
+              "https://www.youtube.com/watch?v=_R9oBtRtM5c"
             ]
           },
           "next_fetch": {
-            "datetime": "2022-08-05 01:27:30",
-            "timestamp": 1659634050,
+            "datetime": "",
+            "timestamp": 0,
             "urls": [
-              "https://www.youtube.com/watch?v=_R9oBtRtM5c",
-              "https://www.youtube.com/watch?v=2Oo8WMuu0zM",
-              "https://www.youtube.com/watch?v=uNm4AElGxo8"
+              "https://www.youtube.com/watch?v=GGbSaRQrLQM"
             ]
           }
         }
@@ -32,25 +29,19 @@
         {
           "id": -1001602754734,
           "last_fetch": {
-            "datetime": "2022-08-05 01:27:30",
-            "timestamp": 1659634050,
+            "datetime": "2022-08-06 01:22:30",
+            "timestamp": 1659720150,
             "urls": [
-              "https://www.youtube.com/watch?v=TpZTSe6d3NY",
-              "https://www.youtube.com/watch?v=sZ_n10FYj8g",
-              "https://www.youtube.com/watch?v=-TIO0_BOkP8",
-              "https://www.youtube.com/watch?v=m-nJI-EJ9mg",
-              "https://www.youtube.com/watch?v=qvKzryKr0V4"
+              "https://www.youtube.com/watch?v=TpZTSe6d3NY"
             ]
           },
           "next_fetch": {
-            "datetime": "2022-08-05 01:27:30",
-            "timestamp": 1659634050,
+            "datetime": "2022-08-06 01:22:30",
+            "timestamp": 1659720150,
             "urls": [
-              "https://www.youtube.com/watch?v=TpZTSe6d3NY",
-              "https://www.youtube.com/watch?v=sZ_n10FYj8g",
-              "https://www.youtube.com/watch?v=-TIO0_BOkP8",
-              "https://www.youtube.com/watch?v=m-nJI-EJ9mg",
-              "https://www.youtube.com/watch?v=qvKzryKr0V4"
+              "https://www.youtube.com/watch?v=l95iiFRgPRc",
+              "https://www.youtube.com/watch?v=HOOa2CAg7Lc",
+              "https://www.youtube.com/watch?v=X219Y1C09Rw"
             ]
           }
         }

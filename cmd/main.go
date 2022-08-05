@@ -12,7 +12,8 @@ import (
 func main() {
 	fmt.Printf("Start fetching, converting, sending... from %s\n", time.Now().Format(handler.DateTimeFormat))
 
-	process()
+	deliveries := handler.AssembleDeliveriesFromPlaylists()
+	process(deliveries)
 
 }
 
@@ -22,28 +23,24 @@ func init() {
 	log.Infof("history: %v", util.MediaHistory[0])
 }
 
-func process() {
-	playlistMetaDataArray := handler.GetYouTubeVideosFromPlaylists()
-	var videoMetaDataArray []*handler.PlaylistVideoMetaData
-	for _, playlistMetaData := range playlistMetaDataArray {
-		videoMetaDataArray = append(videoMetaDataArray, playlistMetaData.PlaylistVideoMetaDataArray...)
-	}
-	videosCount := len(videoMetaDataArray)
-	log.Infof("total playlists: %v, videos: %v", len(playlistMetaDataArray), videosCount)
-
+func process(deliveries []handler.Delivery) {
 	var wg sync.WaitGroup
-	for i, videoMetaData := range videoMetaDataArray {
-		log.Infof("%v, raw url: %s", i, videoMetaData.RawUrl)
-		if i < videosCount-1 { //have to?
+	var updatedDeliveries []handler.Delivery
+	for i, delivery := range deliveries {
+		log.Infof("%v, url: %s", i, delivery.Parcel.Url)
+		if i < len(deliveries)-1 { //have to?
 			wg.Add(1)
-			go func(rawUrl string) {
-				handler.ProcessOneVideo(rawUrl)
+			go func(de handler.Delivery) {
+				handler.ProcessOneVideo(&de)
+				updatedDeliveries = append(updatedDeliveries, de)
 				wg.Done()
-			}(videoMetaData.RawUrl)
+			}(delivery)
 		} else {
-			handler.ProcessOneVideo(videoMetaData.RawUrl)
+			handler.ProcessOneVideo(&delivery)
+			updatedDeliveries = append(updatedDeliveries, delivery)
 			wg.Wait()
 		}
 	}
-	handler.FlushFetchHistory(playlistMetaDataArray)
+	log.Infof("updatedDeliveries: %v", updatedDeliveries)
+	handler.FlushFetchHistory(updatedDeliveries)
 }

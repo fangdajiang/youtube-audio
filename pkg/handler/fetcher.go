@@ -54,25 +54,26 @@ func (s PlaylistMetaData) Swap(i, j int) {
 	s.PlaylistVideoMetaDataArray[i], s.PlaylistVideoMetaDataArray[j] = s.PlaylistVideoMetaDataArray[j], s.PlaylistVideoMetaDataArray[i]
 }
 
-func FlushFetchHistory(playlistMetaDataArray []PlaylistMetaData) {
-	var fetchHistory = util.FetchHistory{Playlists: GenerateFetchHistory(playlistMetaDataArray)}
+func FlushFetchHistory(deliveries []Delivery) {
+	var fetchHistory = util.FetchHistory{Playlists: GenerateFetchHistory(deliveries)}
 	log.Infof("fetchHistory: %v", fetchHistory)
 
 	util.EncodePlaylistJson(util.FetchHistoryJsonPath, fetchHistory)
 }
 
-func ProcessOneVideo(videoUrl string) {
-	audioFile, err := fetchAudio(videoUrl)
+func ProcessOneVideo(delivery *Delivery) {
+	audioFile, err := fetchAudio(delivery.Parcel.Url)
 	if err != nil {
-		log.Warnf("Failed to download audio url %s from YouTube, error: %v", videoUrl, err)
-		SendMessage(videoUrl, FailedToDownloadAudioWarningTemplate)
+		log.Warnf("Failed to download audio url %s from YouTube, error: %v", delivery.Parcel.Url, err)
+		SendMessage(delivery.Parcel.Url, FailedToDownloadAudioWarningTemplate)
 	}
 	if !IsAudioValid(audioFile) {
-		log.Warnf("Downloaded audio url %s from YouTube is NOT valid", videoUrl)
+		log.Warnf("Downloaded audio url %s from YouTube is NOT valid", delivery.Parcel.Url)
 		SendMessage(audioFile.FilePath, InvalidDownloadedAudioWarningTemplate)
 	}
 
-	err = SendAudio(audioFile)
+	delivery.Parcel = audioFile
+	err = SendAudio(delivery)
 
 	if err != nil {
 		log.Warnf("Failed to send file %s to telegram channel, error: %v", audioFile.FilePath, err)

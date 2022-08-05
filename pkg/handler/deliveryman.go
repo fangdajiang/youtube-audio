@@ -8,13 +8,18 @@ import (
 	"time"
 )
 
+type Delivery struct {
+	Parcel     Parcel
+	PlaylistId string
+	Done       bool
+	Timestamp  int64
+	DateTime   string
+}
+
 type Parcel struct {
-	FilePath      string
-	Caption       string
-	Url           string
-	Sent          bool
-	SentTimestamp int64
-	SentDateTime  string
+	FilePath string
+	Caption  string
+	Url      string
 }
 
 type TelegramBot struct {
@@ -24,24 +29,28 @@ type TelegramBot struct {
 	BotChatId     int64  //tg bot chat id
 }
 
-func SendAudio(parcel Parcel) error {
+func SendAudio(delivery *Delivery) error {
 	telegramBot, err := GenerateTelegramBot()
 	if err != nil {
 		log.Fatalf("%s", err)
 	}
 	// Send an audio file
-	err = telegramBot.Send(parcel)
+	err = telegramBot.Send(delivery.Parcel)
 	if err == nil {
-		postSend(parcel)
+		markDelivered(delivery)
 	}
 	return err
 }
 
-func postSend(parcel Parcel) {
-	parcel.Sent = true
+func markDelivered(delivery *Delivery) {
+	//only for testing
+	//rand.Seed(time.Now().UnixNano())
+	//delivery.Done = rand.Float32() < 0.5
+
+	delivery.Done = true
 	now := time.Now()
-	parcel.SentTimestamp = now.Unix()
-	parcel.SentDateTime = now.Format(DateTimeFormat)
+	delivery.Timestamp = now.Unix()
+	delivery.DateTime = now.Format(DateTimeFormat)
 }
 
 func SendMessage(desc string, warningMessage string) {

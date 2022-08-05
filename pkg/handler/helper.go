@@ -31,21 +31,68 @@ const (
 
 var YouTubePart = []string{"snippet"}
 
-func GenerateFetchHistory(playlistMetaDataArray []PlaylistMetaData) []util.HistoryProps {
+func AssembleDeliveriesFromPlaylists() []Delivery {
+	playlistMetaDataArray := GetYouTubeVideosFromPlaylists()
+	var deliveries []Delivery
+	for _, playlistMetaData := range playlistMetaDataArray {
+		delivery := Delivery{}
+		delivery.PlaylistId = playlistMetaData.PlaylistId
+		for _, playlistVideoMetaData := range playlistMetaData.PlaylistVideoMetaDataArray {
+			delivery.Parcel = GenerateParcel("", "", playlistVideoMetaData.RawUrl)
+			deliveries = append(deliveries, delivery)
+		}
+	}
+	log.Infof("total playlists: %v, deliveries: %v", len(playlistMetaDataArray), len(deliveries))
+	return deliveries
+}
+
+func GenerateFetchHistory(deliveries []Delivery) []util.HistoryProps {
 	channelChatId, _ := util.GetEnvVariable(EnvChatIdName)
 	subscriberId, _ := strconv.ParseInt(channelChatId, 10, 64)
-	var historyPropsArray []util.HistoryProps
-	for _, playlistMetaData := range playlistMetaDataArray {
-		var urls []string
-		for _, videoMetaData := range playlistMetaData.PlaylistVideoMetaDataArray {
-			urls = append(urls, videoMetaData.RawUrl)
-		}
+
+	var playlistMap map[string][]util.SubscriberItems
+	playlistMap = make(map[string][]util.SubscriberItems)
+	for _, delivery := range deliveries {
+		subscribers, ok := playlistMap[delivery.PlaylistId]
 		now := time.Now()
-		lastFetch := util.FetchItems{Datetime: time.Now().Format(DateTimeFormat), Timestamp: now.Unix(), Urls: urls}
-		nextFetch := util.FetchItems{Datetime: time.Now().Format(DateTimeFormat), Timestamp: now.Unix(), Urls: urls}
-		subscriberItem := util.SubscriberItems{Id: subscriberId, LastFetch: lastFetch, NextFetch: nextFetch}
-		subscriberItems := []util.SubscriberItems{subscriberItem}
-		historyProps := util.HistoryProps{Id: playlistMetaData.PlaylistId, Subscribers: subscriberItems}
+		if ok {
+			var newSubscribers []util.SubscriberItems
+			if delivery.Done {
+				for _, sub := range subscribers {
+					if sub.Id == subscriberId {
+						sub.LastFetch = util.FetchItems{Datetime: now.Format(DateTimeFormat), Timestamp: now.Unix(), Urls: append(sub.LastFetch.Urls, delivery.Parcel.Url)}
+						newSubscribers = append(newSubscribers, sub)
+					}
+				}
+			} else {
+				for _, sub := range subscribers {
+					if sub.Id == subscriberId {
+						sub.NextFetch = util.FetchItems{Datetime: now.Format(DateTimeFormat), Timestamp: now.Unix(), Urls: append(sub.NextFetch.Urls, delivery.Parcel.Url)}
+						newSubscribers = append(newSubscribers, sub)
+					}
+				}
+			}
+			log.Infof("newSubscribers: %v", newSubscribers)
+			playlistMap[delivery.PlaylistId] = newSubscribers
+		} else {
+			var urls []string
+			urls = append(urls, delivery.Parcel.Url)
+			var lastFetch, nextFetch util.FetchItems
+			thisFetch := util.FetchItems{Datetime: "", Timestamp: 0, Urls: urls}
+			if delivery.Done {
+				lastFetch = thisFetch
+			} else {
+				nextFetch = thisFetch
+			}
+			subscriberItem := util.SubscriberItems{Id: subscriberId, LastFetch: lastFetch, NextFetch: nextFetch}
+			subscriberItems := []util.SubscriberItems{subscriberItem}
+			playlistMap[delivery.PlaylistId] = subscriberItems
+		}
+	}
+	log.Infof("playlistMap: %v", playlistMap)
+	var historyPropsArray []util.HistoryProps
+	for playlistId := range playlistMap {
+		historyProps := util.HistoryProps{Id: playlistId, Subscribers: playlistMap[playlistId]}
 		historyPropsArray = append(historyPropsArray, historyProps)
 	}
 	return historyPropsArray

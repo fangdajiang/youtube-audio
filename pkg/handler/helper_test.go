@@ -52,3 +52,13 @@ func TestGetYouTubeVideosFromPlaylists(t *testing.T) {
 		log.Infof("id:%v, position:%v", video.VideoId, video.Position)
 	}
 }
+
+func TestGenerateFetchHistory(t *testing.T) {
+	r := require.New(t)
+
+	deliveries := AssembleDeliveriesFromPlaylists()
+	r.True(len(deliveries) > 0)
+	log.Infof("deliveries: %v", deliveries)
+
+	FlushFetchHistory(deliveries)
+}
