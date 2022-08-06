@@ -78,7 +78,7 @@ func GenerateFetchHistory(deliveries []Delivery) []util.HistoryProps {
 			var urls []string
 			urls = append(urls, delivery.Parcel.Url)
 			var lastFetch, nextFetch util.FetchItems
-			thisFetch := util.FetchItems{Datetime: "", Timestamp: 0, Urls: urls}
+			thisFetch := util.FetchItems{Datetime: now.Format(DateTimeFormat), Timestamp: now.Unix(), Urls: urls}
 			if delivery.Done {
 				lastFetch = thisFetch
 			} else {

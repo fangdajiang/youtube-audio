@@ -7,12 +7,16 @@
       "downloaded_files_path": "/tmp/",
       "params": [
         {
-          "id": "PL_gom9iTTcZrCXj4niVYgAdkTbybJpQQR",
-          "max_results_count": 3
-        },
-        {
           "id": "PL_gom9iTTcZo-QvnJ680oGGpwKaymGwpv",
           "max_results_count": 4
+        },
+        {
+          "id": "PL6aTnkbuMFlWxpzyGfFzNxjzPQKLlVZ4e",
+          "max_results_count": 1
+        },
+        {
+          "id": "PLt-jD7OCbLJ0ZMwvQFZCSuNaUbT3GMqVJ",
+          "max_results_count": 1
         }
       ]
     }

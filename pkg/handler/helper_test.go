@@ -3,6 +3,7 @@ package handler
 import (
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
+	"math/rand"
 	"testing"
 	"time"
 )
@@ -58,7 +59,18 @@ func TestGenerateFetchHistory(t *testing.T) {
 
 	deliveries := AssembleDeliveriesFromPlaylists()
 	r.True(len(deliveries) > 0)
-	log.Infof("deliveries: %v", deliveries)
+	log.Infof("count: %v, deliveries: %v", len(deliveries), deliveries)
+
+	var tamperedDeliveries []Delivery
+	for _, delivery := range deliveries {
+		log.Infof("original delivery: %v", delivery)
+		rand.Seed(time.Now().UnixNano())
+		delivery.Done = rand.Float32() < 0.5
+		tamperedDeliveries = append(tamperedDeliveries, delivery)
+	}
+	for _, delivery := range tamperedDeliveries {
+		log.Infof("tampered delivery: %v", delivery)
+	}
 
 	FlushFetchHistory(deliveries)
 }
