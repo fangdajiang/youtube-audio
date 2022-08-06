@@ -42,7 +42,7 @@ func AssembleDeliveriesFromPlaylists() []Delivery {
 			deliveries = append(deliveries, delivery)
 		}
 	}
-	log.Infof("total playlists: %v, deliveries: %v", len(playlistMetaDataArray), len(deliveries))
+	log.Infof("total playlists: %v, total deliveries: %v", len(playlistMetaDataArray), len(deliveries))
 	return deliveries
 }
 

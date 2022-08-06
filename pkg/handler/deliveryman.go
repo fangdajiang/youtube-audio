@@ -29,6 +29,10 @@ type TelegramBot struct {
 	BotChatId     int64  //tg bot chat id
 }
 
+func GenerateDeliveriesFromNextFetches() {
+
+}
+
 func SendAudio(delivery *Delivery) error {
 	telegramBot, err := GenerateTelegramBot()
 	if err != nil {

@@ -74,3 +74,8 @@ func TestGenerateFetchHistory(t *testing.T) {
 
 	FlushFetchHistory(deliveries)
 }
+
+func TestAssembleDeliveriesFromPlaylists(t *testing.T) {
+	deliveries := AssembleDeliveriesFromPlaylists()
+	log.Infof("deliveries: %v", deliveries)
+}

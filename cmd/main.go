@@ -12,6 +12,9 @@ import (
 func main() {
 	fmt.Printf("Start fetching, converting, sending... from %s\n", time.Now().Format(handler.DateTimeFormat))
 
+	//lastFetches, nextFetches := util.CollectFetches()
+	//log.Infof("lastFetches: %v", lastFetches)
+	//log.Infof("nextFetches: %v", nextFetches)
 	deliveries := handler.AssembleDeliveriesFromPlaylists()
 	process(deliveries)
 

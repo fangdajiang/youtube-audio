@@ -65,3 +65,8 @@ func getPlaylistsExample() []HistoryProps {
 	var historyProps = HistoryProps{"PL", subscriberItems}
 	return []HistoryProps{historyProps}
 }
+
+func TestCollectValidNextFetchUrls(t *testing.T) {
+	validNextFetchUrls := CollectValidNextFetchUrls()
+	log.Infof("validNextFetchUrls: %s", validNextFetchUrls)
+}
