@@ -12,8 +12,9 @@ import (
 func main() {
 	fmt.Printf("Start fetching, converting, sending... from %s\n", time.Now().Format(handler.DateTimeFormat))
 
-	deliveries := handler.MergeIncomingDeliveriesAndHistoryFetches()
-	process(deliveries)
+	incomingDeliveries := handler.AssembleDeliveriesFromPlaylists()
+	mergedDeliveries := handler.MergeHistoryFetchesInto(incomingDeliveries)
+	process(mergedDeliveries)
 
 }
 

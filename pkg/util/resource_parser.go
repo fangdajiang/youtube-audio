@@ -54,13 +54,13 @@ type FetchHistory struct {
 	Playlists []HistoryProps `json:"playlists"`
 }
 
-func GetBaseProps() []BaseProps {
+func getBaseProps() []BaseProps {
 	fetchBase := FetchBase{}
 	fetchBase.DecodePlaylistJson(FetchBaseJsonPath)
 	return fetchBase.Playlists
 }
 
-func GetHistoryProps() []HistoryProps {
+func getHistoryProps() []HistoryProps {
 	fetchHistory := FetchHistory{}
 	fetchHistory.DecodePlaylistJson(FetchHistoryJsonPath)
 	return fetchHistory.Playlists
@@ -104,7 +104,7 @@ func (fb *FetchBase) DecodePlaylistJson(jsonPath string) {
 }
 
 func InitResources() {
-	MediaBase = GetBaseProps()
+	MediaBase = getBaseProps()
 
-	MediaHistory = GetHistoryProps()
+	MediaHistory = getHistoryProps()
 }

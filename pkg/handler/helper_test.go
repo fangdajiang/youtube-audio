@@ -54,7 +54,7 @@ func TestGetYouTubeVideosFromPlaylists(t *testing.T) {
 	}
 }
 
-func TestGenerateFetchHistory(t *testing.T) {
+func TestFlushFetchHistory(t *testing.T) {
 	r := require.New(t)
 
 	deliveries := AssembleDeliveriesFromPlaylists()
@@ -80,8 +80,7 @@ func TestAssembleDeliveriesFromPlaylists(t *testing.T) {
 	log.Infof("deliveries: %v", deliveries)
 }
 
-func TestMergeIncomingDeliveriesAndHistoryFetches(t *testing.T) {
-	deliveries := MergeIncomingDeliveriesAndHistoryFetches()
+func TestMergeHistoryFetchesInto(t *testing.T) {
+	deliveries := MergeHistoryFetchesInto(AssembleDeliveriesFromPlaylists())
 	log.Infof("merged deliveries: %v", deliveries)
-
 }

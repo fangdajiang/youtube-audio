@@ -31,30 +31,73 @@ const (
 
 var YouTubePart = []string{"snippet"}
 
-func MergeIncomingDeliveriesAndHistoryFetches() []Delivery {
-	incomingDeliveries := AssembleDeliveriesFromPlaylists()
-	log.Infof("incomingDeliveries count: %v", len(incomingDeliveries))
-	historyProps := util.GetHistoryProps()
+// RemoveDuplicatedUrlsByLoop 通过两重循环过滤重复元素 ref: https://blog.csdn.net/qq_27068845/article/details/77407358
+func RemoveDuplicatedUrlsByLoop(slc []Delivery) []Delivery {
+	var result []Delivery
+	for i := range slc {
+		flag := true
+		for j := range result {
+			if slc[i].Parcel.Url == result[j].Parcel.Url {
+				flag = false // 存在重复元素，标识为false
+				break
+			}
+		}
+		if flag { // 标识为false，不添加进结果
+			result = append(result, slc[i])
+		}
+	}
+	return result
+}
+
+func MergeHistoryFetchesInto(newDeliveries []Delivery) []Delivery {
+	historyProps := util.MediaHistory
 	log.Infof("historyProps count: %v", len(historyProps))
 	var mergedDeliveries []Delivery
-	for _, incomingDelivery := range incomingDeliveries {
-		log.Infof("incomingDelivery: %v", incomingDelivery)
+	for _, newDelivery := range newDeliveries {
+		log.Infof("newDelivery: %v", newDelivery)
 		isNewPlayListId := true
 		for _, historyProp := range historyProps {
-			if incomingDelivery.PlaylistId == historyProp.Id {
+			if newDelivery.PlaylistId == historyProp.Id {
 				isNewPlayListId = false
 				for _, sub := range historyProp.Subscribers {
 					searchNextFetchUrls := false
 					lastFetchUrls := sub.LastFetch.Urls
 					if len(lastFetchUrls) > 0 {
 						sort.Strings(lastFetchUrls)
-						lastFetchUrlsIndex := sort.SearchStrings(lastFetchUrls, incomingDelivery.Parcel.Url)
+						lastFetchUrlsIndex := sort.SearchStrings(lastFetchUrls, newDelivery.Parcel.Url)
 						log.Infof("lastFetchUrlsIndex: %v, last fetch urls count: %v", lastFetchUrlsIndex, len(lastFetchUrls))
-						if lastFetchUrlsIndex < len(lastFetchUrls) && lastFetchUrls[lastFetchUrlsIndex] == incomingDelivery.Parcel.Url {
-							log.Infof("incomingDelivery url %s was FOUND from history LAST fetch urls, drop it", incomingDelivery.Parcel.Url)
+						if lastFetchUrlsIndex < len(lastFetchUrls) && lastFetchUrls[lastFetchUrlsIndex] == newDelivery.Parcel.Url {
+							log.Infof("newDelivery url %s was FOUND from history LAST fetch urls, drop it and add all next fetch urls", newDelivery.Parcel.Url)
+							for _, nextFetchUrl := range sub.NextFetch.Urls {
+								historyFetch := Delivery{
+									Parcel:     GenerateParcel("", "", nextFetchUrl),
+									PlaylistId: historyProp.Id,
+									Done:       false,
+									Timestamp:  sub.NextFetch.Timestamp,
+									DateTime:   sub.NextFetch.Datetime,
+								}
+								mergedDeliveries = append(mergedDeliveries, historyFetch)
+							}
 						} else {
-							log.Infof("incomingDelivery url %s NOT FOUND from history LAST fetch urls", incomingDelivery.Parcel.Url)
+							log.Infof("newDelivery url %s NOT FOUND from history LAST fetch urls", newDelivery.Parcel.Url)
 							searchNextFetchUrls = true
+						}
+						lastFetchTime := time.Unix(sub.LastFetch.Timestamp, 0)
+						durationTillNow := time.Since(lastFetchTime)
+						log.Infof("last_fetch till now hours: %v", durationTillNow.Hours())
+						if durationTillNow.Hours() > 24 {
+							log.Warnf("last_fetch time has expired: %s, urls: %v, drop it", sub.LastFetch.Datetime, sub.LastFetch.Urls)
+						} else {
+							for _, lastFetchUrl := range sub.LastFetch.Urls {
+								historyFetch := Delivery{
+									Parcel:     GenerateParcel("", "", lastFetchUrl),
+									PlaylistId: historyProp.Id,
+									Done:       true,
+									Timestamp:  sub.LastFetch.Timestamp,
+									DateTime:   sub.LastFetch.Datetime,
+								}
+								mergedDeliveries = append(mergedDeliveries, historyFetch)
+							}
 						}
 					} else {
 						log.Infof("last fetch urls EMPTY, subscribers id: %v, playlist id: %v", sub.Id, historyProp.Id)
@@ -65,28 +108,40 @@ func MergeIncomingDeliveriesAndHistoryFetches() []Delivery {
 						nextFetchUrls := sub.NextFetch.Urls
 						if len(nextFetchUrls) > 0 {
 							sort.Strings(nextFetchUrls)
-							nextFetchUrlsIndex := sort.SearchStrings(nextFetchUrls, incomingDelivery.Parcel.Url)
+							nextFetchUrlsIndex := sort.SearchStrings(nextFetchUrls, newDelivery.Parcel.Url)
 							log.Infof("nextFetchUrlsIndex: %v, next fetch urls count: %v", nextFetchUrlsIndex, len(nextFetchUrls))
-							if nextFetchUrlsIndex < len(nextFetchUrls) && nextFetchUrls[nextFetchUrlsIndex] == incomingDelivery.Parcel.Url {
-								log.Infof("incomingDelivery url %s was FOUND from history NEXT fetch urls", incomingDelivery.Parcel.Url)
+							if nextFetchUrlsIndex < len(nextFetchUrls) && nextFetchUrls[nextFetchUrlsIndex] == newDelivery.Parcel.Url {
+								log.Infof("newDelivery url %s was FOUND from history NEXT fetch urls", newDelivery.Parcel.Url)
 								nextFetchTime := time.Unix(sub.NextFetch.Timestamp, 0)
 								durationTillNow := time.Since(nextFetchTime)
 								log.Infof("next_fetch till now hours: %v", durationTillNow.Hours())
 								if durationTillNow.Hours() > 48 {
 									log.Warnf("next_fetch time has expired: %s, urls: %v, drop it", sub.NextFetch.Datetime, sub.NextFetch.Urls)
 								} else {
-									incomingDelivery.Timestamp = sub.NextFetch.Timestamp
-									incomingDelivery.DateTime = sub.NextFetch.Datetime
-									log.Infof("incomingDelivery tampered: %v, add it", incomingDelivery)
-									mergedDeliveries = append(mergedDeliveries, incomingDelivery)
+									newDelivery.Timestamp = sub.NextFetch.Timestamp
+									newDelivery.DateTime = sub.NextFetch.Datetime
+									log.Infof("newDelivery tampered: %v, add it", newDelivery)
+									mergedDeliveries = append(mergedDeliveries, newDelivery)
+
+									nextFetchUrls = append(nextFetchUrls[:nextFetchUrlsIndex], nextFetchUrls[nextFetchUrlsIndex+1:]...)
+									for _, nextFetchUrl := range nextFetchUrls {
+										historyFetch := Delivery{
+											Parcel:     GenerateParcel("", "", nextFetchUrl),
+											PlaylistId: historyProp.Id,
+											Done:       false,
+											Timestamp:  sub.NextFetch.Timestamp,
+											DateTime:   sub.NextFetch.Datetime,
+										}
+										mergedDeliveries = append(mergedDeliveries, historyFetch)
+									}
 								}
 							} else {
-								log.Infof("incomingDelivery url %s NOT FOUND from history NEXT fetch urls, add it", incomingDelivery.Parcel.Url)
-								mergedDeliveries = append(mergedDeliveries, incomingDelivery)
+								log.Infof("newDelivery url %s NOT FOUND from history NEXT fetch urls, add it", newDelivery.Parcel.Url)
+								mergedDeliveries = append(mergedDeliveries, newDelivery)
 							}
 						} else {
 							log.Infof("next fetch urls EMPTY, subscribers id: %v, playlist id: %v, add it", sub.Id, historyProp.Id)
-							mergedDeliveries = append(mergedDeliveries, incomingDelivery)
+							mergedDeliveries = append(mergedDeliveries, newDelivery)
 						}
 					}
 				}
@@ -94,11 +149,12 @@ func MergeIncomingDeliveriesAndHistoryFetches() []Delivery {
 			}
 		}
 		if isNewPlayListId {
-			mergedDeliveries = append(mergedDeliveries, incomingDelivery)
+			mergedDeliveries = append(mergedDeliveries, newDelivery)
 		}
 	}
-	log.Infof("mergedDeliveries count: %v", len(mergedDeliveries))
-	return mergedDeliveries
+	mergedDeliveriesWithoutDuplicated := RemoveDuplicatedUrlsByLoop(mergedDeliveries)
+	log.Infof("merged deliveries count: %v which removed duplicated items", len(mergedDeliveriesWithoutDuplicated))
+	return mergedDeliveriesWithoutDuplicated
 }
 
 func AssembleDeliveriesFromPlaylists() []Delivery {
@@ -112,7 +168,7 @@ func AssembleDeliveriesFromPlaylists() []Delivery {
 			deliveries = append(deliveries, delivery)
 		}
 	}
-	log.Infof("total playlists: %v, total deliveries: %v", len(playlistMetaDataArray), len(deliveries))
+	log.Infof("total incoming playlists: %v, total incoming deliveries: %v", len(playlistMetaDataArray), len(deliveries))
 	return deliveries
 }
 
