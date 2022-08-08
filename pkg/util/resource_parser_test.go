@@ -14,9 +14,7 @@ func TestInitResources(t *testing.T) {
 }
 
 func TestFetchBase_DecodePlaylistJson(t *testing.T) {
-	fetchBase := FetchBase{}
-	fetchBase.DecodePlaylistJson(FetchBaseJsonPath)
-	MediaBase = fetchBase.Playlists
+	MediaBase = GetBaseProps()
 	log.Infof("base: %v", MediaBase[0])
 }
 
@@ -64,9 +62,4 @@ func getPlaylistsExample() []HistoryProps {
 	var subscriberItems = []SubscriberItems{subscriberItem}
 	var historyProps = HistoryProps{"PL", subscriberItems}
 	return []HistoryProps{historyProps}
-}
-
-func TestCollectValidNextFetchUrls(t *testing.T) {
-	validNextFetchUrls := CollectValidNextFetchUrls()
-	log.Infof("validNextFetchUrls: %s", validNextFetchUrls)
 }

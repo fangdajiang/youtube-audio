@@ -79,3 +79,9 @@ func TestAssembleDeliveriesFromPlaylists(t *testing.T) {
 	deliveries := AssembleDeliveriesFromPlaylists()
 	log.Infof("deliveries: %v", deliveries)
 }
+
+func TestMergeIncomingDeliveriesAndHistoryFetches(t *testing.T) {
+	deliveries := MergeIncomingDeliveriesAndHistoryFetches()
+	log.Infof("merged deliveries: %v", deliveries)
+
+}

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	log "github.com/sirupsen/logrus"
 	"os"
-	"time"
 )
 
 const (
@@ -55,42 +54,16 @@ type FetchHistory struct {
 	Playlists []HistoryProps `json:"playlists"`
 }
 
-func CollectValidNextFetchUrls() []string {
-	_, nextFetches := CollectFetches()
-	var nextFetchUrls []string
-	for _, nextFetch := range nextFetches {
-		nextFetchTime := time.Unix(nextFetch.Timestamp, 0)
-		durationTillNow := time.Since(nextFetchTime)
-		log.Infof("next_fetch till now hours: %v", durationTillNow.Hours())
-		if durationTillNow.Hours() > 8 {
-			log.Warnf("next_fetch time has expired: %s, urls: %v", nextFetch.Datetime, nextFetch.Urls)
-		} else {
-			nextFetchUrls = append(nextFetchUrls, nextFetch.Urls...)
-		}
-	}
-	return nextFetchUrls
+func GetBaseProps() []BaseProps {
+	fetchBase := FetchBase{}
+	fetchBase.DecodePlaylistJson(FetchBaseJsonPath)
+	return fetchBase.Playlists
 }
 
-func CollectFetches() ([]FetchItems, []FetchItems) {
+func GetHistoryProps() []HistoryProps {
 	fetchHistory := FetchHistory{}
 	fetchHistory.DecodePlaylistJson(FetchHistoryJsonPath)
-	var lastFetchItems []FetchItems
-	var nextFetchItems []FetchItems
-	for _, historyProp := range fetchHistory.Playlists {
-		for _, subscriberItems := range historyProp.Subscribers {
-			if subscriberItems.LastFetch.Timestamp != 0 {
-				lastFetchItems = append(lastFetchItems, subscriberItems.LastFetch)
-			} else {
-				log.Infof("empty last_fetch: %v", subscriberItems.LastFetch)
-			}
-			if subscriberItems.NextFetch.Timestamp != 0 {
-				nextFetchItems = append(nextFetchItems, subscriberItems.NextFetch)
-			} else {
-				log.Infof("empty next_fetch: %v", subscriberItems.NextFetch)
-			}
-		}
-	}
-	return lastFetchItems, nextFetchItems
+	return fetchHistory.Playlists
 }
 
 func EncodePlaylistJson(jsonPath string, fetchHistory FetchHistory) {
@@ -131,11 +104,7 @@ func (fb *FetchBase) DecodePlaylistJson(jsonPath string) {
 }
 
 func InitResources() {
-	fetchBase := FetchBase{}
-	fetchBase.DecodePlaylistJson(FetchBaseJsonPath)
-	MediaBase = fetchBase.Playlists
+	MediaBase = GetBaseProps()
 
-	fetchHistory := FetchHistory{}
-	fetchHistory.DecodePlaylistJson(FetchHistoryJsonPath)
-	MediaHistory = fetchHistory.Playlists
+	MediaHistory = GetHistoryProps()
 }

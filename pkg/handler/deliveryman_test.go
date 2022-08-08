@@ -83,7 +83,3 @@ func TestIsAudioValid(t *testing.T) {
 	valid := IsAudioValid(parcel)
 	r.True(valid, "invalid file: %s", filePath)
 }
-
-func TestGenerateDeliveriesFromNextFetches(t *testing.T) {
-	GenerateDeliveriesFromNextFetches()
-}

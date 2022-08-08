@@ -31,6 +31,76 @@ const (
 
 var YouTubePart = []string{"snippet"}
 
+func MergeIncomingDeliveriesAndHistoryFetches() []Delivery {
+	incomingDeliveries := AssembleDeliveriesFromPlaylists()
+	log.Infof("incomingDeliveries count: %v", len(incomingDeliveries))
+	historyProps := util.GetHistoryProps()
+	log.Infof("historyProps count: %v", len(historyProps))
+	var mergedDeliveries []Delivery
+	for _, incomingDelivery := range incomingDeliveries {
+		log.Infof("incomingDelivery: %v", incomingDelivery)
+		isNewPlayListId := true
+		for _, historyProp := range historyProps {
+			if incomingDelivery.PlaylistId == historyProp.Id {
+				isNewPlayListId = false
+				for _, sub := range historyProp.Subscribers {
+					searchNextFetchUrls := false
+					lastFetchUrls := sub.LastFetch.Urls
+					if len(lastFetchUrls) > 0 {
+						sort.Strings(lastFetchUrls)
+						lastFetchUrlsIndex := sort.SearchStrings(lastFetchUrls, incomingDelivery.Parcel.Url)
+						log.Infof("lastFetchUrlsIndex: %v, last fetch urls count: %v", lastFetchUrlsIndex, len(lastFetchUrls))
+						if lastFetchUrlsIndex < len(lastFetchUrls) && lastFetchUrls[lastFetchUrlsIndex] == incomingDelivery.Parcel.Url {
+							log.Infof("incomingDelivery url %s was FOUND from history LAST fetch urls, drop it", incomingDelivery.Parcel.Url)
+						} else {
+							log.Infof("incomingDelivery url %s NOT FOUND from history LAST fetch urls", incomingDelivery.Parcel.Url)
+							searchNextFetchUrls = true
+						}
+					} else {
+						log.Infof("last fetch urls EMPTY, subscribers id: %v, playlist id: %v", sub.Id, historyProp.Id)
+						searchNextFetchUrls = true
+					}
+
+					if searchNextFetchUrls {
+						nextFetchUrls := sub.NextFetch.Urls
+						if len(nextFetchUrls) > 0 {
+							sort.Strings(nextFetchUrls)
+							nextFetchUrlsIndex := sort.SearchStrings(nextFetchUrls, incomingDelivery.Parcel.Url)
+							log.Infof("nextFetchUrlsIndex: %v, next fetch urls count: %v", nextFetchUrlsIndex, len(nextFetchUrls))
+							if nextFetchUrlsIndex < len(nextFetchUrls) && nextFetchUrls[nextFetchUrlsIndex] == incomingDelivery.Parcel.Url {
+								log.Infof("incomingDelivery url %s was FOUND from history NEXT fetch urls", incomingDelivery.Parcel.Url)
+								nextFetchTime := time.Unix(sub.NextFetch.Timestamp, 0)
+								durationTillNow := time.Since(nextFetchTime)
+								log.Infof("next_fetch till now hours: %v", durationTillNow.Hours())
+								if durationTillNow.Hours() > 48 {
+									log.Warnf("next_fetch time has expired: %s, urls: %v, drop it", sub.NextFetch.Datetime, sub.NextFetch.Urls)
+								} else {
+									incomingDelivery.Timestamp = sub.NextFetch.Timestamp
+									incomingDelivery.DateTime = sub.NextFetch.Datetime
+									log.Infof("incomingDelivery tampered: %v, add it", incomingDelivery)
+									mergedDeliveries = append(mergedDeliveries, incomingDelivery)
+								}
+							} else {
+								log.Infof("incomingDelivery url %s NOT FOUND from history NEXT fetch urls, add it", incomingDelivery.Parcel.Url)
+								mergedDeliveries = append(mergedDeliveries, incomingDelivery)
+							}
+						} else {
+							log.Infof("next fetch urls EMPTY, subscribers id: %v, playlist id: %v, add it", sub.Id, historyProp.Id)
+							mergedDeliveries = append(mergedDeliveries, incomingDelivery)
+						}
+					}
+				}
+				break
+			}
+		}
+		if isNewPlayListId {
+			mergedDeliveries = append(mergedDeliveries, incomingDelivery)
+		}
+	}
+	log.Infof("mergedDeliveries count: %v", len(mergedDeliveries))
+	return mergedDeliveries
+}
+
 func AssembleDeliveriesFromPlaylists() []Delivery {
 	playlistMetaDataArray := GetYouTubeVideosFromPlaylists()
 	var deliveries []Delivery
