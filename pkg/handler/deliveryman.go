@@ -13,7 +13,7 @@ type Delivery struct {
 	PlaylistId string
 	Done       bool
 	Timestamp  int64
-	DateTime   string
+	Datetime   string
 }
 
 type Parcel struct {
@@ -48,9 +48,11 @@ func markDelivered(delivery *Delivery) {
 	//delivery.Done = rand.Float32() < 0.5
 
 	delivery.Done = true
-	now := time.Now()
-	delivery.Timestamp = now.Unix()
-	delivery.DateTime = now.Format(DateTimeFormat)
+	if delivery.Timestamp == 0 {
+		now := time.Now()
+		delivery.Timestamp = now.Unix()
+		delivery.Datetime = now.Format(DateTimeFormat)
+	}
 }
 
 func SendMessage(desc string, warningMessage string) {

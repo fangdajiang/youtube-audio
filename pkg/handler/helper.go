@@ -74,7 +74,7 @@ func MergeHistoryFetchesInto(newDeliveries []Delivery) []Delivery {
 									PlaylistId: historyProp.Id,
 									Done:       false,
 									Timestamp:  sub.NextFetch.Timestamp,
-									DateTime:   sub.NextFetch.Datetime,
+									Datetime:   sub.NextFetch.Datetime,
 								}
 								mergedDeliveries = append(mergedDeliveries, historyFetch)
 							}
@@ -94,7 +94,7 @@ func MergeHistoryFetchesInto(newDeliveries []Delivery) []Delivery {
 									PlaylistId: historyProp.Id,
 									Done:       true,
 									Timestamp:  sub.LastFetch.Timestamp,
-									DateTime:   sub.LastFetch.Datetime,
+									Datetime:   sub.LastFetch.Datetime,
 								}
 								mergedDeliveries = append(mergedDeliveries, historyFetch)
 							}
@@ -119,7 +119,7 @@ func MergeHistoryFetchesInto(newDeliveries []Delivery) []Delivery {
 									log.Warnf("next_fetch time has expired: %s, urls: %v, drop it", sub.NextFetch.Datetime, sub.NextFetch.Urls)
 								} else {
 									newDelivery.Timestamp = sub.NextFetch.Timestamp
-									newDelivery.DateTime = sub.NextFetch.Datetime
+									newDelivery.Datetime = sub.NextFetch.Datetime
 									log.Infof("newDelivery tampered: %v, add it", newDelivery)
 									mergedDeliveries = append(mergedDeliveries, newDelivery)
 
@@ -130,7 +130,7 @@ func MergeHistoryFetchesInto(newDeliveries []Delivery) []Delivery {
 											PlaylistId: historyProp.Id,
 											Done:       false,
 											Timestamp:  sub.NextFetch.Timestamp,
-											DateTime:   sub.NextFetch.Datetime,
+											Datetime:   sub.NextFetch.Datetime,
 										}
 										mergedDeliveries = append(mergedDeliveries, historyFetch)
 									}
@@ -180,20 +180,27 @@ func GenerateFetchHistory(deliveries []Delivery) []util.HistoryProps {
 	playlistMap = make(map[string][]util.SubscriberItems)
 	for _, delivery := range deliveries {
 		subscribers, ok := playlistMap[delivery.PlaylistId]
-		now := time.Now()
 		if ok {
+			log.Infof("playlist id %s FOUND from playlistMap: %v", delivery.PlaylistId, playlistMap)
 			var newSubscribers []util.SubscriberItems
 			if delivery.Done {
 				for _, sub := range subscribers {
 					if sub.Id == subscriberId {
-						sub.LastFetch = util.FetchItems{Datetime: now.Format(DateTimeFormat), Timestamp: now.Unix(), Urls: append(sub.LastFetch.Urls, delivery.Parcel.Url)}
+						sub.LastFetch = util.FetchItems{Datetime: sub.LastFetch.Datetime, Timestamp: sub.LastFetch.Timestamp, Urls: append(sub.LastFetch.Urls, delivery.Parcel.Url)}
 						newSubscribers = append(newSubscribers, sub)
 					}
 				}
 			} else {
+				now := time.Now()
 				for _, sub := range subscribers {
+					nextFetchTimestamp := sub.NextFetch.Timestamp
+					nextFetchDatetime := sub.NextFetch.Datetime
+					if nextFetchTimestamp == 0 {
+						nextFetchTimestamp = now.Unix()
+						nextFetchDatetime = now.Format(DateTimeFormat)
+					}
 					if sub.Id == subscriberId {
-						sub.NextFetch = util.FetchItems{Datetime: now.Format(DateTimeFormat), Timestamp: now.Unix(), Urls: append(sub.NextFetch.Urls, delivery.Parcel.Url)}
+						sub.NextFetch = util.FetchItems{Datetime: nextFetchDatetime, Timestamp: nextFetchTimestamp, Urls: append(sub.NextFetch.Urls, delivery.Parcel.Url)}
 						newSubscribers = append(newSubscribers, sub)
 					}
 				}
@@ -201,10 +208,11 @@ func GenerateFetchHistory(deliveries []Delivery) []util.HistoryProps {
 			log.Infof("newSubscribers: %v", newSubscribers)
 			playlistMap[delivery.PlaylistId] = newSubscribers
 		} else {
+			log.Infof("playlist id %s NOT FOUND from playlistMap: %v", delivery.PlaylistId, playlistMap)
 			var urls []string
 			urls = append(urls, delivery.Parcel.Url)
 			var lastFetch, nextFetch util.FetchItems
-			thisFetch := util.FetchItems{Datetime: now.Format(DateTimeFormat), Timestamp: now.Unix(), Urls: urls}
+			thisFetch := util.FetchItems{Datetime: delivery.Datetime, Timestamp: delivery.Timestamp, Urls: urls}
 			if delivery.Done {
 				lastFetch = thisFetch
 			} else {
