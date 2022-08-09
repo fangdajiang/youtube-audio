@@ -7,9 +7,10 @@ import (
 )
 
 const (
-	FetchBaseJsonPath        string = "/Users/fangdajiang/IdeaProjects/youtube-audio/resource/fetch_base.json"
-	FetchHistoryJsonPath     string = "/Users/fangdajiang/IdeaProjects/youtube-audio/resource/fetch_history.json"
-	TempFetchHistoryJsonPath string = "/Users/fangdajiang/IdeaProjects/youtube-audio/resource/tmp_fetch_history.json"
+	EnvYouTubeAudioHomeName  string = "APP_HOME"
+	FetchBaseJsonPath        string = "/resource/fetch_base.json"
+	FetchHistoryJsonPath     string = "/resource/fetch_history.json"
+	TempFetchHistoryJsonPath string = "/resource/tmp_fetch_history.json"
 )
 
 var MediaBase []BaseProps
@@ -54,15 +55,24 @@ type FetchHistory struct {
 	Playlists []HistoryProps `json:"playlists"`
 }
 
+func GetFetchJsonPath(jsonPath string) string {
+	homePath, err := GetEnvVariable(EnvYouTubeAudioHomeName)
+	if err != nil {
+		log.Errorf("reading env %s vars error", EnvYouTubeAudioHomeName)
+		return "/tmp"
+	}
+	return homePath + jsonPath
+}
+
 func getBaseProps() []BaseProps {
 	fetchBase := FetchBase{}
-	fetchBase.DecodePlaylistJson(FetchBaseJsonPath)
+	fetchBase.DecodePlaylistJson(GetFetchJsonPath(FetchBaseJsonPath))
 	return fetchBase.Playlists
 }
 
 func getHistoryProps() []HistoryProps {
 	fetchHistory := FetchHistory{}
-	fetchHistory.DecodePlaylistJson(FetchHistoryJsonPath)
+	fetchHistory.DecodePlaylistJson(GetFetchJsonPath(FetchHistoryJsonPath))
 	return fetchHistory.Playlists
 }
 

@@ -14,7 +14,7 @@ func TestInitResources(t *testing.T) {
 }
 
 func TestFetchBase_DecodePlaylistJson(t *testing.T) {
-	MediaBase = GetBaseProps()
+	MediaBase = getBaseProps()
 	log.Infof("base: %v", MediaBase[0])
 }
 
@@ -22,7 +22,7 @@ func TestFetchHistory_EncodePlaylistJson(t *testing.T) {
 	var fetchHistory = FetchHistory{getPlaylistsExample()}
 	log.Infof("fetchHistory: %v", fetchHistory)
 
-	EncodePlaylistJson(TempFetchHistoryJsonPath, fetchHistory)
+	EncodePlaylistJson(GetFetchJsonPath(TempFetchHistoryJsonPath), fetchHistory)
 }
 
 func TestMarshalUnMarshalJson(t *testing.T) {

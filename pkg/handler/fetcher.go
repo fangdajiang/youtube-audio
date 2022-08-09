@@ -58,7 +58,7 @@ func FlushFetchHistory(deliveries []Delivery) {
 	var fetchHistory = util.FetchHistory{Playlists: GenerateFetchHistory(deliveries)}
 	log.Infof("fetchHistory: %v", fetchHistory)
 
-	util.EncodePlaylistJson(util.FetchHistoryJsonPath, fetchHistory)
+	util.EncodePlaylistJson(util.GetFetchJsonPath(util.FetchHistoryJsonPath), fetchHistory)
 }
 
 func ProcessOneVideo(delivery *Delivery) {
@@ -71,18 +71,17 @@ func ProcessOneVideo(delivery *Delivery) {
 		if !IsAudioValid(audioFile) {
 			log.Warnf("Downloaded audio url %s from YouTube is NOT valid", delivery.Parcel.Url)
 			SendMessage(audioFile.FilePath, InvalidDownloadedAudioWarningTemplate)
+		} else {
+			delivery.Parcel = audioFile
+			err = SendAudio(delivery)
+
+			if err != nil {
+				log.Warnf("Failed to send file %s to telegram channel, error: %v", audioFile.FilePath, err)
+				audioFile.Caption = audioFile.Caption + fmt.Sprintf("%s", err)
+				SendMessage(audioFile.Caption, FailedToSendAudioWarningTemplate)
+			}
 		}
-
-		delivery.Parcel = audioFile
-		err = SendAudio(delivery)
-
-		if err != nil {
-			log.Warnf("Failed to send file %s to telegram channel, error: %v", audioFile.FilePath, err)
-			audioFile.Caption = audioFile.Caption + fmt.Sprintf("%s", err)
-			SendMessage(audioFile.Caption, FailedToSendAudioWarningTemplate)
-		}
-
-		log.Infof("before cleaning up, audioFile: %v", audioFile)
+		log.Infof("ready to clean up, audioFile: %v", audioFile)
 		Cleanup(audioFile)
 	} else {
 		log.Infof("this delivery %v has be DONE, no more process", delivery)

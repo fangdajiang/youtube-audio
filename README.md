@@ -1,4 +1,4 @@
-## 结合 Telegram 的 机器人(Bot) 和 频道(Channel)，将视频网站（目前仅 YouTube）上的订阅内容自动以音频的形式发送到 Telegram 的指定频道中，从而构建出一个能在 Telegram 上使用的音频服务。
+## 结合 Telegram 的 机器人(Bot) 和 频道(Channel)，将视频网站（目前仅 YouTube）上的订阅内容自动以音频的形式发送到 Telegram 的指定频道中，从而提供 Telegram 上的音频服务。
 
 #### 简体中文 [English](/docs/en_US/README.md)
 
@@ -21,7 +21,7 @@ sudo chmod a+rx /usr/local/bin/youtube-dl
 > * 从源码安装
 ```shell
 # 拷贝 dependency/youtube-dl 到 $PATH
-# 设置环境变量 BOT_TOKEN, BOT_CHAT_ID, CHAT_ID, YOUTUBE_KEY
+# 设置环境变量 APP_HOME, BOT_TOKEN, BOT_CHAT_ID, CHAT_ID, YOUTUBE_KEY
 git clone https://github.com/fangdajiang/youtube-audio.git
 cd youtube-audio
 go run ./cmd/main.go

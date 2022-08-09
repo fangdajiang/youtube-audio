@@ -24,6 +24,7 @@ const (
 	UploadAudioMaxLength                  int64  = 52428800
 	YouTubeDefaultMaxResults              int64  = 1
 	FetchYouTubeMaxResultsLimit           int64  = 50
+	FetchMaxUrlsLimit                     int    = 10
 	FailedToSendAudioWarningTemplate      string = "FAILED TO SEND AUDIO %s TO THE CHANNEL"
 	FailedToDownloadAudioWarningTemplate  string = "FAILED TO DOWNLOAD AUDIO %s"
 	InvalidDownloadedAudioWarningTemplate string = "INVALID DOWNLOADED FILE %s"
@@ -49,6 +50,41 @@ func RemoveDuplicatedUrlsByLoop(slc []Delivery) []Delivery {
 	return result
 }
 
+func appendDeliveries(deliveries *[]Delivery, fetchItems util.FetchItems, playlistId string, done bool) {
+	// remain time from FetchItems
+	fetchTimestamp := fetchItems.Timestamp
+	fetchDatetime := fetchItems.Datetime
+	if done {
+		// apply current time to last_fetch block
+		now := time.Now()
+		fetchTimestamp = now.Unix()
+		fetchDatetime = now.Format(DateTimeFormat)
+	} else {
+		fetchTime := time.Unix(fetchTimestamp, 0)
+		durationTillNow := time.Since(fetchTime)
+		log.Infof("fetch time till now hours: %v", durationTillNow.Hours())
+		if durationTillNow.Hours() > 48 {
+			log.Warnf("fetch block time has EXPIRED: %s, urls: %v, drop it", fetchDatetime, fetchItems.Urls)
+			return
+		}
+	}
+	// always keep the fetch block, but under maximum count of urls
+	if len(fetchItems.Urls) > FetchMaxUrlsLimit {
+		removeUrlsCount := len(fetchItems.Urls) - FetchMaxUrlsLimit
+		fetchItems.Urls = fetchItems.Urls[removeUrlsCount:]
+	}
+	for _, fetchUrl := range fetchItems.Urls {
+		historyFetch := Delivery{
+			Parcel:     GenerateParcel("", "", fetchUrl),
+			PlaylistId: playlistId,
+			Done:       done,
+			Timestamp:  fetchTimestamp,
+			Datetime:   fetchDatetime,
+		}
+		*deliveries = append(*deliveries, historyFetch)
+	}
+}
+
 func MergeHistoryFetchesInto(newDeliveries []Delivery) []Delivery {
 	historyProps := util.MediaHistory
 	log.Infof("historyProps count: %v", len(historyProps))
@@ -67,38 +103,14 @@ func MergeHistoryFetchesInto(newDeliveries []Delivery) []Delivery {
 						lastFetchUrlsIndex := sort.SearchStrings(lastFetchUrls, newDelivery.Parcel.Url)
 						log.Infof("lastFetchUrlsIndex: %v, last fetch urls count: %v", lastFetchUrlsIndex, len(lastFetchUrls))
 						if lastFetchUrlsIndex < len(lastFetchUrls) && lastFetchUrls[lastFetchUrlsIndex] == newDelivery.Parcel.Url {
+							// will cause append same next fetch urls repeatedly
 							log.Infof("newDelivery url %s was FOUND from history LAST fetch urls, drop it and add all next fetch urls", newDelivery.Parcel.Url)
-							for _, nextFetchUrl := range sub.NextFetch.Urls {
-								historyFetch := Delivery{
-									Parcel:     GenerateParcel("", "", nextFetchUrl),
-									PlaylistId: historyProp.Id,
-									Done:       false,
-									Timestamp:  sub.NextFetch.Timestamp,
-									Datetime:   sub.NextFetch.Datetime,
-								}
-								mergedDeliveries = append(mergedDeliveries, historyFetch)
-							}
+							appendDeliveries(&mergedDeliveries, sub.NextFetch, historyProp.Id, false)
 						} else {
 							log.Infof("newDelivery url %s NOT FOUND from history LAST fetch urls", newDelivery.Parcel.Url)
 							searchNextFetchUrls = true
 						}
-						lastFetchTime := time.Unix(sub.LastFetch.Timestamp, 0)
-						durationTillNow := time.Since(lastFetchTime)
-						log.Infof("last_fetch till now hours: %v", durationTillNow.Hours())
-						if durationTillNow.Hours() > 24 {
-							log.Warnf("last_fetch time has expired: %s, urls: %v, drop it", sub.LastFetch.Datetime, sub.LastFetch.Urls)
-						} else {
-							for _, lastFetchUrl := range sub.LastFetch.Urls {
-								historyFetch := Delivery{
-									Parcel:     GenerateParcel("", "", lastFetchUrl),
-									PlaylistId: historyProp.Id,
-									Done:       true,
-									Timestamp:  sub.LastFetch.Timestamp,
-									Datetime:   sub.LastFetch.Datetime,
-								}
-								mergedDeliveries = append(mergedDeliveries, historyFetch)
-							}
-						}
+						appendDeliveries(&mergedDeliveries, sub.LastFetch, historyProp.Id, true)
 					} else {
 						log.Infof("last fetch urls EMPTY, subscribers id: %v, playlist id: %v", sub.Id, historyProp.Id)
 						searchNextFetchUrls = true
@@ -112,29 +124,7 @@ func MergeHistoryFetchesInto(newDeliveries []Delivery) []Delivery {
 							log.Infof("nextFetchUrlsIndex: %v, next fetch urls count: %v", nextFetchUrlsIndex, len(nextFetchUrls))
 							if nextFetchUrlsIndex < len(nextFetchUrls) && nextFetchUrls[nextFetchUrlsIndex] == newDelivery.Parcel.Url {
 								log.Infof("newDelivery url %s was FOUND from history NEXT fetch urls", newDelivery.Parcel.Url)
-								nextFetchTime := time.Unix(sub.NextFetch.Timestamp, 0)
-								durationTillNow := time.Since(nextFetchTime)
-								log.Infof("next_fetch till now hours: %v", durationTillNow.Hours())
-								if durationTillNow.Hours() > 48 {
-									log.Warnf("next_fetch time has expired: %s, urls: %v, drop it", sub.NextFetch.Datetime, sub.NextFetch.Urls)
-								} else {
-									newDelivery.Timestamp = sub.NextFetch.Timestamp
-									newDelivery.Datetime = sub.NextFetch.Datetime
-									log.Infof("newDelivery tampered: %v, add it", newDelivery)
-									mergedDeliveries = append(mergedDeliveries, newDelivery)
-
-									nextFetchUrls = append(nextFetchUrls[:nextFetchUrlsIndex], nextFetchUrls[nextFetchUrlsIndex+1:]...)
-									for _, nextFetchUrl := range nextFetchUrls {
-										historyFetch := Delivery{
-											Parcel:     GenerateParcel("", "", nextFetchUrl),
-											PlaylistId: historyProp.Id,
-											Done:       false,
-											Timestamp:  sub.NextFetch.Timestamp,
-											Datetime:   sub.NextFetch.Datetime,
-										}
-										mergedDeliveries = append(mergedDeliveries, historyFetch)
-									}
-								}
+								appendDeliveries(&mergedDeliveries, sub.NextFetch, historyProp.Id, false)
 							} else {
 								log.Infof("newDelivery url %s NOT FOUND from history NEXT fetch urls, add it", newDelivery.Parcel.Url)
 								mergedDeliveries = append(mergedDeliveries, newDelivery)
