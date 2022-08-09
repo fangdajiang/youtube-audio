@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"testing"
 	"time"
+	"youtube-audio/pkg/util"
 )
 
 func TestGetLocalDateTime(t *testing.T) {
@@ -83,4 +84,14 @@ func TestAssembleDeliveriesFromPlaylists(t *testing.T) {
 func TestMergeHistoryFetchesInto(t *testing.T) {
 	deliveries := MergeHistoryFetchesInto(AssembleDeliveriesFromPlaylists())
 	log.Infof("merged deliveries: %v", deliveries)
+}
+
+func TestDeleteSliceElms(t *testing.T) {
+	historyProps := util.MediaHistory
+	log.Infof("historyProps count: %v, historyProps: %v", len(historyProps), historyProps)
+	hp := util.HistoryProps{Id: "PLt-jD7OCbLJ0ZMwvQFZCSuNaUbT3GMqVJ"}
+	result := DeleteSliceElms(historyProps, hp)
+	log.Infof("result count: %v, result: %v", len(result), result)
+	log.Infof("historyProps count2: %v", len(historyProps))
+
 }

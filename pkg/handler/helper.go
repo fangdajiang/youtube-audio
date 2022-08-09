@@ -60,11 +60,16 @@ func appendDeliveries(deliveries *[]Delivery, fetchItems util.FetchItems, playli
 		fetchTimestamp = now.Unix()
 		fetchDatetime = now.Format(DateTimeFormat)
 	} else {
-		fetchTime := time.Unix(fetchTimestamp, 0)
-		durationTillNow := time.Since(fetchTime)
-		log.Infof("fetch time till now hours: %v", durationTillNow.Hours())
-		if durationTillNow.Hours() > 48 {
-			log.Warnf("fetch block time has EXPIRED: %s, urls: %v, drop it", fetchDatetime, fetchItems.Urls)
+		if len(fetchItems.Urls) > 0 {
+			fetchTime := time.Unix(fetchTimestamp, 0)
+			durationTillNow := time.Since(fetchTime)
+			log.Infof("fetch time till now hours: %v", durationTillNow.Hours())
+			if durationTillNow.Hours() > 48 {
+				log.Warnf("fetch block time has EXPIRED: %s, playlistId: %s, urls: %v, drop it", fetchDatetime, playlistId, fetchItems.Urls)
+				return
+			}
+		} else {
+			log.Infof("EMPTY fetch items urls, playlistId: %s, urls: %v, ignore it", playlistId, fetchItems.Urls)
 			return
 		}
 	}
@@ -85,9 +90,28 @@ func appendDeliveries(deliveries *[]Delivery, fetchItems util.FetchItems, playli
 	}
 }
 
+func DeleteSliceElms(sl []util.HistoryProps, elms ...util.HistoryProps) []util.HistoryProps {
+	if len(sl) == 0 || len(elms) == 0 {
+		return sl
+	}
+	// 先将元素转为 set
+	m := make(map[string]util.HistoryProps)
+	for _, v := range elms {
+		m[v.Id] = util.HistoryProps{}
+	}
+	// 过滤掉指定元素
+	res := make([]util.HistoryProps, 0, len(sl))
+	for _, v := range sl {
+		if _, ok := m[v.Id]; !ok {
+			res = append(res, v)
+		}
+	}
+	return res
+}
+
 func MergeHistoryFetchesInto(newDeliveries []Delivery) []Delivery {
 	historyProps := util.MediaHistory
-	log.Infof("historyProps count: %v", len(historyProps))
+	log.Infof("newDeliveries count: %v, historyProps count: %v", len(newDeliveries), len(historyProps))
 	var mergedDeliveries []Delivery
 	for _, newDelivery := range newDeliveries {
 		log.Infof("newDelivery: %v", newDelivery)
@@ -139,6 +163,9 @@ func MergeHistoryFetchesInto(newDeliveries []Delivery) []Delivery {
 			}
 		}
 		if isNewPlayListId {
+			now := time.Now()
+			newDelivery.Timestamp = now.Unix()
+			newDelivery.Datetime = now.Format(DateTimeFormat)
 			mergedDeliveries = append(mergedDeliveries, newDelivery)
 		}
 	}

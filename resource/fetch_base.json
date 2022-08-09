@@ -7,20 +7,24 @@
       "downloaded_files_path": "/tmp/",
       "params": [
         {
-          "id": "PL_gom9iTTcZrCXj4niVYgAdkTbybJpQQR",
-          "max_results_count": 3
-        },
-        {
-          "id": "PL_gom9iTTcZo-QvnJ680oGGpwKaymGwpv",
-          "max_results_count": 4
-        },
-        {
           "id": "PL6aTnkbuMFlWxpzyGfFzNxjzPQKLlVZ4e",
-          "max_results_count": 1
+          "max_results_count": 2
         },
         {
-          "id": "PLt-jD7OCbLJ0ZMwvQFZCSuNaUbT3GMqVJ",
-          "max_results_count": 1
+          "id": "PLvV_WiuPV7_VY3oDS1OiOQccDywoPIyIw",
+          "max_results_count": 2
+        },
+        {
+          "id": "PL_gom9iTTcZrCXj4niVYgAdkTbybJpQQR",
+          "max_results_count": 2
+        },
+        {
+          "id": "PLPVsJMpVPkCdJ9hGP86GKy8ShqHaMVNOr",
+          "max_results_count": 2
+        },
+        {
+          "id": "PLHKdohGW0LJcyfUUNjPjaPTTyBDsfYJPu",
+          "max_results_count": 2
         }
       ]
     }
