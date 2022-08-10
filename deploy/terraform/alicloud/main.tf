@@ -27,7 +27,7 @@ resource "alicloud_instance" "youtube-audio" {
   instance_type        = "ecs.n1.small"
   # 系统盘类型
   system_disk_category = "cloud_efficiency"
-  # 系统镜像 ubuntu_22_04_x64_20G_alibase_20220628.vhd
+  # 自定义镜像
   image_id             = "m-j6c2yv3ppzgbhft9y4f7"
   # 实例名称
   instance_name        = "centos-youtube-audio"

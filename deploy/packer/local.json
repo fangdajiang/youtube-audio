@@ -13,8 +13,8 @@
     "start_source_file": "deploy/script/start.sh",
     "youtube_audio_source_file": "youtube-audio",
 
-    "fetch_base_target_file": "/fetch_base.json",
-    "fetch_history_target_file": "/fetch_history.json",
+    "fetch_base_target_file": "/resource/fetch_base.json",
+    "fetch_history_target_file": "/resource/fetch_history.json",
     "youtube_dl_target_file": "/usr/local/sbin/youtube-dl",
     "configure_target_file": "/configure.sh",
     "start_target_file": "/start.sh",
@@ -36,6 +36,12 @@
     ]
   }],
   "provisioners": [
+    {
+      "type": "shell",
+      "inline": [
+        "mkdir /resource"
+      ]
+    },
     {
       "type": "file",
       "source": "{{user `fetch_base_source_file`}}",
