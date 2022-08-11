@@ -21,7 +21,7 @@ sudo chmod a+rx /usr/local/bin/youtube-dl
 > * 从源码安装
 ```shell
 # 拷贝 dependency/youtube-dl 到 $PATH
-# 设置环境变量 APP_HOME, BOT_TOKEN, BOT_CHAT_ID, CHAT_ID, YOUTUBE_KEY
+# 设置环境变量 BOT_TOKEN, BOT_CHAT_ID, CHAT_ID, YOUTUBE_KEY
 git clone https://github.com/fangdajiang/youtube-audio.git
 cd youtube-audio
 go run ./cmd/main.go

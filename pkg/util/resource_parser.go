@@ -3,14 +3,7 @@ package util
 import (
 	"encoding/json"
 	log "github.com/sirupsen/logrus"
-	"os"
-)
-
-const (
-	EnvYouTubeAudioHomeName  string = "APP_HOME"
-	FetchBaseJsonPath        string = "/resource/fetch_base.json"
-	FetchHistoryJsonPath     string = "/resource/fetch_history.json"
-	TempFetchHistoryJsonPath string = "/resource/tmp_fetch_history.json"
+	"strings"
 )
 
 var MediaBase []BaseProps
@@ -55,62 +48,51 @@ type FetchHistory struct {
 	Playlists []HistoryProps `json:"playlists"`
 }
 
-func GetFetchJsonPath(jsonPath string) string {
-	homePath, err := GetEnvVariable(EnvYouTubeAudioHomeName)
+func (fb *FetchBase) DecodePlaylistJson(jsonFileName string) {
+	fetchJson, err := GetResourceJson(jsonFileName)
 	if err != nil {
-		log.Errorf("reading env %s vars error", EnvYouTubeAudioHomeName)
-		return "/tmp"
+		log.Errorf("get resource json error, jsonFileName: %s, error: %s", jsonFileName, err)
+		return
 	}
-	return homePath + jsonPath
+	resourceDecoder := json.NewDecoder(strings.NewReader(fetchJson))
+	err = resourceDecoder.Decode(&fb)
+	if err != nil {
+		log.Fatalf("decoding json error:%v, jsonFileName:%s", err, jsonFileName)
+	}
+}
+
+func (fh *FetchHistory) DecodePlaylistJson(jsonFileName string) {
+	fetchJson, err := GetResourceJson(jsonFileName)
+	if err != nil {
+		log.Errorf("get resource json error, jsonFileName: %s, error: %s", jsonFileName, err)
+		return
+	}
+	resourceDecoder := json.NewDecoder(strings.NewReader(fetchJson))
+	err = resourceDecoder.Decode(&fh)
+	if err != nil {
+		log.Fatalf("decoding json error:%v, jsonFileName:%s", err, jsonFileName)
+	}
 }
 
 func getBaseProps() []BaseProps {
 	fetchBase := FetchBase{}
-	fetchBase.DecodePlaylistJson(GetFetchJsonPath(FetchBaseJsonPath))
+	fetchBase.DecodePlaylistJson(FetchBaseFileName)
 	return fetchBase.Playlists
 }
 
 func getHistoryProps() []HistoryProps {
 	fetchHistory := FetchHistory{}
-	fetchHistory.DecodePlaylistJson(GetFetchJsonPath(FetchHistoryJsonPath))
+	fetchHistory.DecodePlaylistJson(FetchHistoryFileName)
 	return fetchHistory.Playlists
 }
 
-func EncodePlaylistJson(jsonPath string, fetchHistory FetchHistory) {
-	resourceJson, _ := os.Create(jsonPath)
-	defer func(file *os.File) {
-		_ = file.Close()
-	}(resourceJson)
-	resourceEncoder := json.NewEncoder(resourceJson)
-	resourceEncoder.SetIndent("", "  ")
-	err := resourceEncoder.Encode(fetchHistory)
+func MarshalPlaylistJson(fetchHistory FetchHistory) {
+	jsonBytes, err := json.MarshalIndent(&fetchHistory, "", "  ")
 	if err != nil {
-		log.Fatalf("encoding json error:%v, json:%s, fetchHistory:%v", err, jsonPath, fetchHistory)
+		log.Fatalf("marshal indent error:%v, ossFileName:%s, fetchHistory:%v", err, FetchHistoryFileName, fetchHistory)
 	}
-}
-
-func (fh *FetchHistory) DecodePlaylistJson(jsonPath string) {
-	resourceJson, _ := os.Open(jsonPath)
-	defer func(file *os.File) {
-		_ = file.Close()
-	}(resourceJson)
-	resourceDecoder := json.NewDecoder(resourceJson)
-	err := resourceDecoder.Decode(&fh)
-	if err != nil {
-		log.Fatalf("decoding json error:%v, json path:%s", err, jsonPath)
-	}
-}
-
-func (fb *FetchBase) DecodePlaylistJson(jsonPath string) {
-	resourceJson, _ := os.Open(jsonPath)
-	defer func(file *os.File) {
-		_ = file.Close()
-	}(resourceJson)
-	resourceDecoder := json.NewDecoder(resourceJson)
-	err := resourceDecoder.Decode(&fb)
-	if err != nil {
-		log.Fatalf("decoding json error:%v, json path:%s", err, jsonPath)
-	}
+	log.Infof("fetchHistory json: %v", string(jsonBytes))
+	UpdateResourceJson(FetchHistoryFileName, string(jsonBytes))
 }
 
 func InitResources() {

@@ -58,7 +58,7 @@ func FlushFetchHistory(deliveries []Delivery) {
 	var fetchHistory = util.FetchHistory{Playlists: GenerateFetchHistory(deliveries)}
 	log.Infof("fetchHistory: %v", fetchHistory)
 
-	util.EncodePlaylistJson(util.GetFetchJsonPath(util.FetchHistoryJsonPath), fetchHistory)
+	util.MarshalPlaylistJson(fetchHistory)
 }
 
 func ProcessOneVideo(delivery *Delivery) {

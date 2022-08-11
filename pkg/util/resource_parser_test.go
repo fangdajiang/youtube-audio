@@ -18,13 +18,6 @@ func TestFetchBase_DecodePlaylistJson(t *testing.T) {
 	log.Infof("base: %v", MediaBase[0])
 }
 
-func TestFetchHistory_EncodePlaylistJson(t *testing.T) {
-	var fetchHistory = FetchHistory{getPlaylistsExample()}
-	log.Infof("fetchHistory: %v", fetchHistory)
-
-	EncodePlaylistJson(GetFetchJsonPath(TempFetchHistoryJsonPath), fetchHistory)
-}
-
 func TestMarshalUnMarshalJson(t *testing.T) {
 	r := require.New(t)
 
@@ -62,4 +55,9 @@ func getPlaylistsExample() []HistoryProps {
 	var subscriberItems = []SubscriberItems{subscriberItem}
 	var historyProps = HistoryProps{"PL", subscriberItems}
 	return []HistoryProps{historyProps}
+}
+
+func TestMarshalPlaylistJson(t *testing.T) {
+	fetchHistory := FetchHistory{getPlaylistsExample()}
+	MarshalPlaylistJson(fetchHistory)
 }

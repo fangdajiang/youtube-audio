@@ -6,15 +6,11 @@
     "youtube_key": "{{env `YOUTUBE_KEY`}}",
     "docker_id": "{{env `DOCKER_ID`}}",
 
-    "fetch_base_source_file": "resource/fetch_base.json",
-    "fetch_history_source_file": "resource/fetch_history.json",
     "youtube_dl_source_file": "dependency/youtube-dl",
     "configure_source_file": "deploy/script/configure.sh",
     "start_source_file": "deploy/script/start.sh",
     "youtube_audio_source_file": "youtube-audio",
 
-    "fetch_base_target_file": "/resource/fetch_base.json",
-    "fetch_history_target_file": "/resource/fetch_history.json",
     "youtube_dl_target_file": "/usr/local/sbin/youtube-dl",
     "configure_target_file": "/configure.sh",
     "start_target_file": "/start.sh",
@@ -28,7 +24,9 @@
     "commit": true,
     "pull": false,
     "changes": [
-      "ENV APP_HOME /",
+      "ENV LANG zh_CN.UTF-8",
+      "ENV LANGUAGE zh_CN.UTF-8",
+      "ENV LC_ALL zh_CN.UTF-8",
       "ENV BOT_TOKEN {{ user `bot_token` }}",
       "ENV BOT_CHAT_ID {{ user `bot_chat_id` }}",
       "ENV CHAT_ID {{ user `chat_id` }}",
@@ -39,18 +37,8 @@
     {
       "type": "shell",
       "inline": [
-        "mkdir /resource"
+        "CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o youtube-audio cmd/main.go"
       ]
-    },
-    {
-      "type": "file",
-      "source": "{{user `fetch_base_source_file`}}",
-      "destination": "{{user `fetch_base_target_file`}}"
-    },
-    {
-      "type": "file",
-      "source": "{{user `fetch_history_source_file`}}",
-      "destination": "{{user `fetch_history_target_file`}}"
     },
     {
       "type": "file",

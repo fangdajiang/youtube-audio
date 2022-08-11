@@ -3,19 +3,14 @@
     "access_key": "{{env `ALICLOUD_ACCESS_KEY`}}",
     "secret_key": "{{env `ALICLOUD_SECRET_KEY`}}",
 
-    "app_home": "/",
     "bot_token": "{{env `BOT_TOKEN`}}",
     "bot_chat_id": "{{env `BOT_CHAT_ID`}}",
     "chat_id": "{{env `CHAT_ID`}}",
     "youtube_key": "{{env `YOUTUBE_KEY`}}",
 
-    "fetch_base_source_file": "resource/fetch_base.json",
-    "fetch_history_source_file": "resource/fetch_history.json",
     "youtube_dl_source_file": "dependency/youtube-dl",
     "youtube_audio_source_file": "youtube-audio",
 
-    "fetch_base_target_file": "/resource/fetch_base.json",
-    "fetch_history_target_file": "/resource/fetch_history.json",
     "youtube_dl_target_file": "/usr/local/sbin/youtube-dl",
     "youtube_audio_target_file": "/youtube-audio"
   },
@@ -37,22 +32,6 @@
   }],
   "provisioners": [
     {
-      "type": "shell",
-      "inline": [
-        "mkdir /resource"
-      ]
-    },
-    {
-      "type": "file",
-      "source": "{{user `fetch_base_source_file`}}",
-      "destination": "{{user `fetch_base_target_file`}}"
-    },
-    {
-      "type": "file",
-      "source": "{{user `fetch_history_source_file`}}",
-      "destination": "{{user `fetch_history_target_file`}}"
-    },
-    {
       "type": "file",
       "source": "{{user `youtube_audio_source_file`}}",
       "destination": "{{user `youtube_audio_target_file`}}"
@@ -65,7 +44,6 @@
     {
       "type": "shell",
       "inline": [
-        "echo 'export APP_HOME={{user `app_home`}}' >> ~/.bash_profile",
         "echo 'export BOT_TOKEN={{user `bot_token`}}' >> ~/.bash_profile",
         "echo 'export BOT_CHAT_ID={{user `bot_chat_id`}}' >> ~/.bash_profile",
         "echo 'export CHAT_ID={{user `chat_id`}}' >> ~/.bash_profile",
