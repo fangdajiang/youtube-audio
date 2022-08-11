@@ -285,7 +285,7 @@ func GetYouTubePlaylistMaxResultsCount(playlistId string) int64 {
 		}
 	}
 	if youtube.Owner == "" {
-		log.Fatalf("getting youtube playlist max results count from json error, scopes:%v", youtube.Params)
+		log.Errorf("getting youtube playlist max results count from json error, scopes:%v", youtube.Params)
 	}
 	return 1
 }

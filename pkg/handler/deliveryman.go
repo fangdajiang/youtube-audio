@@ -32,7 +32,7 @@ type TelegramBot struct {
 func SendAudio(delivery *Delivery) error {
 	telegramBot, err := GenerateTelegramBot()
 	if err != nil {
-		log.Fatalf("%s", err)
+		return err
 	}
 	// Send an audio file
 	err = telegramBot.Send(delivery.Parcel)
@@ -58,31 +58,41 @@ func markDelivered(delivery *Delivery) {
 func SendMessage(desc string, warningMessage string) {
 	telegramBot, err := GenerateTelegramBot()
 	if err != nil {
-		log.Fatalf("%s", err)
+		log.Errorf("%s", err)
 	}
 	telegramBot.SendWarningMessage(desc, warningMessage)
 }
 
 func IsAudioValid(parcel Parcel) bool {
+	if parcel.FilePath == "" {
+		log.Warnf("file path EMPTY: %v", parcel)
+		return false
+	}
 	// exists?
 	audioExists, err := FileExists(parcel.FilePath)
 	if !audioExists {
-		log.Fatalf("downloaded file does NOT exist: %s, %v", parcel.FilePath, err)
+		log.Warnf("downloaded file does NOT exist: %s, %v", parcel.FilePath, err)
+		return false
 	}
 	// empty?
 	audioFileInfo, _ := os.Stat(parcel.FilePath)
 	log.Infof("audioFileInfo size: %v", audioFileInfo.Size())
 	if audioFileInfo.Size() < 1024 {
-		log.Errorf("downloaded file size(%v) is not BIG enough(>= 1024B): %s", audioFileInfo.Size(), parcel.FilePath)
+		log.Warnf("downloaded file size(%v) is not BIG enough(>= 1024B): %s", audioFileInfo.Size(), parcel.FilePath)
 		return false
 	}
 	return true
 }
 
 func Cleanup(parcel Parcel) {
-	err := os.Remove(parcel.FilePath)
+	parcelExists, err := FileExists(parcel.FilePath)
+	if !parcelExists {
+		log.Warnf("parcel file does NOT exist: %s, %v", parcel.FilePath, err)
+		return
+	}
+	err = os.Remove(parcel.FilePath)
 	if err != nil {
-		log.Fatalf("removing file %s, error: %s", parcel.FilePath, err)
+		log.Errorf("removing file %s, error: %s", parcel.FilePath, err)
 	} else {
 		log.Infof("downloaded file cleaned up %s", parcel.FilePath)
 	}
@@ -126,14 +136,16 @@ func (t *TelegramBot) SendWarningMessage(desc string, warningMessage string) {
 
 	bot, err := tgbotapi.NewBotAPI(t.Token)
 	if err != nil {
-		log.Fatalf("building msg bot error %s", err)
+		log.Errorf("building msg bot error %s", err)
+		return
 	}
 
 	msg := tgbotapi.NewMessage(t.BotChatId, fmt.Sprintf(warningMessage, desc))
 
 	_, err = bot.Send(msg)
 	if err != nil {
-		log.Fatalf("sending warning message error: %s", err)
+		log.Errorf("sending warning message error: %s", err)
+		return
 	}
 	log.Infof("Warning message %s has been sent", msg.Text)
 

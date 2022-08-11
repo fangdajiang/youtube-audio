@@ -81,8 +81,10 @@ func ProcessOneVideo(delivery *Delivery) {
 				SendMessage(audioFile.Caption, FailedToSendAudioWarningTemplate)
 			}
 		}
-		log.Infof("ready to clean up, audioFile: %v", audioFile)
-		Cleanup(audioFile)
+		if audioFile.FilePath != "" {
+			log.Infof("ready to clean up, audioFile: %v", audioFile)
+			Cleanup(audioFile)
+		}
 	} else {
 		log.Infof("this delivery %v has be DONE, no more process", delivery)
 	}
@@ -159,7 +161,7 @@ func playlistItemsList(service *youtubeapi.Service, part []string, playlistId st
 	//lastUpdated := queryParamOpt{key: "order", value: "time"}
 	response, err := call.Do()
 	if err != nil {
-		log.Fatalf("get playlist items error:%v, playlistId:%s", err, playlistId)
+		log.Errorf("get playlist items error:%v, playlistId:%s", err, playlistId)
 	}
 	return response
 }
@@ -270,7 +272,7 @@ func DownloadYouTubeAudioToPath(mediaUrl string) (Parcel, error) {
 	written, err := io.Copy(parcelFile, downloadedResult)
 	log.Infof("media file %s DOWNLOADED & COPIED till %s", parcel.FilePath, time.Now().Format(DateTimeFormat))
 	if err != nil {
-		log.Fatalf("copy error: %s, parcel: %v, written: %v", err, parcel, written)
+		return parcel, fmt.Errorf("copy error: %s, parcel: %v, written: %v", err, parcel, written)
 	}
 	defer func(f *os.File) {
 		_ = f.Close()

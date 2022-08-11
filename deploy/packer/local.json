@@ -26,7 +26,6 @@
     "changes": [
       "ENV LANG zh_CN.UTF-8",
       "ENV LANGUAGE zh_CN.UTF-8",
-      "ENV LC_ALL zh_CN.UTF-8",
       "ENV BOT_TOKEN {{ user `bot_token` }}",
       "ENV BOT_CHAT_ID {{ user `bot_chat_id` }}",
       "ENV CHAT_ID {{ user `chat_id` }}",
