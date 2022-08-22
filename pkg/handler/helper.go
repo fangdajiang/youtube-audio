@@ -76,11 +76,9 @@ func appendDeliveries(deliveries *[]Delivery, fetchItems util.FetchItems, playli
 			return
 		}
 	}
-	// always keep the fetch block, but under maximum count of urls
-	if len(fetchItems.Urls) > FetchMaxUrlsLimit {
-		log.Infof("fetchItems.Urls length: %v is GREATER than %v", len(fetchItems.Urls), FetchMaxUrlsLimit)
-		removeUrlsCount := len(fetchItems.Urls) - FetchMaxUrlsLimit
-		fetchItems.Urls = fetchItems.Urls[removeUrlsCount:]
+	// always keep the fetch block, but under maximum count of urls, drop random(?) ones
+	for len(fetchItems.Urls) > FetchMaxUrlsLimit {
+		fetchItems.Urls = fetchItems.Urls[1:]
 	}
 	for _, fetchUrl := range fetchItems.Urls {
 		historyFetch := Delivery{
@@ -124,43 +122,22 @@ func MergeHistoryFetchesInto(newDeliveries []Delivery) []Delivery {
 			if newDelivery.PlaylistId == historyProp.Id {
 				isNewPlayListId = false
 				for _, sub := range historyProp.Subscribers {
-					searchNextFetchUrls := false
-					lastFetchUrls := sub.LastFetch.Urls
-					if len(lastFetchUrls) > 0 {
-						sort.Strings(lastFetchUrls)
-						lastFetchUrlsIndex := sort.SearchStrings(lastFetchUrls, newDelivery.Parcel.Url)
-						log.Infof("lastFetchUrlsIndex: %v, last fetch urls count: %v", lastFetchUrlsIndex, len(lastFetchUrls))
-						if lastFetchUrlsIndex < len(lastFetchUrls) && lastFetchUrls[lastFetchUrlsIndex] == newDelivery.Parcel.Url {
-							// will cause append same next fetch urls repeatedly
-							log.Infof("newDelivery url %s was FOUND from history LAST fetch urls, drop it and add all next fetch urls", newDelivery.Parcel.Url)
+					appendDeliveries(&mergedDeliveries, sub.LastFetch, historyProp.Id, true)
+					nextFetchUrls := sub.NextFetch.Urls
+					if len(nextFetchUrls) > 0 {
+						sort.Strings(nextFetchUrls)
+						nextFetchUrlsIndex := sort.SearchStrings(nextFetchUrls, newDelivery.Parcel.Url)
+						log.Infof("nextFetchUrlsIndex: %v, next fetch urls count: %v", nextFetchUrlsIndex, len(nextFetchUrls))
+						if nextFetchUrlsIndex < len(nextFetchUrls) {
+							log.Infof("newDelivery url %s was FOUND from history NEXT fetch urls", newDelivery.Parcel.Url)
 							appendDeliveries(&mergedDeliveries, sub.NextFetch, historyProp.Id, false)
 						} else {
-							log.Infof("newDelivery url %s NOT FOUND from history LAST fetch urls", newDelivery.Parcel.Url)
-							searchNextFetchUrls = true
-						}
-						appendDeliveries(&mergedDeliveries, sub.LastFetch, historyProp.Id, true)
-					} else {
-						log.Infof("last fetch urls EMPTY, subscribers id: %v, playlist id: %v", sub.Id, historyProp.Id)
-						searchNextFetchUrls = true
-					}
-
-					if searchNextFetchUrls {
-						nextFetchUrls := sub.NextFetch.Urls
-						if len(nextFetchUrls) > 0 {
-							sort.Strings(nextFetchUrls)
-							nextFetchUrlsIndex := sort.SearchStrings(nextFetchUrls, newDelivery.Parcel.Url)
-							log.Infof("nextFetchUrlsIndex: %v, next fetch urls count: %v", nextFetchUrlsIndex, len(nextFetchUrls))
-							if nextFetchUrlsIndex < len(nextFetchUrls) && nextFetchUrls[nextFetchUrlsIndex] == newDelivery.Parcel.Url {
-								log.Infof("newDelivery url %s was FOUND from history NEXT fetch urls", newDelivery.Parcel.Url)
-								appendDeliveries(&mergedDeliveries, sub.NextFetch, historyProp.Id, false)
-							} else {
-								log.Infof("newDelivery url %s NOT FOUND from history NEXT fetch urls, add it", newDelivery.Parcel.Url)
-								mergedDeliveries = append(mergedDeliveries, newDelivery)
-							}
-						} else {
-							log.Infof("next fetch urls EMPTY, subscribers id: %v, playlist id: %v, add it", sub.Id, historyProp.Id)
+							log.Infof("newDelivery url %s NOT FOUND from history NEXT fetch urls, add it", newDelivery.Parcel.Url)
 							mergedDeliveries = append(mergedDeliveries, newDelivery)
 						}
+					} else {
+						log.Infof("next fetch urls EMPTY, subscribers id: %v, playlist id: %v, add it", sub.Id, historyProp.Id)
+						mergedDeliveries = append(mergedDeliveries, newDelivery)
 					}
 				}
 				break
