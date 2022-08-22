@@ -8,11 +8,11 @@
     "chat_id": "{{env `CHAT_ID`}}",
     "youtube_key": "{{env `YOUTUBE_KEY`}}",
 
-    "youtube_dl_source_file": "dependency/youtube-dl",
-    "youtube_audio_source_file": "youtube-audio",
+    "youtube_dl_source_file": "bin/dependency/youtube-dl",
+    "youtube_audio_source_file": "bin/youtube-audio",
 
     "youtube_dl_target_file": "/usr/local/sbin/youtube-dl",
-    "youtube_audio_target_file": "/youtube-audio"
+    "youtube_audio_target_file": "/app/youtube-audio"
   },
   "builders": [{
     "type":"alicloud-ecs",

@@ -270,7 +270,7 @@ func DownloadYouTubeAudioToPath(mediaUrl string) (Parcel, error) {
 
 	log.Infof("ready to COPY media file %s at %s", parcel.FilePath, time.Now().Format(DateTimeFormat))
 	written, err := io.Copy(parcelFile, downloadedResult)
-	log.Infof("media file %s DOWNLOADED & COPIED till %s", parcel.FilePath, time.Now().Format(DateTimeFormat))
+	log.Infof("media file %s DOWNLOADED & COPIED at %s", parcel.FilePath, time.Now().Format(DateTimeFormat))
 	if err != nil {
 		return parcel, fmt.Errorf("copy error: %s, parcel: %v, written: %v", err, parcel, written)
 	}

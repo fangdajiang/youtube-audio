@@ -20,7 +20,7 @@ sudo chmod a+rx /usr/local/bin/youtube-dl
 ```
 > * 从源码安装
 ```shell
-# 拷贝 dependency/youtube-dl 到 $PATH
+# 拷贝 bin/dependency/youtube-dl 到 $PATH
 # 设置环境变量 BOT_TOKEN, BOT_CHAT_ID, CHAT_ID, YOUTUBE_KEY
 git clone https://github.com/fangdajiang/youtube-audio.git
 cd youtube-audio
@@ -40,8 +40,7 @@ packer build deploy/packer/alicloud.json
 ## 例子
 Docker:
 ```shell
-docker run -it xxx
-./youtube-audio
+docker run -d -e BOT_TOKEN= -e BOT_CHAT_ID= -e CHAT_ID= -e YOUTUBE_KEY= -e ALICLOUD_ACCESS_KEY= -e ALICLOUD_SECRET_KEY= youtube-audio:latest
 ```
 Terraform:
 ```shell
@@ -60,11 +59,13 @@ terraform init/plan/apply
 - [ ] 支持取消订阅
 - [ ] 支持发布给用户
 - [ ] （支持订阅不同质量的音轨）
+- [ ] 将本项目平台化，订阅来源和发布目的 与本项目解耦
 
 ## 注意事项
 > * 编译时，假如本机是 ARM 架构的 CPU(如 Apple M1/M2)，须加参数
 ```shell
-CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o youtube-audio cmd/main.go
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/youtube-audio cmd/main.go
+docker build -t youtube-audio:latest -f ./Dockerfile .
 ```
 > *
 

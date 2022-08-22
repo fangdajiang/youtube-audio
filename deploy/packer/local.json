@@ -4,17 +4,20 @@
     "bot_chat_id": "{{env `BOT_CHAT_ID`}}",
     "chat_id": "{{env `CHAT_ID`}}",
     "youtube_key": "{{env `YOUTUBE_KEY`}}",
+    "alicloud_access_key": "{{env `ALICLOUD_ACCESS_KEY`}}",
+    "alicloud_secret_key": "{{env `ALICLOUD_SECRET_KEY`}}",
+    "alicloud_region": "{{env `ALICLOUD_REGION`}}",
     "docker_id": "{{env `DOCKER_ID`}}",
 
-    "youtube_dl_source_file": "dependency/youtube-dl",
+    "youtube_audio_source_file": "bin/youtube-audio",
+    "youtube_dl_source_file": "bin/dependency/youtube-dl",
     "configure_source_file": "deploy/script/configure.sh",
     "start_source_file": "deploy/script/start.sh",
-    "youtube_audio_source_file": "youtube-audio",
 
+    "youtube_audio_target_file": "/app/youtube-audio",
     "youtube_dl_target_file": "/usr/local/sbin/youtube-dl",
     "configure_target_file": "/configure.sh",
     "start_target_file": "/start.sh",
-    "youtube_audio_target_file": "/youtube-audio",
 
     "tmp_dir": "/tmp"
   },
@@ -29,7 +32,11 @@
       "ENV BOT_TOKEN {{ user `bot_token` }}",
       "ENV BOT_CHAT_ID {{ user `bot_chat_id` }}",
       "ENV CHAT_ID {{ user `chat_id` }}",
-      "ENV YOUTUBE_KEY {{ user `youtube_key` }}"
+      "ENV YOUTUBE_KEY {{ user `youtube_key` }}",
+      "ENV ALICLOUD_ACCESS_KEY {{ user `alicloud_access_key` }}",
+      "ENV ALICLOUD_SECRET_KEY {{ user `alicloud_secret_key` }}",
+      "ENV ALICLOUD_REGION {{ user `alicloud_region` }}",
+      "ENV DOCKER_ID {{ user `docker_id` }}"
     ]
   }],
   "provisioners": [
@@ -70,7 +77,7 @@
         "type": "docker-tag",
         "repository": "{{user `docker_id`}}/youtube-audio",
         "tags": [
-          "v0.1.5"
+          "v0.1.6"
         ]
       },
       "docker-push"
