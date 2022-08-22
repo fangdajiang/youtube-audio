@@ -2,6 +2,7 @@
   "variables": {
     "access_key": "{{env `ALICLOUD_ACCESS_KEY`}}",
     "secret_key": "{{env `ALICLOUD_SECRET_KEY`}}",
+    "region": "{{env `ALICLOUD_REGION`}}",
 
     "bot_token": "{{env `BOT_TOKEN`}}",
     "bot_chat_id": "{{env `BOT_CHAT_ID`}}",
@@ -18,7 +19,7 @@
     "type":"alicloud-ecs",
     "access_key":"{{user `access_key`}}",
     "secret_key":"{{user `secret_key`}}",
-    "region":"cn-hongkong",
+    "region":"{{user `region`}}",
     "image_name":"centos_youtube_audio",
     "source_image":"centos_7_9_x64_20G_alibase_20220727.vhd",
     "ssh_username":"root",
@@ -47,7 +48,9 @@
         "echo 'export BOT_TOKEN={{user `bot_token`}}' >> ~/.bash_profile",
         "echo 'export BOT_CHAT_ID={{user `bot_chat_id`}}' >> ~/.bash_profile",
         "echo 'export CHAT_ID={{user `chat_id`}}' >> ~/.bash_profile",
-        "echo 'export YOUTUBE_KEY={{user `youtube_key`}}' >> ~/.bash_profile"
+        "echo 'export YOUTUBE_KEY={{user `youtube_key`}}' >> ~/.bash_profile",
+        "echo 'export ALICLOUD_ACCESS_KEY={{user `access_key`}}' >> ~/.bash_profile",
+        "echo 'export ALICLOUD_SECRET_KEY={{user `secret_key`}}' >> ~/.bash_profile"
       ],
       "environment_vars": [
         "FOO={{ user `tmp_dir` }}"
