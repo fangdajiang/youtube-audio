@@ -8,6 +8,7 @@ import (
 	"os"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 	"youtube-audio/pkg/util"
 )
@@ -27,7 +28,9 @@ const (
 	FetchMaxUrlsLimit                     int    = 10
 	FailedToSendAudioWarningTemplate      string = "FAILED TO SEND AUDIO %s TO THE CHANNEL"
 	FailedToDownloadAudioWarningTemplate  string = "FAILED TO DOWNLOAD AUDIO %s"
-	InvalidDownloadedAudioWarningTemplate string = "INVALID DOWNLOADED FILE %s"
+	FileNotExistWarningTemplate           string = "FILE NOT EXIST: *%s*"
+	EmptyFilePathWarningTemplate          string = "EMPTY FILE PATH: *%s*"
+	InvalidFileSizeWarningTemplate        string = "INVALID FILE SIZE: *%s*"
 )
 
 var YouTubePart = []string{"snippet"}
@@ -75,6 +78,7 @@ func appendDeliveries(deliveries *[]Delivery, fetchItems util.FetchItems, playli
 	}
 	// always keep the fetch block, but under maximum count of urls
 	if len(fetchItems.Urls) > FetchMaxUrlsLimit {
+		log.Infof("fetchItems.Urls length: %v is GREATER than %v", len(fetchItems.Urls), FetchMaxUrlsLimit)
 		removeUrlsCount := len(fetchItems.Urls) - FetchMaxUrlsLimit
 		fetchItems.Urls = fetchItems.Urls[removeUrlsCount:]
 	}
@@ -326,6 +330,8 @@ func FilenamifyMediaTitle(title string) (string, error) {
 		log.Errorf("convert raw media title to a valid file name error:%s", err)
 		return "", fmt.Errorf("filenamify error: %s", rawMediaTitle)
 	}
+	validMediaFileName = strings.ReplaceAll(validMediaFileName, "#", IllegalCharacterReplacementInFilename)
+	validMediaFileName = strings.ReplaceAll(validMediaFileName, " ", "")
 	log.Infof("validMediaFileName %s", validMediaFileName)
 
 	return validMediaFileName, nil

@@ -24,7 +24,7 @@ func TestGetLocalDateTime(t *testing.T) {
 func TestFilenamifyMediaTitle(t *testing.T) {
 	r := require.New(t)
 
-	mediaTitle := "中文abc/标题\\_123!_def`_gh'_done"
+	mediaTitle := "中文abc/标题\\_123!_def`_gh'_done #shorts"
 
 	namifiedMediaTitle, err := FilenamifyMediaTitle(mediaTitle)
 	r.NoError(err)

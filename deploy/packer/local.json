@@ -1,12 +1,5 @@
 {
   "variables": {
-    "bot_token": "{{env `BOT_TOKEN`}}",
-    "bot_chat_id": "{{env `BOT_CHAT_ID`}}",
-    "chat_id": "{{env `CHAT_ID`}}",
-    "youtube_key": "{{env `YOUTUBE_KEY`}}",
-    "alicloud_access_key": "{{env `ALICLOUD_ACCESS_KEY`}}",
-    "alicloud_secret_key": "{{env `ALICLOUD_SECRET_KEY`}}",
-    "alicloud_region": "{{env `ALICLOUD_REGION`}}",
     "docker_id": "{{env `DOCKER_ID`}}",
 
     "youtube_audio_source_file": "bin/youtube-audio",
@@ -29,17 +22,26 @@
     "changes": [
       "ENV LANG zh_CN.UTF-8",
       "ENV LANGUAGE zh_CN.UTF-8",
-      "ENV BOT_TOKEN {{ user `bot_token` }}",
-      "ENV BOT_CHAT_ID {{ user `bot_chat_id` }}",
-      "ENV CHAT_ID {{ user `chat_id` }}",
-      "ENV YOUTUBE_KEY {{ user `youtube_key` }}",
-      "ENV ALICLOUD_ACCESS_KEY {{ user `alicloud_access_key` }}",
-      "ENV ALICLOUD_SECRET_KEY {{ user `alicloud_secret_key` }}",
-      "ENV ALICLOUD_REGION {{ user `alicloud_region` }}",
-      "ENV DOCKER_ID {{ user `docker_id` }}"
+      "ENV LC_ALL zh_CN.UTF-8",
+      "ENV BOT_TOKEN ${BOT_TOKEN}",
+      "ENV BOT_CHAT_ID ${BOT_CHAT_ID}",
+      "ENV CHAT_ID ${CHAT_ID}",
+      "ENV YOUTUBE_KEY ${YOUTUBE_KEY}",
+      "ENV ALICLOUD_ACCESS_KEY ${ALICLOUD_ACCESS_KEY}",
+      "ENV ALICLOUD_SECRET_KEY ${ALICLOUD_SECRET_KEY}",
+      "ENV ALICLOUD_REGION ${ALICLOUD_REGION}",
+      "ENV DOCKER_ID ${DOCKER_ID}",
+
+      "ENTRYPOINT [\"/app/youtube-audio\"]"
     ]
   }],
   "provisioners": [
+    {
+      "type": "shell",
+      "inline": [
+        "mkdir /app"
+      ]
+    },
     {
       "type": "file",
       "source": "{{user `youtube_audio_source_file`}}",

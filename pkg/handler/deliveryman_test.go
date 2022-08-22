@@ -78,8 +78,7 @@ func TestTelegramBot_SendWarningMessage(t *testing.T) {
 func TestIsAudioValid(t *testing.T) {
 	r := require.New(t)
 
-	filePath := "/tmp/test.txt"
-
-	valid := IsAudioValid(parcel)
-	r.True(valid, "invalid file: %s", filePath)
+	valid, template := IsAudioValid(parcel)
+	r.False(valid)
+	r.Equal(InvalidFileSizeWarningTemplate, template)
 }

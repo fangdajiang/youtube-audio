@@ -63,25 +63,25 @@ func SendMessage(desc string, warningMessage string) {
 	telegramBot.SendWarningMessage(desc, warningMessage)
 }
 
-func IsAudioValid(parcel Parcel) bool {
+func IsAudioValid(parcel Parcel) (bool, string) {
 	if parcel.FilePath == "" {
 		log.Warnf("file path EMPTY: %v", parcel)
-		return false
+		return false, EmptyFilePathWarningTemplate
 	}
 	// exists?
 	audioExists, err := FileExists(parcel.FilePath)
 	if !audioExists {
 		log.Warnf("downloaded file does NOT exist: %s, %v", parcel.FilePath, err)
-		return false
+		return false, FileNotExistWarningTemplate
 	}
 	// empty?
 	audioFileInfo, _ := os.Stat(parcel.FilePath)
 	log.Infof("audioFileInfo size: %v", audioFileInfo.Size())
 	if audioFileInfo.Size() < 1024 {
 		log.Warnf("downloaded file size(%v) is not BIG enough(>= 1024B): %s", audioFileInfo.Size(), parcel.FilePath)
-		return false
+		return false, InvalidFileSizeWarningTemplate
 	}
-	return true
+	return true, ""
 }
 
 func Cleanup(parcel Parcel) {

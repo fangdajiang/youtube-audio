@@ -20,8 +20,8 @@ func main() {
 
 func init() {
 	util.InitResources()
-	log.Infof("base: %v", util.MediaBase[0])
-	log.Infof("history: %v", util.MediaHistory[0])
+	log.Infof("base[0]: %v", util.MediaBase[0])
+	log.Infof("history[0]: %v", util.MediaHistory[0])
 }
 
 func process(deliveries []handler.Delivery) {
