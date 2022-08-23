@@ -7,6 +7,7 @@ import (
 	"os"
 	"testing"
 	"time"
+	"youtube-audio/pkg/util"
 )
 
 const (
@@ -24,7 +25,7 @@ func init() {
 	log.Infof("initing deliveryman test")
 
 	telegramBot, _ = GenerateTelegramBot()
-	parcel = GenerateParcel(LocalFilePath, LocalFileCaption+time.Now().Format(DateTimeFormat), UselessUrl)
+	parcel = GenerateParcel(LocalFilePath, LocalFileCaption+time.Now().Format(util.DateTimeFormat), UselessUrl)
 
 }
 
@@ -71,7 +72,7 @@ func TestTelegramBot_SendWarningMessage(t *testing.T) {
 	_, err = f.WriteString("Hello Test")
 	r.NoError(err)
 
-	telegramBot.SendWarningMessage(parcel.Caption, FailedToSendAudioWarningTemplate)
+	//telegramBot.SendToBot(FailedToSendAudioWarningTemplate, parcel.Caption)
 	Cleanup(parcel)
 }
 
@@ -80,5 +81,5 @@ func TestIsAudioValid(t *testing.T) {
 
 	valid, template := IsAudioValid(parcel)
 	r.False(valid)
-	r.Equal(InvalidFileSizeWarningTemplate, template)
+	r.Equal(util.InvalidFileSizeWarningTemplate, template)
 }

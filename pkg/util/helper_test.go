@@ -1,13 +1,11 @@
-package handler
+package util
 
 import (
 	mapset "github.com/deckarep/golang-set"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
-	"math/rand"
 	"testing"
 	"time"
-	"youtube-audio/pkg/util"
 )
 
 func TestGetLocalDateTime(t *testing.T) {
@@ -44,53 +42,10 @@ func TestFileExists(t *testing.T) {
 	r.True(exists, "file NOT exists: %s", filePath)
 }
 
-func TestGetYouTubeVideosFromPlaylists(t *testing.T) {
-	playlistMetaDataArray := GetYouTubeVideosFromPlaylists()
-	log.Infof("playlists count: %v", len(playlistMetaDataArray))
-	var videoMetaDataArray []*PlaylistVideoMetaData
-	for _, playlistMetaData := range playlistMetaDataArray {
-		videoMetaDataArray = append(videoMetaDataArray, playlistMetaData.PlaylistVideoMetaDataArray...)
-	}
-	for _, video := range videoMetaDataArray {
-		log.Infof("id:%v, position:%v", video.VideoId, video.Position)
-	}
-}
-
-func TestFlushFetchHistory(t *testing.T) {
-	r := require.New(t)
-
-	deliveries := AssembleDeliveriesFromPlaylists()
-	r.True(len(deliveries) > 0)
-	log.Infof("count: %v, deliveries: %v", len(deliveries), deliveries)
-
-	var tamperedDeliveries []Delivery
-	for _, delivery := range deliveries {
-		log.Infof("original delivery: %v", delivery)
-		rand.Seed(time.Now().UnixNano())
-		delivery.Done = rand.Float32() < 0.5
-		tamperedDeliveries = append(tamperedDeliveries, delivery)
-	}
-	for _, delivery := range tamperedDeliveries {
-		log.Infof("tampered delivery: %v", delivery)
-	}
-
-	FlushFetchHistory(deliveries)
-}
-
-func TestAssembleDeliveriesFromPlaylists(t *testing.T) {
-	deliveries := AssembleDeliveriesFromPlaylists()
-	log.Infof("deliveries: %v", deliveries)
-}
-
-func TestMergeHistoryFetchesInto(t *testing.T) {
-	deliveries := MergeHistoryFetchesInto(AssembleDeliveriesFromPlaylists())
-	log.Infof("merged deliveries: %v", deliveries)
-}
-
 func TestDeleteSliceElms(t *testing.T) {
-	historyProps := util.MediaHistory
+	historyProps := MediaHistory
 	log.Infof("historyProps count: %v, historyProps: %v", len(historyProps), historyProps)
-	hp := util.HistoryProps{Id: "PLt-jD7OCbLJ0ZMwvQFZCSuNaUbT3GMqVJ"}
+	hp := HistoryProps{Id: "PLt-jD7OCbLJ0ZMwvQFZCSuNaUbT3GMqVJ"}
 	result := DeleteSliceElms(historyProps, hp)
 	log.Infof("result count: %v, result: %v", len(result), result)
 	log.Infof("historyProps count2: %v", len(historyProps))

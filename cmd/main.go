@@ -6,11 +6,12 @@ import (
 	"sync"
 	"time"
 	"youtube-audio/pkg/handler"
+	"youtube-audio/pkg/reporter"
 	"youtube-audio/pkg/util"
 )
 
 func main() {
-	fmt.Printf("Start fetching, converting, sending... from %s\n", time.Now().Format(handler.DateTimeFormat))
+	fmt.Printf("Start fetching, converting, sending... from %s\n", time.Now().Format(util.DateTimeFormat))
 
 	incomingDeliveries := handler.AssembleDeliveriesFromPlaylists()
 	mergedDeliveries := handler.MergeHistoryFetchesInto(incomingDeliveries)
@@ -22,6 +23,7 @@ func init() {
 	util.InitResources()
 	log.Infof("base[0]: %v", util.MediaBase[0])
 	log.Infof("history[0]: %v", util.MediaHistory[0])
+	reporter.InitGeneralStats()
 }
 
 func process(deliveries []handler.Delivery) {
@@ -44,6 +46,8 @@ func process(deliveries []handler.Delivery) {
 			wg.Wait()
 		}
 	}
-	log.Infof("updatedDeliveries: %v", updatedDeliveries)
+	reporter.EndGeneralStats()
+	handler.SendSummary()
+	//log.Infof("updatedDeliveries: %v", updatedDeliveries)
 	handler.FlushFetchHistory(updatedDeliveries)
 }

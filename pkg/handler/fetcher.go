@@ -10,7 +10,9 @@ import (
 	youtubeapi "google.golang.org/api/youtube/v3"
 	"io"
 	"os"
+	"sort"
 	"strconv"
+	"testing"
 	"time"
 	"youtube-audio/pkg/util"
 )
@@ -66,12 +68,12 @@ func ProcessOneVideo(delivery *Delivery) {
 		audioFile, err := fetchAudio(delivery.Parcel.Url)
 		if err != nil {
 			log.Warnf("Failed to download audio url %s from YouTube, error: %v", delivery.Parcel.Url, err)
-			SendMessage(err.Error(), FailedToDownloadAudioWarningTemplate)
+			SendWarningMessage(util.FailedToFetchAudioWarningTemplate, err.Error())
 			return
 		}
 		if v, template := IsAudioValid(audioFile); v == false {
 			log.Warnf("Downloaded file from YouTube %s is NOT valid: %s", delivery.Parcel.Url, template)
-			SendMessage(audioFile.FilePath, template)
+			SendWarningMessage(template, audioFile.FilePath)
 			return
 		} else {
 			delivery.Parcel = audioFile
@@ -80,7 +82,7 @@ func ProcessOneVideo(delivery *Delivery) {
 			if err != nil {
 				log.Warnf("Failed to send file %s to telegram channel, error: %v", audioFile.FilePath, err)
 				audioFile.Caption = audioFile.Caption + fmt.Sprintf("%s", err)
-				SendMessage(audioFile.Caption, FailedToSendAudioWarningTemplate)
+				SendWarningMessage(util.FailedToSendAudioWarningTemplate, audioFile.Caption)
 			}
 		}
 		if audioFile.FilePath != "" {
@@ -123,13 +125,13 @@ func GetPlaylistMetaDataBy(playlistId string) PlaylistMetaData {
 		return playlistMetaData
 	}
 
-	playlistResponse := playlistItemsList(svc, YouTubePart, playlistId, GetYouTubePlaylistMaxResultsCount(playlistId))
+	playlistResponse := playlistItemsList(svc, util.YouTubePart, playlistId, util.GetYouTubePlaylistMaxResultsCount(playlistId))
 
 	playlistMetaData.PlaylistId = playlistId
 	for _, playlistItem := range playlistResponse.Items {
 		publishedAt := playlistItem.Snippet.PublishedAt
 		title := playlistItem.Snippet.Title
-		localPublishedAt := GetLocalDateTime(publishedAt)
+		localPublishedAt := util.GetLocalDateTime(publishedAt)
 		channelTitle := playlistItem.Snippet.ChannelTitle
 		channelId := playlistItem.Snippet.ChannelId
 
@@ -137,7 +139,7 @@ func GetPlaylistMetaDataBy(playlistId string) PlaylistMetaData {
 		position := playlistItem.Snippet.Position
 		log.Infof("%s(%s) from %s(%s) on position %v was published at %s\r\n", title, videoId, channelTitle, channelId, position, localPublishedAt)
 
-		videoMetaData := PlaylistVideoMetaData{videoId, MakeYouTubeRawUrl(videoId), position}
+		videoMetaData := PlaylistVideoMetaData{videoId, util.MakeYouTubeRawUrl(videoId), position}
 		playlistMetaData.PlaylistVideoMetaDataArray = append(playlistMetaData.PlaylistVideoMetaDataArray, &videoMetaData)
 	}
 
@@ -155,9 +157,9 @@ func GetPlaylistMetaDataBy(playlistId string) PlaylistMetaData {
 func playlistItemsList(service *youtubeapi.Service, part []string, playlistId string, maxResults int64) *youtubeapi.PlaylistItemListResponse {
 	call := service.PlaylistItems.List(part)
 	call = call.PlaylistId(playlistId)
-	if maxResults <= 0 || maxResults > FetchYouTubeMaxResultsLimit {
+	if maxResults <= 0 || maxResults > util.FetchYouTubeMaxResultsLimit {
 		log.Errorf("illegal maxResults error:%v", maxResults)
-		maxResults = YouTubeDefaultMaxResults
+		maxResults = util.YouTubeDefaultMaxResults
 	}
 	call = call.MaxResults(maxResults)
 	//lastUpdated := queryParamOpt{key: "order", value: "time"}
@@ -171,9 +173,9 @@ func playlistItemsList(service *youtubeapi.Service, part []string, playlistId st
 func RetrieveITagOfMinimumSizeAudio(mediaUrl string) (int, error) {
 	client := youtube.Client{}
 
-	log.Infof("Ready to get video: %s at %s", mediaUrl, time.Now().Format(DateTimeFormat))
+	log.Infof("Ready to get video: %s at %s", mediaUrl, time.Now().Format(util.DateTimeFormat))
 	video, err := client.GetVideo(mediaUrl)
-	log.Infof("video duration: %vs at %s", video.Duration.Seconds(), time.Now().Format(DateTimeFormat))
+	log.Infof("video duration: %vs at %s", video.Duration.Seconds(), time.Now().Format(util.DateTimeFormat))
 	if err != nil {
 		return -1, fmt.Errorf("failed to get video, error:%s, mediaUrl:%s", err, mediaUrl)
 	}
@@ -204,17 +206,17 @@ func RetrieveITagOfMinimumSizeAudio(mediaUrl string) (int, error) {
 		ITagNo:           0,
 		Bitrate:          0,
 		AverageBitrate:   0,
-		ContentLength:    UploadAudioMaxLength,
+		ContentLength:    util.UploadAudioMaxLength,
 		ApproxDurationMs: "",
 		AudioChannels:    0,
 	}
 	if len(videoMetaDataArray) == 0 {
 		return -1, fmt.Errorf("proper audio track not found:%s", mediaUrl)
 	} else if len(videoMetaDataArray) == 1 {
-		log.Infof("Found only 1 proper audio track for %s, iTagNo: %v at %s", mediaUrl, videoMetaDataArray[0].ITagNo, time.Now().Format(DateTimeFormat))
+		log.Infof("Found only 1 proper audio track for %s, iTagNo: %v at %s", mediaUrl, videoMetaDataArray[0].ITagNo, time.Now().Format(util.DateTimeFormat))
 		minSizeVideoMetaData = videoMetaDataArray[0]
 	} else {
-		log.Infof("Found %v proper audio tracks for %s, at %s", len(videoMetaDataArray), mediaUrl, time.Now().Format(DateTimeFormat))
+		log.Infof("Found %v proper audio tracks for %s, at %s", len(videoMetaDataArray), mediaUrl, time.Now().Format(util.DateTimeFormat))
 		for _, v := range videoMetaDataArray {
 			if v.ContentLength < minSizeVideoMetaData.ContentLength {
 				minSizeVideoMetaData = v
@@ -225,32 +227,32 @@ func RetrieveITagOfMinimumSizeAudio(mediaUrl string) (int, error) {
 		log.Infof("maxSizeVideoMetaData: %v", maxSizeVideoMetaData)
 	}
 	log.Infof("minSizeVideoMetaData: %v", minSizeVideoMetaData)
-	if UploadAudioMaxLength < minSizeVideoMetaData.ContentLength {
+	if util.UploadAudioMaxLength < minSizeVideoMetaData.ContentLength {
 		return -1, fmt.Errorf("the min size %v of audio track EXCEEDS the max %v, url:%s",
-			minSizeVideoMetaData.ContentLength, UploadAudioMaxLength, mediaUrl)
+			minSizeVideoMetaData.ContentLength, util.UploadAudioMaxLength, mediaUrl)
 	}
 	return minSizeVideoMetaData.ITagNo, nil
 }
 
 func DownloadYouTubeAudioToPath(mediaUrl string) (Parcel, error) {
 	var parcel Parcel
-	log.Infof("Ready to download media %s at %s", mediaUrl, time.Now().Format(DateTimeFormat))
+	log.Infof("Ready to download media %s at %s", mediaUrl, time.Now().Format(util.DateTimeFormat))
 	result, err := goutubedl.New(context.Background(), mediaUrl, goutubedl.Options{})
 	if err != nil {
 		log.Errorf("goutubedl error:%s", err)
-		return parcel, fmt.Errorf("goutubedl new error: %s", mediaUrl)
+		return parcel, fmt.Errorf("goutubedl new error: %v, url: %s", err, mediaUrl)
 	}
 
-	validMediaFileName, err := FilenamifyMediaTitle(result.Info.Title)
+	validMediaFileName, err := util.FilenamifyMediaTitle(result.Info.Title)
 	if err != nil {
 		return parcel, err
 	}
-	parcel = GenerateParcel(fmt.Sprintf("%s%s", GetYouTubeFetchBase().DownloadedFilesPath, validMediaFileName), result.Info.Title, mediaUrl)
+	parcel = GenerateParcel(fmt.Sprintf("%s%s", util.GetYouTubeFetchBase().DownloadedFilesPath, validMediaFileName), result.Info.Title, mediaUrl)
 	log.Infof("generated parcel: %v", parcel)
 
-	log.Infof("ready to CREATE media file %s at %s", parcel.FilePath, time.Now().Format(DateTimeFormat))
+	log.Infof("ready to CREATE media file %s at %s", parcel.FilePath, time.Now().Format(util.DateTimeFormat))
 	parcelFile, err := os.Create(parcel.FilePath)
-	log.Infof("media file %s CREATED at %s", parcel.FilePath, time.Now().Format(DateTimeFormat))
+	log.Infof("media file %s CREATED at %s", parcel.FilePath, time.Now().Format(util.DateTimeFormat))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -258,21 +260,21 @@ func DownloadYouTubeAudioToPath(mediaUrl string) (Parcel, error) {
 	iTagNo, err := RetrieveITagOfMinimumSizeAudio(mediaUrl)
 	if err != nil {
 		log.Errorf("retrieve iTag error, iTagNo: %v, error: %s", iTagNo, err)
-		return parcel, fmt.Errorf("goutubedl download error: %s, ITagNo: %v", mediaUrl, iTagNo)
+		return parcel, fmt.Errorf("goutubedl download error: %v, url: %s, ITagNo: %v", err, mediaUrl, iTagNo)
 	}
 	downloadedResult, err := result.Download(context.Background(), strconv.Itoa(iTagNo))
 	if err != nil {
 		log.Errorf("download error:%s", err)
-		return parcel, fmt.Errorf("goutubedl download error: %s, ITagNo: %v", mediaUrl, iTagNo)
+		return parcel, fmt.Errorf("goutubedl download error: %v, url: %s, ITagNo: %v", err, mediaUrl, iTagNo)
 	}
 	defer func(downloadedResult *goutubedl.DownloadResult) {
 		_ = downloadedResult.Close()
 	}(downloadedResult)
-	log.Infof("downloading media %s from %s", result.Info.Title, time.Now().Format(DateTimeFormat))
+	log.Infof("downloading media %s from %s", result.Info.Title, time.Now().Format(util.DateTimeFormat))
 
-	log.Infof("ready to COPY media file %s at %s", parcel.FilePath, time.Now().Format(DateTimeFormat))
+	log.Infof("ready to COPY media file %s at %s", parcel.FilePath, time.Now().Format(util.DateTimeFormat))
 	written, err := io.Copy(parcelFile, downloadedResult)
-	log.Infof("media file %s DOWNLOADED & COPIED at %s", parcel.FilePath, time.Now().Format(DateTimeFormat))
+	log.Infof("media file %s DOWNLOADED & COPIED at %s", parcel.FilePath, time.Now().Format(util.DateTimeFormat))
 	if err != nil {
 		return parcel, fmt.Errorf("copy error: %s, parcel: %v, written: %v", err, parcel, written)
 	}
@@ -281,4 +283,152 @@ func DownloadYouTubeAudioToPath(mediaUrl string) (Parcel, error) {
 	}(parcelFile)
 
 	return parcel, nil
+}
+
+func GenerateFetchHistory(deliveries []Delivery) []util.HistoryProps {
+	channelChatId, _ := util.GetEnvVariable(util.EnvChatIdName)
+	subscriberId, _ := strconv.ParseInt(channelChatId, 10, 64)
+
+	var playlistMap map[string][]util.SubscriberItems
+	playlistMap = make(map[string][]util.SubscriberItems)
+	for _, delivery := range deliveries {
+		subscribers, ok := playlistMap[delivery.PlaylistId]
+		if ok {
+			log.Infof("playlist id %s FOUND from playlistMap: %v", delivery.PlaylistId, playlistMap)
+			var newSubscribers []util.SubscriberItems
+			if delivery.Done {
+				for _, sub := range subscribers {
+					if sub.Id == subscriberId {
+						sub.LastFetch = util.FetchItems{Datetime: sub.LastFetch.Datetime, Timestamp: sub.LastFetch.Timestamp, Urls: append(sub.LastFetch.Urls, delivery.Parcel.Url)}
+						newSubscribers = append(newSubscribers, sub)
+					}
+				}
+			} else {
+				now := time.Now()
+				for _, sub := range subscribers {
+					nextFetchTimestamp := sub.NextFetch.Timestamp
+					nextFetchDatetime := sub.NextFetch.Datetime
+					if nextFetchTimestamp == 0 {
+						nextFetchTimestamp = now.Unix()
+						nextFetchDatetime = now.Format(util.DateTimeFormat)
+					}
+					if sub.Id == subscriberId {
+						sub.NextFetch = util.FetchItems{Datetime: nextFetchDatetime, Timestamp: nextFetchTimestamp, Urls: append(sub.NextFetch.Urls, delivery.Parcel.Url)}
+						newSubscribers = append(newSubscribers, sub)
+					}
+				}
+			}
+			log.Infof("newSubscribers: %v", newSubscribers)
+			playlistMap[delivery.PlaylistId] = newSubscribers
+		} else {
+			log.Infof("playlist id %s NOT FOUND from playlistMap: %v", delivery.PlaylistId, playlistMap)
+			var urls []string
+			urls = append(urls, delivery.Parcel.Url)
+			var lastFetch, nextFetch util.FetchItems
+			thisFetch := util.FetchItems{Datetime: delivery.Datetime, Timestamp: delivery.Timestamp, Urls: urls}
+			if delivery.Done {
+				lastFetch = thisFetch
+			} else {
+				nextFetch = thisFetch
+			}
+			subscriberItem := util.SubscriberItems{Id: subscriberId, LastFetch: lastFetch, NextFetch: nextFetch}
+			subscriberItems := []util.SubscriberItems{subscriberItem}
+			playlistMap[delivery.PlaylistId] = subscriberItems
+		}
+	}
+	log.Infof("playlistMap: %v", playlistMap)
+	var historyPropsArray []util.HistoryProps
+	for playlistId := range playlistMap {
+		historyProps := util.HistoryProps{Id: playlistId, Subscribers: playlistMap[playlistId]}
+		historyPropsArray = append(historyPropsArray, historyProps)
+	}
+	return historyPropsArray
+}
+
+func MergeHistoryFetchesInto(newDeliveries []Delivery) []Delivery {
+	historyProps := util.MediaHistory
+	log.Infof("newDeliveries count: %v, historyProps count: %v", len(newDeliveries), len(historyProps))
+	var mergedDeliveries []Delivery
+	for _, newDelivery := range newDeliveries {
+		log.Infof("newDelivery: %v", newDelivery)
+		isNewPlayListId := true
+		for _, historyProp := range historyProps {
+			if newDelivery.PlaylistId == historyProp.Id {
+				isNewPlayListId = false
+				for _, sub := range historyProp.Subscribers {
+					AppendDeliveries(&mergedDeliveries, sub.LastFetch, historyProp.Id, true)
+					nextFetchUrls := sub.NextFetch.Urls
+					if len(nextFetchUrls) > 0 {
+						if util.StringSliceContains(nextFetchUrls, newDelivery.Parcel.Url) {
+							log.Infof("newDelivery url %s was FOUND from history NEXT fetch urls: %v", newDelivery.Parcel.Url, nextFetchUrls)
+							AppendDeliveries(&mergedDeliveries, sub.NextFetch, historyProp.Id, false)
+						} else {
+							log.Infof("newDelivery url %s NOT FOUND from history NEXT fetch urls: %v, add it", newDelivery.Parcel.Url, nextFetchUrls)
+							mergedDeliveries = append(mergedDeliveries, newDelivery)
+						}
+					} else {
+						log.Infof("next fetch urls EMPTY, subscribers id: %v, playlist id: %v, add it", sub.Id, historyProp.Id)
+						mergedDeliveries = append(mergedDeliveries, newDelivery)
+					}
+				}
+				break
+			}
+		}
+		if isNewPlayListId {
+			now := time.Now()
+			newDelivery.Timestamp = now.Unix()
+			newDelivery.Datetime = now.Format(util.DateTimeFormat)
+			mergedDeliveries = append(mergedDeliveries, newDelivery)
+		}
+	}
+	mergedDeliveriesWithoutDuplicated := RemoveDuplicatedUrlsByLoop(mergedDeliveries)
+	log.Infof("merged deliveries count: %v which removed duplicated items", len(mergedDeliveriesWithoutDuplicated))
+	return mergedDeliveriesWithoutDuplicated
+}
+
+func GetYouTubeVideosFromPlaylists() []PlaylistMetaData {
+	var playlistMetaDataArray []PlaylistMetaData
+	for _, param := range util.GetYouTubeFetchBase().Params {
+		playlistMetaData := GetPlaylistMetaDataBy(param.Id)
+		if param.SortByPosition {
+			log.Infof("SORT the playlist:%s", param.Id)
+			sort.Sort(playlistMetaData)
+		}
+		playlistMetaDataArray = append(playlistMetaDataArray, playlistMetaData)
+	}
+	return playlistMetaDataArray
+}
+
+func AssembleDeliveriesFromPlaylists() []Delivery {
+	playlistMetaDataArray := GetYouTubeVideosFromPlaylists()
+	var deliveries []Delivery
+	for _, playlistMetaData := range playlistMetaDataArray {
+		delivery := Delivery{}
+		delivery.PlaylistId = playlistMetaData.PlaylistId
+		for _, playlistVideoMetaData := range playlistMetaData.PlaylistVideoMetaDataArray {
+			delivery.Parcel = GenerateParcel("", "", playlistVideoMetaData.RawUrl)
+			deliveries = append(deliveries, delivery)
+		}
+	}
+	log.Infof("total incoming playlists: %v, total incoming deliveries: %v", len(playlistMetaDataArray), len(deliveries))
+	return deliveries
+}
+
+func GenerateYouTubeCredentials() (YouTubeCredentials, error) {
+	var err error
+	var youTubeCredentials YouTubeCredentials
+
+	youtubeKey, err := util.GetEnvVariable(util.EnvYouTubeKeyName)
+	if err != nil {
+		log.Errorf("%s", err)
+		return youTubeCredentials, fmt.Errorf("reading env %s vars error", util.EnvYouTubeKeyName)
+	}
+	youTubeCredentials.Key = youtubeKey
+
+	return youTubeCredentials, nil
+}
+
+func TestMergeHistoryFetchesInto(t *testing.T) {
+	deliveries := MergeHistoryFetchesInto(AssembleDeliveriesFromPlaylists())
+	log.Infof("merged deliveries: %v", deliveries)
 }

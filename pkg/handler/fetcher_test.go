@@ -4,12 +4,52 @@ import (
 	"github.com/kkdai/youtube/v2"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
+	"math/rand"
 	"testing"
+	"time"
 	"youtube-audio/pkg/util"
 )
 
 func init() {
 	util.InitResources()
+}
+
+func TestGetYouTubeVideosFromPlaylists(t *testing.T) {
+	playlistMetaDataArray := GetYouTubeVideosFromPlaylists()
+	log.Infof("playlists count: %v", len(playlistMetaDataArray))
+	var videoMetaDataArray []*PlaylistVideoMetaData
+	for _, playlistMetaData := range playlistMetaDataArray {
+		videoMetaDataArray = append(videoMetaDataArray, playlistMetaData.PlaylistVideoMetaDataArray...)
+	}
+	for _, video := range videoMetaDataArray {
+		log.Infof("id:%v, position:%v", video.VideoId, video.Position)
+	}
+}
+
+func TestFlushFetchHistory(t *testing.T) {
+	r := require.New(t)
+
+	deliveries := AssembleDeliveriesFromPlaylists()
+	r.True(len(deliveries) > 0)
+	log.Infof("count: %v, deliveries: %v", len(deliveries), deliveries)
+
+	var tamperedDeliveries []Delivery
+	for _, delivery := range deliveries {
+		log.Infof("original delivery: %v", delivery)
+		rand.Seed(time.Now().UnixNano())
+		delivery.Done = rand.Float32() < 0.5
+		tamperedDeliveries = append(tamperedDeliveries, delivery)
+	}
+	for _, delivery := range tamperedDeliveries {
+		log.Infof("tampered delivery: %v", delivery)
+	}
+
+	FlushFetchHistory(deliveries)
+}
+
+func TestAssembleDeliveriesFromPlaylists(t *testing.T) {
+	deliveries := AssembleDeliveriesFromPlaylists()
+	log.Infof("deliveries: %v", deliveries)
 }
 
 func TestFindChannelId(t *testing.T) {
@@ -20,7 +60,7 @@ func TestFindChannelId(t *testing.T) {
 	channelAlias := "德国自干五"
 	queryType := "channel"
 
-	call := svc.Search.List(YouTubePart)
+	call := svc.Search.List(util.YouTubePart)
 	call = call.Q(channelAlias).Type(queryType)
 	response, err := call.Do()
 	r.NoError(err)
@@ -37,7 +77,7 @@ func TestGetVideoMetaDataArrayBy(t *testing.T) {
 	playlistId := "PL_gom9iTTcZrCXj4niVYgAdkTbybJpQQR"
 
 	playlistMetaData := GetPlaylistMetaDataBy(playlistId)
-	maxResultsCount := GetYouTubePlaylistMaxResultsCount(playlistId)
+	maxResultsCount := util.GetYouTubePlaylistMaxResultsCount(playlistId)
 
 	r.Len(playlistMetaData.PlaylistVideoMetaDataArray, int(maxResultsCount))
 
