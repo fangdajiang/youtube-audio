@@ -66,11 +66,13 @@ func ProcessOneVideo(delivery *Delivery) {
 		audioFile, err := fetchAudio(delivery.Parcel.Url)
 		if err != nil {
 			log.Warnf("Failed to download audio url %s from YouTube, error: %v", delivery.Parcel.Url, err)
-			SendMessage(delivery.Parcel.Url, FailedToDownloadAudioWarningTemplate)
+			SendMessage(err.Error(), FailedToDownloadAudioWarningTemplate)
+			return
 		}
 		if v, template := IsAudioValid(audioFile); v == false {
 			log.Warnf("Downloaded file from YouTube %s is NOT valid: %s", delivery.Parcel.Url, template)
 			SendMessage(audioFile.FilePath, template)
+			return
 		} else {
 			delivery.Parcel = audioFile
 			err = SendAudio(delivery)

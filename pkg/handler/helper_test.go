@@ -1,6 +1,7 @@
 package handler
 
 import (
+	mapset "github.com/deckarep/golang-set"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"math/rand"
@@ -93,5 +94,17 @@ func TestDeleteSliceElms(t *testing.T) {
 	result := DeleteSliceElms(historyProps, hp)
 	log.Infof("result count: %v, result: %v", len(result), result)
 	log.Infof("historyProps count2: %v", len(historyProps))
+
+}
+
+func TestContainString(t *testing.T) {
+	sl := []string{"https://www.youtube.com/watch?v=jQZ36-zERtM"}
+	log.Infof("sl: %v", sl)
+
+	sl2 := StringSlice2Interface(sl)
+
+	set := mapset.NewSetFromSlice(sl2)
+	log.Infof("contains https://www.youtube.com/watch?v=jQZ36-zERtM: %v", set.Contains("https://www.youtube.com/watch?v=jQZ36-zERtM"))
+	log.Infof("contains https://www.youtube.com/watch?v=JOj-k2UE2Bs: %v", set.Contains("https://www.youtube.com/watch?v=JOj-k2UE2Bs"))
 
 }

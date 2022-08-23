@@ -4,6 +4,7 @@ go 1.18
 
 require (
 	github.com/aliyun/aliyun-oss-go-sdk v2.2.4+incompatible
+	github.com/deckarep/golang-set v1.8.0
 	github.com/flytam/filenamify v1.1.0
 	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
 	github.com/kkdai/youtube/v2 v2.7.15

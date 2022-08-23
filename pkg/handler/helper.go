@@ -3,6 +3,7 @@ package handler
 import (
 	"errors"
 	"fmt"
+	mapset "github.com/deckarep/golang-set"
 	"github.com/flytam/filenamify"
 	log "github.com/sirupsen/logrus"
 	"os"
@@ -35,6 +36,20 @@ const (
 
 var YouTubePart = []string{"snippet"}
 
+func StringSliceContains(sl []string, s string) bool {
+	sl2 := StringSlice2Interface(sl)
+	set := mapset.NewSetFromSlice(sl2)
+	return set.Contains(s)
+}
+
+func StringSlice2Interface(sl []string) []interface{} {
+	sl2 := make([]interface{}, 0)
+	for _, str := range sl {
+		sl2 = append(sl2, str)
+	}
+	return sl2
+}
+
 // RemoveDuplicatedUrlsByLoop 通过两重循环过滤重复元素 ref: https://blog.csdn.net/qq_27068845/article/details/77407358
 func RemoveDuplicatedUrlsByLoop(slc []Delivery) []Delivery {
 	var result []Delivery
@@ -66,7 +81,7 @@ func appendDeliveries(deliveries *[]Delivery, fetchItems util.FetchItems, playli
 		if len(fetchItems.Urls) > 0 {
 			fetchTime := time.Unix(fetchTimestamp, 0)
 			durationTillNow := time.Since(fetchTime)
-			log.Infof("fetch time till now hours: %v", durationTillNow.Hours())
+			log.Infof("playlistId: %s, fetchDatetime: %s, fetch time till now hours: %v", playlistId, fetchDatetime, durationTillNow.Hours())
 			if durationTillNow.Hours() > 48 {
 				log.Warnf("fetch block time has EXPIRED: %s, playlistId: %s, urls: %v, drop it", fetchDatetime, playlistId, fetchItems.Urls)
 				return
@@ -125,14 +140,11 @@ func MergeHistoryFetchesInto(newDeliveries []Delivery) []Delivery {
 					appendDeliveries(&mergedDeliveries, sub.LastFetch, historyProp.Id, true)
 					nextFetchUrls := sub.NextFetch.Urls
 					if len(nextFetchUrls) > 0 {
-						sort.Strings(nextFetchUrls)
-						nextFetchUrlsIndex := sort.SearchStrings(nextFetchUrls, newDelivery.Parcel.Url)
-						log.Infof("nextFetchUrlsIndex: %v, next fetch urls count: %v", nextFetchUrlsIndex, len(nextFetchUrls))
-						if nextFetchUrlsIndex < len(nextFetchUrls) {
-							log.Infof("newDelivery url %s was FOUND from history NEXT fetch urls", newDelivery.Parcel.Url)
+						if StringSliceContains(nextFetchUrls, newDelivery.Parcel.Url) {
+							log.Infof("newDelivery url %s was FOUND from history NEXT fetch urls: %v", newDelivery.Parcel.Url, nextFetchUrls)
 							appendDeliveries(&mergedDeliveries, sub.NextFetch, historyProp.Id, false)
 						} else {
-							log.Infof("newDelivery url %s NOT FOUND from history NEXT fetch urls, add it", newDelivery.Parcel.Url)
+							log.Infof("newDelivery url %s NOT FOUND from history NEXT fetch urls: %v, add it", newDelivery.Parcel.Url, nextFetchUrls)
 							mergedDeliveries = append(mergedDeliveries, newDelivery)
 						}
 					} else {

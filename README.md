@@ -72,3 +72,4 @@ docker build -t youtube-audio:latest -f ./Dockerfile .
 ## 受以下项目启发并表示感谢
 * [youtube-dl](https://github.com/ytdl-org/youtube-dl)
 * [youtube](https://github.com/kkdai/youtube)
+* [YouTube中文時政精選](https://t.me/YouTubePoliTalk)
