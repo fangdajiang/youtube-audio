@@ -1,14 +1,14 @@
 package util
 
 import (
-	"errors"
 	"fmt"
 	mapset "github.com/deckarep/golang-set"
 	"github.com/flytam/filenamify"
-	"os"
 	"strings"
 	"time"
 	"youtube-audio/pkg/util/log"
+	"youtube-audio/pkg/util/oss"
+	"youtube-audio/pkg/util/resource"
 )
 
 const (
@@ -33,6 +33,10 @@ const (
 
 var YouTubePart = []string{"snippet"}
 
+func UploadLog2Oss() {
+	oss.Upload2Oss(log.LoggingFilePath)
+}
+
 func StringSliceContains(sl []string, s string) bool {
 	sl2 := StringSlice2Interface(sl)
 	set := mapset.NewSetFromSlice(sl2)
@@ -47,17 +51,17 @@ func StringSlice2Interface(sl []string) []interface{} {
 	return sl2
 }
 
-func DeleteSliceElms(sl []HistoryProps, elms ...HistoryProps) []HistoryProps {
+func DeleteSliceElms(sl []resource.HistoryProps, elms ...resource.HistoryProps) []resource.HistoryProps {
 	if len(sl) == 0 || len(elms) == 0 {
 		return sl
 	}
 	// 先将元素转为 set
-	m := make(map[string]HistoryProps)
+	m := make(map[string]resource.HistoryProps)
 	for _, v := range elms {
-		m[v.Id] = HistoryProps{}
+		m[v.Id] = resource.HistoryProps{}
 	}
 	// 过滤掉指定元素
-	res := make([]HistoryProps, 0, len(sl))
+	res := make([]resource.HistoryProps, 0, len(sl))
 	for _, v := range sl {
 		if _, ok := m[v.Id]; !ok {
 			res = append(res, v)
@@ -66,9 +70,9 @@ func DeleteSliceElms(sl []HistoryProps, elms ...HistoryProps) []HistoryProps {
 	return res
 }
 
-func GetYouTubeFetchBase() BaseProps {
-	youtube := BaseProps{}
-	for _, cp := range MediaBase {
+func GetYouTubeFetchBase() resource.BaseProps {
+	youtube := resource.BaseProps{}
+	for _, cp := range resource.MediaBase {
 		if cp.Owner == "YouTube" {
 			youtube = cp
 			break
@@ -76,7 +80,7 @@ func GetYouTubeFetchBase() BaseProps {
 		continue
 	}
 	if youtube.Owner == "" {
-		log.Fatalf("getting youtube playlists from json error, util.MediaBase:%v", MediaBase)
+		log.Fatalf("getting youtube playlists from json error, util.MediaBase:%v", resource.MediaBase)
 	}
 	return youtube
 }
@@ -102,17 +106,6 @@ func GetLocalDateTime(formattedDateTime string) string {
 	}
 	loc, _ := time.LoadLocation("Asia/Shanghai")
 	return youtubeTime.In(loc).Format(DateTimeFormat)
-}
-
-func FileExists(name string) (bool, error) {
-	_, err := os.Stat(name)
-	if err == nil {
-		return true, nil
-	}
-	if errors.Is(err, os.ErrNotExist) {
-		return false, nil
-	}
-	return false, err
 }
 
 func MakeYouTubeRawUrl(videoId string) string {

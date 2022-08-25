@@ -8,6 +8,7 @@ import (
 	"time"
 	"youtube-audio/pkg/util"
 	"youtube-audio/pkg/util/log"
+	"youtube-audio/pkg/util/myio"
 )
 
 func init() {
@@ -108,7 +109,7 @@ func TestDownloadYouTubeAudioToPath(t *testing.T) {
 	r.NoError(err)
 	r.Equal("摸着石头过河，后来呢？/王剑每日观察/短视频", parcel.Caption)
 
-	Cleanup(parcel)
+	myio.Cleanup(parcel)
 }
 
 func TestRetrieveITagOfMinimumAudioSize(t *testing.T) {

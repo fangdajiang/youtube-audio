@@ -13,7 +13,10 @@ import (
 	"strconv"
 	"time"
 	"youtube-audio/pkg/util"
+	"youtube-audio/pkg/util/env"
 	"youtube-audio/pkg/util/log"
+	io2 "youtube-audio/pkg/util/myio"
+	"youtube-audio/pkg/util/resource"
 )
 
 //ITagNo format id
@@ -56,10 +59,10 @@ func (s PlaylistMetaData) Swap(i, j int) {
 }
 
 func FlushFetchHistory(deliveries []Delivery) {
-	var fetchHistory = util.FetchHistory{Playlists: GenerateFetchHistory(deliveries)}
+	var fetchHistory = resource.FetchHistory{Playlists: GenerateFetchHistory(deliveries)}
 	log.Debugf("fetchHistory: %v", fetchHistory)
 
-	util.MarshalPlaylistJson(fetchHistory)
+	resource.MarshalPlaylistJson(fetchHistory)
 }
 
 func ProcessOneVideo(delivery *Delivery) {
@@ -86,7 +89,7 @@ func ProcessOneVideo(delivery *Delivery) {
 		}
 		if audioFile.FilePath != "" {
 			log.Debugf("ready to clean up, audioFile: %v", audioFile)
-			Cleanup(audioFile)
+			io2.Cleanup(audioFile.FilePath)
 		}
 	} else {
 		log.Infof("the state of this delivery %v is DONE, no more process", delivery)
@@ -284,21 +287,21 @@ func DownloadYouTubeAudioToPath(mediaUrl string) (Parcel, error) {
 	return parcel, nil
 }
 
-func GenerateFetchHistory(deliveries []Delivery) []util.HistoryProps {
-	channelChatId, _ := util.GetEnvVariable(util.EnvChatIdName)
+func GenerateFetchHistory(deliveries []Delivery) []resource.HistoryProps {
+	channelChatId, _ := env.GetEnvVariable(util.EnvChatIdName)
 	subscriberId, _ := strconv.ParseInt(channelChatId, 10, 64)
 
-	var playlistMap map[string][]util.SubscriberItems
-	playlistMap = make(map[string][]util.SubscriberItems)
+	var playlistMap map[string][]resource.SubscriberItems
+	playlistMap = make(map[string][]resource.SubscriberItems)
 	for _, delivery := range deliveries {
 		subscribers, ok := playlistMap[delivery.PlaylistId]
 		if ok {
 			log.Infof("playlist id %s FOUND from playlistMap: %v", delivery.PlaylistId, playlistMap)
-			var newSubscribers []util.SubscriberItems
+			var newSubscribers []resource.SubscriberItems
 			if delivery.Done {
 				for _, sub := range subscribers {
 					if sub.Id == subscriberId {
-						sub.LastFetch = util.FetchItems{Datetime: sub.LastFetch.Datetime, Timestamp: sub.LastFetch.Timestamp, Urls: append(sub.LastFetch.Urls, delivery.Parcel.Url)}
+						sub.LastFetch = resource.FetchItems{Datetime: sub.LastFetch.Datetime, Timestamp: sub.LastFetch.Timestamp, Urls: append(sub.LastFetch.Urls, delivery.Parcel.Url)}
 						newSubscribers = append(newSubscribers, sub)
 					}
 				}
@@ -312,7 +315,7 @@ func GenerateFetchHistory(deliveries []Delivery) []util.HistoryProps {
 						nextFetchDatetime = now.Format(util.DateTimeFormat)
 					}
 					if sub.Id == subscriberId {
-						sub.NextFetch = util.FetchItems{Datetime: nextFetchDatetime, Timestamp: nextFetchTimestamp, Urls: append(sub.NextFetch.Urls, delivery.Parcel.Url)}
+						sub.NextFetch = resource.FetchItems{Datetime: nextFetchDatetime, Timestamp: nextFetchTimestamp, Urls: append(sub.NextFetch.Urls, delivery.Parcel.Url)}
 						newSubscribers = append(newSubscribers, sub)
 					}
 				}
@@ -323,29 +326,29 @@ func GenerateFetchHistory(deliveries []Delivery) []util.HistoryProps {
 			log.Infof("playlist id %s NOT FOUND from playlistMap: %v", delivery.PlaylistId, playlistMap)
 			var urls []string
 			urls = append(urls, delivery.Parcel.Url)
-			var lastFetch, nextFetch util.FetchItems
-			thisFetch := util.FetchItems{Datetime: delivery.Datetime, Timestamp: delivery.Timestamp, Urls: urls}
+			var lastFetch, nextFetch resource.FetchItems
+			thisFetch := resource.FetchItems{Datetime: delivery.Datetime, Timestamp: delivery.Timestamp, Urls: urls}
 			if delivery.Done {
 				lastFetch = thisFetch
 			} else {
 				nextFetch = thisFetch
 			}
-			subscriberItem := util.SubscriberItems{Id: subscriberId, LastFetch: lastFetch, NextFetch: nextFetch}
-			subscriberItems := []util.SubscriberItems{subscriberItem}
+			subscriberItem := resource.SubscriberItems{Id: subscriberId, LastFetch: lastFetch, NextFetch: nextFetch}
+			subscriberItems := []resource.SubscriberItems{subscriberItem}
 			playlistMap[delivery.PlaylistId] = subscriberItems
 		}
 	}
 	log.Debugf("playlistMap: %v", playlistMap)
-	var historyPropsArray []util.HistoryProps
+	var historyPropsArray []resource.HistoryProps
 	for playlistId := range playlistMap {
-		historyProps := util.HistoryProps{Id: playlistId, Subscribers: playlistMap[playlistId]}
+		historyProps := resource.HistoryProps{Id: playlistId, Subscribers: playlistMap[playlistId]}
 		historyPropsArray = append(historyPropsArray, historyProps)
 	}
 	return historyPropsArray
 }
 
 func MergeHistoryFetchesInto(newDeliveries []Delivery) []Delivery {
-	historyProps := util.MediaHistory
+	historyProps := resource.MediaHistory
 	log.Debugf("newDeliveries count: %v, historyProps count: %v", len(newDeliveries), len(historyProps))
 	var mergedDeliveries []Delivery
 	for _, newDelivery := range newDeliveries {
@@ -417,7 +420,7 @@ func GenerateYouTubeCredentials() (YouTubeCredentials, error) {
 	var err error
 	var youTubeCredentials YouTubeCredentials
 
-	youtubeKey, err := util.GetEnvVariable(util.EnvYouTubeKeyName)
+	youtubeKey, err := env.GetEnvVariable(util.EnvYouTubeKeyName)
 	if err != nil {
 		log.Errorf("%s", err)
 		return youTubeCredentials, fmt.Errorf("reading env %s vars error", util.EnvYouTubeKeyName)

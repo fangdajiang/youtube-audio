@@ -8,6 +8,7 @@ import (
 	"time"
 	"youtube-audio/pkg/util"
 	"youtube-audio/pkg/util/log"
+	"youtube-audio/pkg/util/myio"
 )
 
 const (
@@ -54,7 +55,7 @@ func TestTelegramBot_Send(t *testing.T) {
 	err = telegramBot.Send(parcel)
 	r.NoError(err)
 
-	Cleanup(parcel)
+	myio.Cleanup(parcel.FilePath)
 
 }
 
@@ -73,7 +74,7 @@ func TestTelegramBot_SendWarningMessage(t *testing.T) {
 	r.NoError(err)
 
 	//telegramBot.SendToBot(FailedToSendAudioWarningTemplate, parcel.Caption)
-	Cleanup(parcel)
+	myio.Cleanup(parcel.FilePath)
 }
 
 func TestIsAudioValid(t *testing.T) {

@@ -6,9 +6,26 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 	"io"
 	"os"
+	"time"
+)
+
+const (
+	FileNameSuffixFormat string = "-2006-01-02-15-04"
+	FileNamePrefix       string = "youtube-audio"
+	FileNameExt          string = ".log"
+	FileNameDir          string = "logs/"
 )
 
 var log = logrus.New()
+var LoggingFilePath = getLogFilePath()
+
+func getLogFilePath() string {
+	return FileNameDir + getLogFileName()
+}
+
+func getLogFileName() string {
+	return FileNamePrefix + time.Now().Format(FileNameSuffixFormat) + FileNameExt
+}
 
 func init() {
 	fmt.Println("INIT LOGGING...")
@@ -17,7 +34,7 @@ func init() {
 		TimestampFormat: "2006-01-02 15:04:05",
 	})
 	logger := &lumberjack.Logger{
-		Filename:   "./youtube-audio.log",
+		Filename:   LoggingFilePath,
 		MaxSize:    30,    // 日志文件大小，单位是 MB
 		MaxBackups: 3,     // 最大过期日志保留个数
 		MaxAge:     28,    // 保留过期文件最大时间，单位 天

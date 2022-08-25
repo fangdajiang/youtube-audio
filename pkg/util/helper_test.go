@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 	"youtube-audio/pkg/util/log"
+	"youtube-audio/pkg/util/myio"
 )
 
 func TestGetLocalDateTime(t *testing.T) {
@@ -37,7 +38,7 @@ func TestFileExists(t *testing.T) {
 
 	filePath := "/tmp/test.txt"
 
-	exists, err := FileExists(filePath)
+	exists, err := myio.FileExists(filePath)
 	r.NoError(err)
 	r.True(exists, "file NOT exists: %s", filePath)
 }

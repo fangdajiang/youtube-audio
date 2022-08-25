@@ -1,9 +1,10 @@
-package util
+package resource
 
 import (
 	"encoding/json"
 	"strings"
 	"youtube-audio/pkg/util/log"
+	"youtube-audio/pkg/util/oss"
 )
 
 var MediaBase []BaseProps
@@ -49,7 +50,7 @@ type FetchHistory struct {
 }
 
 func (fb *FetchBase) DecodePlaylistJson(jsonFileName string) {
-	fetchJson, err := GetResourceJson(jsonFileName)
+	fetchJson, err := oss.GetResourceJson(jsonFileName)
 	if err != nil {
 		log.Errorf("get resource json error, jsonFileName: %s, error: %s", jsonFileName, err)
 		return
@@ -62,7 +63,7 @@ func (fb *FetchBase) DecodePlaylistJson(jsonFileName string) {
 }
 
 func (fh *FetchHistory) DecodePlaylistJson(jsonFileName string) {
-	fetchJson, err := GetResourceJson(jsonFileName)
+	fetchJson, err := oss.GetResourceJson(jsonFileName)
 	if err != nil {
 		log.Errorf("get resource json error, jsonFileName: %s, error: %s", jsonFileName, err)
 		return
@@ -76,23 +77,23 @@ func (fh *FetchHistory) DecodePlaylistJson(jsonFileName string) {
 
 func getBaseProps() []BaseProps {
 	fetchBase := FetchBase{}
-	fetchBase.DecodePlaylistJson(FetchBaseFileName)
+	fetchBase.DecodePlaylistJson(oss.FetchBaseFileName)
 	return fetchBase.Playlists
 }
 
 func getHistoryProps() []HistoryProps {
 	fetchHistory := FetchHistory{}
-	fetchHistory.DecodePlaylistJson(FetchHistoryFileName)
+	fetchHistory.DecodePlaylistJson(oss.FetchHistoryFileName)
 	return fetchHistory.Playlists
 }
 
 func MarshalPlaylistJson(fetchHistory FetchHistory) {
 	jsonBytes, err := json.MarshalIndent(&fetchHistory, "", "  ")
 	if err != nil {
-		log.Fatalf("marshal indent error:%v, ossFileName:%s, fetchHistory:%v", err, FetchHistoryFileName, fetchHistory)
+		log.Fatalf("marshal indent error:%v, ossFileName:%s, fetchHistory:%v", err, oss.FetchHistoryFileName, fetchHistory)
 	}
 	log.Debugf("fetchHistory json: %v", string(jsonBytes))
-	UpdateResourceJson(FetchHistoryFileName, string(jsonBytes))
+	oss.UpdateResourceJson(oss.FetchHistoryFileName, string(jsonBytes))
 }
 
 func InitResources() {

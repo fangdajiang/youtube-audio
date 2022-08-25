@@ -8,7 +8,10 @@ import (
 	"time"
 	"youtube-audio/pkg/reporter"
 	"youtube-audio/pkg/util"
+	"youtube-audio/pkg/util/env"
 	"youtube-audio/pkg/util/log"
+	"youtube-audio/pkg/util/myio"
+	"youtube-audio/pkg/util/resource"
 )
 
 type Delivery struct {
@@ -82,7 +85,7 @@ func IsAudioValid(parcel Parcel) (bool, string) {
 		return false, util.EmptyFilePathWarningTemplate
 	}
 	// exists?
-	audioExists, err := util.FileExists(parcel.FilePath)
+	audioExists, err := myio.FileExists(parcel.FilePath)
 	if !audioExists {
 		log.Warnf("downloaded file does NOT exist: %s, %v", parcel.FilePath, err)
 		return false, util.FileNotExistWarningTemplate
@@ -95,21 +98,6 @@ func IsAudioValid(parcel Parcel) (bool, string) {
 		return false, util.InvalidFileSizeWarningTemplate
 	}
 	return true, ""
-}
-
-func Cleanup(parcel Parcel) {
-	parcelExists, err := util.FileExists(parcel.FilePath)
-	if !parcelExists {
-		log.Warnf("parcel file does NOT exist: %s, %v", parcel.FilePath, err)
-		return
-	}
-	err = os.Remove(parcel.FilePath)
-	if err != nil {
-		log.Errorf("removing file %s, error: %s", parcel.FilePath, err)
-	} else {
-		log.Debugf("downloaded file cleaned up %s", parcel.FilePath)
-	}
-	log.Infof("file %s has been removed", parcel.FilePath)
 }
 
 func (t *TelegramBot) Send(parcel Parcel) error {
@@ -164,7 +152,7 @@ func (t *TelegramBot) SendToBot(template string, key ...any) {
 
 }
 
-func AppendDeliveries(deliveries *[]Delivery, fetchItems util.FetchItems, playlistId string, done bool) {
+func AppendDeliveries(deliveries *[]Delivery, fetchItems resource.FetchItems, playlistId string, done bool) {
 	// remain time from FetchItems
 	fetchTimestamp := fetchItems.Timestamp
 	fetchDatetime := fetchItems.Datetime
@@ -235,21 +223,21 @@ func GenerateTelegramBot() (TelegramBot, error) {
 	var telegramBot TelegramBot
 
 	// Get the TOKEN and the CHAT_ID
-	botToken, err := util.GetEnvVariable(util.EnvTokenName)
+	botToken, err := env.GetEnvVariable(util.EnvTokenName)
 	if err != nil {
 		log.Errorf("%s", err)
 		return telegramBot, fmt.Errorf("reading env %s vars error", util.EnvTokenName)
 	}
 	telegramBot.Token = botToken
 
-	channelChatId, err := util.GetEnvVariable(util.EnvChatIdName)
+	channelChatId, err := env.GetEnvVariable(util.EnvChatIdName)
 	if err != nil {
 		log.Errorf("%s", err)
 		return telegramBot, fmt.Errorf("reading env %s vars error", util.EnvChatIdName)
 	}
 	telegramBot.ChannelChatId = channelChatId
 
-	botChatId, err := util.GetEnvVariable(util.EnvBotChatIdName)
+	botChatId, err := env.GetEnvVariable(util.EnvBotChatIdName)
 	if err != nil {
 		log.Errorf("%s", err)
 		return telegramBot, fmt.Errorf("reading env %s vars error", util.EnvBotChatIdName)

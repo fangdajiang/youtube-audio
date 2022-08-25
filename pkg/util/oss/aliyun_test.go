@@ -1,8 +1,9 @@
-package util
+package oss
 
 import (
 	"github.com/stretchr/testify/require"
 	"testing"
+	"youtube-audio/pkg/util/env"
 	"youtube-audio/pkg/util/log"
 )
 
@@ -13,11 +14,11 @@ func TestListBuckets(t *testing.T) {
 func TestGetAliCloudEnvName(t *testing.T) {
 	r := require.New(t)
 
-	accessKeyName, err := GetEnvVariable(EnvAliCloudAccessKeyName)
+	accessKeyName, err := env.GetEnvVariable(EnvAliCloudAccessKeyName)
 	r.NoError(err)
 	log.Debugf("accessKeyName: %s", accessKeyName)
 
-	secretKeyName, err := GetEnvVariable(EnvAliCloudSecretKeyName)
+	secretKeyName, err := env.GetEnvVariable(EnvAliCloudSecretKeyName)
 	r.NoError(err)
 	log.Debugf("secretKeyName: %s", secretKeyName)
 }
@@ -36,4 +37,13 @@ func TestGetResourceJson(t *testing.T) {
 
 func TestUpdateResourceJson(t *testing.T) {
 	UpdateResourceJson("tmp_file.json", "{}")
+}
+
+func TestUpload2Oss(t *testing.T) {
+	r := require.New(t)
+
+	Upload2Oss(log.LoggingFilePath)
+
+	r.NoFileExists(log.LoggingFilePath)
+
 }

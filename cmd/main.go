@@ -7,6 +7,7 @@ import (
 	"youtube-audio/pkg/reporter"
 	"youtube-audio/pkg/util"
 	"youtube-audio/pkg/util/log"
+	"youtube-audio/pkg/util/resource"
 )
 
 func main() {
@@ -19,9 +20,9 @@ func main() {
 }
 
 func init() {
-	util.InitResources()
-	log.Infof("base[0]: %v", util.MediaBase[0])
-	log.Infof("history[0]: %v", util.MediaHistory[0])
+	resource.InitResources()
+	log.Infof("base[0]: %v", resource.MediaBase[0])
+	log.Infof("history[0]: %v", resource.MediaHistory[0])
 	reporter.InitGeneralStats()
 }
 
@@ -49,4 +50,5 @@ func process(deliveries []handler.Delivery) {
 	handler.SendSummary()
 	log.Debugf("updatedDeliveries: %v", updatedDeliveries)
 	handler.FlushFetchHistory(updatedDeliveries)
+	util.UploadLog2Oss()
 }
