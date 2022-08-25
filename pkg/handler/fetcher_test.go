@@ -2,12 +2,12 @@ package handler
 
 import (
 	"github.com/kkdai/youtube/v2"
-	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"math/rand"
 	"testing"
 	"time"
 	"youtube-audio/pkg/util"
+	"youtube-audio/pkg/util/log"
 )
 
 func init() {
@@ -16,13 +16,13 @@ func init() {
 
 func TestGetYouTubeVideosFromPlaylists(t *testing.T) {
 	playlistMetaDataArray := GetYouTubeVideosFromPlaylists()
-	log.Infof("playlists count: %v", len(playlistMetaDataArray))
+	log.Debugf("playlists count: %v", len(playlistMetaDataArray))
 	var videoMetaDataArray []*PlaylistVideoMetaData
 	for _, playlistMetaData := range playlistMetaDataArray {
 		videoMetaDataArray = append(videoMetaDataArray, playlistMetaData.PlaylistVideoMetaDataArray...)
 	}
 	for _, video := range videoMetaDataArray {
-		log.Infof("id:%v, position:%v", video.VideoId, video.Position)
+		log.Debugf("id:%v, position:%v", video.VideoId, video.Position)
 	}
 }
 
@@ -31,17 +31,17 @@ func TestFlushFetchHistory(t *testing.T) {
 
 	deliveries := AssembleDeliveriesFromPlaylists()
 	r.True(len(deliveries) > 0)
-	log.Infof("count: %v, deliveries: %v", len(deliveries), deliveries)
+	log.Debugf("count: %v, deliveries: %v", len(deliveries), deliveries)
 
 	var tamperedDeliveries []Delivery
 	for _, delivery := range deliveries {
-		log.Infof("original delivery: %v", delivery)
+		log.Debugf("original delivery: %v", delivery)
 		rand.Seed(time.Now().UnixNano())
 		delivery.Done = rand.Float32() < 0.5
 		tamperedDeliveries = append(tamperedDeliveries, delivery)
 	}
 	for _, delivery := range tamperedDeliveries {
-		log.Infof("tampered delivery: %v", delivery)
+		log.Debugf("tampered delivery: %v", delivery)
 	}
 
 	FlushFetchHistory(deliveries)
@@ -49,7 +49,7 @@ func TestFlushFetchHistory(t *testing.T) {
 
 func TestAssembleDeliveriesFromPlaylists(t *testing.T) {
 	deliveries := AssembleDeliveriesFromPlaylists()
-	log.Infof("deliveries: %v", deliveries)
+	log.Debugf("deliveries: %v", deliveries)
 }
 
 func TestFindChannelId(t *testing.T) {
@@ -64,9 +64,9 @@ func TestFindChannelId(t *testing.T) {
 	call = call.Q(channelAlias).Type(queryType)
 	response, err := call.Do()
 	r.NoError(err)
-	log.Infof("len: %v", len(response.Items))
+	log.Debugf("len: %v", len(response.Items))
 	for _, item := range response.Items {
-		log.Infof("channelId: %s, channelTitle: %s, description: %s, ", item.Snippet.ChannelId, item.Snippet.ChannelTitle, item.Snippet.Description)
+		log.Debugf("channelId: %s, channelTitle: %s, description: %s, ", item.Snippet.ChannelId, item.Snippet.ChannelTitle, item.Snippet.Description)
 	}
 
 }
@@ -82,7 +82,7 @@ func TestGetVideoMetaDataArrayBy(t *testing.T) {
 	r.Len(playlistMetaData.PlaylistVideoMetaDataArray, int(maxResultsCount))
 
 	for _, videoMetaData := range playlistMetaData.PlaylistVideoMetaDataArray {
-		log.Infof("videoMetaData position: %v", videoMetaData.Position)
+		log.Debugf("videoMetaData position: %v", videoMetaData.Position)
 	}
 }
 
@@ -96,7 +96,7 @@ func TestYouTube_GetItagInfo(t *testing.T) {
 	//r.Len(video.Formats, 24)
 
 	for i, f := range video.Formats {
-		log.Infof("i: %v, ItagNo:%v, ADM:%s, FPS:%v, QL:%s, AQ:%s, AC:%v, AverBit:%v, Bit:%v, Size:%v",
+		log.Debugf("i: %v, ItagNo:%v, ADM:%s, FPS:%v, QL:%s, AQ:%s, AC:%v, AverBit:%v, Bit:%v, Size:%v",
 			i, f.ItagNo, f.ApproxDurationMs, f.FPS, f.QualityLabel, f.AudioQuality, f.AudioChannels, f.AverageBitrate, f.Bitrate, f.ContentLength)
 	}
 }
@@ -117,5 +117,10 @@ func TestRetrieveITagOfMinimumAudioSize(t *testing.T) {
 	iTagNo, err := RetrieveITagOfMinimumSizeAudio("https://www.youtube.com/watch?v=Y-EX1u34E2M")
 	r.NoError(err)
 	//r.Equal(249, iTagNo)
-	log.Infof("iTagNo:%v", iTagNo)
+	log.Debugf("iTagNo:%v", iTagNo)
+}
+
+func TestMergeHistoryFetchesInto(t *testing.T) {
+	deliveries := MergeHistoryFetchesInto(AssembleDeliveriesFromPlaylists())
+	log.Debugf("merged deliveries: %v", deliveries)
 }

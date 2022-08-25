@@ -3,12 +3,12 @@ package handler
 import (
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	log "github.com/sirupsen/logrus"
 	"os"
 	"strconv"
 	"time"
 	"youtube-audio/pkg/reporter"
 	"youtube-audio/pkg/util"
+	"youtube-audio/pkg/util/log"
 )
 
 type Delivery struct {
@@ -41,7 +41,7 @@ func SendAudio(delivery *Delivery) error {
 	err = telegramBot.Send(delivery.Parcel)
 	if err == nil {
 		markDelivered(delivery)
-		reporter.TotalFetch.SuccessfulFetch++
+		reporter.BriefSummary.SuccessfulFetch++
 	}
 	return err
 }
@@ -60,7 +60,7 @@ func markDelivered(delivery *Delivery) {
 }
 
 func SendWarningMessage(template string, key ...any) {
-	reporter.TotalFetch.FailedFetch++
+	reporter.BriefSummary.FailedFetch++
 	telegramBot, err := GenerateTelegramBot()
 	if err != nil {
 		log.Errorf("%s", err)
@@ -73,7 +73,7 @@ func SendSummary() {
 	if err != nil {
 		log.Errorf("%s", err)
 	}
-	telegramBot.SendToBot(reporter.SummaryReportTemplate, reporter.TotalFetch.StartDatetime, reporter.TotalFetch.DurationSecs, reporter.TotalFetch.SuccessfulFetch, reporter.TotalFetch.FailedFetch)
+	telegramBot.SendToBot(reporter.SummaryReportTemplate, reporter.BriefSummary.StartDatetime, reporter.BriefSummary.DurationSecs, reporter.BriefSummary.SuccessfulFetch, reporter.BriefSummary.FailedFetch)
 }
 
 func IsAudioValid(parcel Parcel) (bool, string) {
@@ -89,7 +89,7 @@ func IsAudioValid(parcel Parcel) (bool, string) {
 	}
 	// empty?
 	audioFileInfo, _ := os.Stat(parcel.FilePath)
-	log.Infof("audioFileInfo size: %v", audioFileInfo.Size())
+	log.Debugf("audioFileInfo size: %v", audioFileInfo.Size())
 	if audioFileInfo.Size() < 1024 {
 		log.Warnf("downloaded file size(%v) is not BIG enough(>= 1024B): %s", audioFileInfo.Size(), parcel.FilePath)
 		return false, util.InvalidFileSizeWarningTemplate
@@ -107,7 +107,7 @@ func Cleanup(parcel Parcel) {
 	if err != nil {
 		log.Errorf("removing file %s, error: %s", parcel.FilePath, err)
 	} else {
-		log.Infof("downloaded file cleaned up %s", parcel.FilePath)
+		log.Debugf("downloaded file cleaned up %s", parcel.FilePath)
 	}
 	log.Infof("file %s has been removed", parcel.FilePath)
 }
@@ -125,10 +125,10 @@ func (t *TelegramBot) Send(parcel Parcel) error {
 		return fmt.Errorf("building bot error")
 	}
 
-	log.Infof("ready to new audio to channel")
+	log.Debugf("ready to new audio to channel")
 	msg := tgbotapi.NewAudioToChannel(t.ChannelChatId, tgbotapi.FilePath(parcel.FilePath))
 	msg.Caption = parcel.Caption
-	log.Infof("ready to send audio")
+	log.Debugf("ready to send audio")
 
 	_, err = bot.Send(msg)
 	if err != nil {
@@ -177,19 +177,19 @@ func AppendDeliveries(deliveries *[]Delivery, fetchItems util.FetchItems, playli
 		if len(fetchItems.Urls) > 0 {
 			fetchTime := time.Unix(fetchTimestamp, 0)
 			durationTillNow := time.Since(fetchTime)
-			log.Infof("playlistId: %s, fetchDatetime: %s, fetch time till now hours: %v", playlistId, fetchDatetime, durationTillNow.Hours())
+			log.Debugf("playlistId: %s, fetchDatetime: %s, fetch time till now hours: %v", playlistId, fetchDatetime, durationTillNow.Hours())
 			if durationTillNow.Hours() > 48 {
 				log.Warnf("fetch block time has EXPIRED: %s, playlistId: %s, urls: %v, drop it", fetchDatetime, playlistId, fetchItems.Urls)
 				return
 			}
 		} else {
-			log.Infof("EMPTY fetch items urls, playlistId: %s, urls: %v, ignore it", playlistId, fetchItems.Urls)
+			log.Debugf("EMPTY fetch items urls, playlistId: %s, urls: %v, ignore it", playlistId, fetchItems.Urls)
 			return
 		}
 	}
 	// always keep the fetch block, but under maximum count of urls, drop random(?) ones
 	for len(fetchItems.Urls) > util.FetchMaxUrlsLimit {
-		fetchItems.Urls = fetchItems.Urls[1:]
+		fetchItems.Urls = append(fetchItems.Urls[:0], fetchItems.Urls[1:]...)
 	}
 	for _, fetchUrl := range fetchItems.Urls {
 		historyFetch := Delivery{

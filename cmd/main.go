@@ -1,17 +1,16 @@
 package main
 
 import (
-	"fmt"
-	log "github.com/sirupsen/logrus"
 	"sync"
 	"time"
 	"youtube-audio/pkg/handler"
 	"youtube-audio/pkg/reporter"
 	"youtube-audio/pkg/util"
+	"youtube-audio/pkg/util/log"
 )
 
 func main() {
-	fmt.Printf("Start fetching, converting, sending... from %s\n", time.Now().Format(util.DateTimeFormat))
+	log.Infof("Start fetching, converting, sending... from %s\n", time.Now().Format(util.DateTimeFormat))
 
 	incomingDeliveries := handler.AssembleDeliveriesFromPlaylists()
 	mergedDeliveries := handler.MergeHistoryFetchesInto(incomingDeliveries)
@@ -30,17 +29,17 @@ func process(deliveries []handler.Delivery) {
 	var wg sync.WaitGroup
 	var updatedDeliveries []handler.Delivery
 	for i, delivery := range deliveries {
-		log.Infof("ready to process %v, url: %s", i, delivery.Parcel.Url)
+		log.Debugf("ready to process %v, url: %s", i, delivery.Parcel.Url)
 		if i < len(deliveries)-1 { //have to?
 			wg.Add(1)
 			go func(de handler.Delivery) {
-				log.Infof("processing video by NEW routine: %v", de)
+				log.Debugf("processing video by NEW routine: %v", de)
 				handler.ProcessOneVideo(&de)
 				updatedDeliveries = append(updatedDeliveries, de)
 				wg.Done()
 			}(delivery)
 		} else {
-			log.Infof("processing video by ORIGINAL routine: %v", delivery)
+			log.Debugf("processing video by ORIGINAL routine: %v", delivery)
 			handler.ProcessOneVideo(&delivery)
 			updatedDeliveries = append(updatedDeliveries, delivery)
 			wg.Wait()
@@ -48,6 +47,6 @@ func process(deliveries []handler.Delivery) {
 	}
 	reporter.EndGeneralStats()
 	handler.SendSummary()
-	//log.Infof("updatedDeliveries: %v", updatedDeliveries)
+	log.Debugf("updatedDeliveries: %v", updatedDeliveries)
 	handler.FlushFetchHistory(updatedDeliveries)
 }

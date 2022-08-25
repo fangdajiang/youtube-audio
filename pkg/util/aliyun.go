@@ -3,10 +3,10 @@ package util
 import (
 	"fmt"
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
-	log "github.com/sirupsen/logrus"
 	"io"
 	"io/ioutil"
 	"strings"
+	"youtube-audio/pkg/util/log"
 )
 
 const (

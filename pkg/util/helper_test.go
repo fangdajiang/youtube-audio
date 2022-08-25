@@ -2,10 +2,10 @@ package util
 
 import (
 	mapset "github.com/deckarep/golang-set"
-	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
+	"youtube-audio/pkg/util/log"
 )
 
 func TestGetLocalDateTime(t *testing.T) {
@@ -16,7 +16,7 @@ func TestGetLocalDateTime(t *testing.T) {
 	r.NoError(err)
 	localPublishedAt := GetLocalDateTime(publishedAt)
 
-	log.Infof("remotePublishedAt:%s, localPublishedAt: %s", remotePublishedAt.Format(DateTimeFormat), localPublishedAt)
+	log.Debugf("remotePublishedAt:%s, localPublishedAt: %s", remotePublishedAt.Format(DateTimeFormat), localPublishedAt)
 
 }
 
@@ -28,8 +28,8 @@ func TestFilenamifyMediaTitle(t *testing.T) {
 	namifiedMediaTitle, err := FilenamifyMediaTitle(mediaTitle)
 	r.NoError(err)
 	r.Greater(len(namifiedMediaTitle), len(mediaTitle))
-	log.Infof("mediaTitle: %v", len(mediaTitle))
-	log.Infof("namifiedMediaTitle: %v", len(namifiedMediaTitle))
+	log.Debugf("mediaTitle: %v", len(mediaTitle))
+	log.Debugf("namifiedMediaTitle: %v", len(namifiedMediaTitle))
 }
 
 func TestFileExists(t *testing.T) {
@@ -44,22 +44,22 @@ func TestFileExists(t *testing.T) {
 
 func TestDeleteSliceElms(t *testing.T) {
 	historyProps := MediaHistory
-	log.Infof("historyProps count: %v, historyProps: %v", len(historyProps), historyProps)
+	log.Debugf("historyProps count: %v, historyProps: %v", len(historyProps), historyProps)
 	hp := HistoryProps{Id: "PLt-jD7OCbLJ0ZMwvQFZCSuNaUbT3GMqVJ"}
 	result := DeleteSliceElms(historyProps, hp)
-	log.Infof("result count: %v, result: %v", len(result), result)
-	log.Infof("historyProps count2: %v", len(historyProps))
+	log.Debugf("result count: %v, result: %v", len(result), result)
+	log.Debugf("historyProps count2: %v", len(historyProps))
 
 }
 
 func TestContainString(t *testing.T) {
 	sl := []string{"https://www.youtube.com/watch?v=jQZ36-zERtM"}
-	log.Infof("sl: %v", sl)
+	log.Debugf("sl: %v", sl)
 
 	sl2 := StringSlice2Interface(sl)
 
 	set := mapset.NewSetFromSlice(sl2)
-	log.Infof("contains https://www.youtube.com/watch?v=jQZ36-zERtM: %v", set.Contains("https://www.youtube.com/watch?v=jQZ36-zERtM"))
-	log.Infof("contains https://www.youtube.com/watch?v=JOj-k2UE2Bs: %v", set.Contains("https://www.youtube.com/watch?v=JOj-k2UE2Bs"))
+	log.Debugf("contains https://www.youtube.com/watch?v=jQZ36-zERtM: %v", set.Contains("https://www.youtube.com/watch?v=jQZ36-zERtM"))
+	log.Debugf("contains https://www.youtube.com/watch?v=JOj-k2UE2Bs: %v", set.Contains("https://www.youtube.com/watch?v=JOj-k2UE2Bs"))
 
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/kkdai/youtube/v2"
-	log "github.com/sirupsen/logrus"
 	"github.com/wader/goutubedl"
 	"google.golang.org/api/option"
 	youtubeapi "google.golang.org/api/youtube/v3"
@@ -12,14 +11,14 @@ import (
 	"os"
 	"sort"
 	"strconv"
-	"testing"
 	"time"
 	"youtube-audio/pkg/util"
+	"youtube-audio/pkg/util/log"
 )
 
 //ITagNo format id
 //  for _, f := range result.Formats() {
-//		log.Infof("format id:%s", f.FormatID)
+//		log.Debugf("format id:%s", f.FormatID)
 //	}
 
 type YouTubeCredentials struct {
@@ -58,7 +57,7 @@ func (s PlaylistMetaData) Swap(i, j int) {
 
 func FlushFetchHistory(deliveries []Delivery) {
 	var fetchHistory = util.FetchHistory{Playlists: GenerateFetchHistory(deliveries)}
-	log.Infof("fetchHistory: %v", fetchHistory)
+	log.Debugf("fetchHistory: %v", fetchHistory)
 
 	util.MarshalPlaylistJson(fetchHistory)
 }
@@ -86,13 +85,13 @@ func ProcessOneVideo(delivery *Delivery) {
 			}
 		}
 		if audioFile.FilePath != "" {
-			log.Infof("ready to clean up, audioFile: %v", audioFile)
+			log.Debugf("ready to clean up, audioFile: %v", audioFile)
 			Cleanup(audioFile)
 		}
 	} else {
-		log.Infof("this delivery %v has be DONE, no more process", delivery)
+		log.Infof("the state of this delivery %v is DONE, no more process", delivery)
 	}
-	log.Infof("\r\n")
+	fmt.Println()
 }
 
 func fetchAudio(rawUrl string) (Parcel, error) {
@@ -137,7 +136,7 @@ func GetPlaylistMetaDataBy(playlistId string) PlaylistMetaData {
 
 		videoId := playlistItem.Snippet.ResourceId.VideoId
 		position := playlistItem.Snippet.Position
-		log.Infof("%s(%s) from %s(%s) on position %v was published at %s\r\n", title, videoId, channelTitle, channelId, position, localPublishedAt)
+		log.Debugf("%s(%s) from %s(%s) on position %v was published at %s", title, videoId, channelTitle, channelId, position, localPublishedAt)
 
 		videoMetaData := PlaylistVideoMetaData{videoId, util.MakeYouTubeRawUrl(videoId), position}
 		playlistMetaData.PlaylistVideoMetaDataArray = append(playlistMetaData.PlaylistVideoMetaDataArray, &videoMetaData)
@@ -173,15 +172,15 @@ func playlistItemsList(service *youtubeapi.Service, part []string, playlistId st
 func RetrieveITagOfMinimumSizeAudio(mediaUrl string) (int, error) {
 	client := youtube.Client{}
 
-	log.Infof("Ready to get video: %s at %s", mediaUrl, time.Now().Format(util.DateTimeFormat))
+	log.Debugf("Ready to get video: %s at %s", mediaUrl, time.Now().Format(util.DateTimeFormat))
 	video, err := client.GetVideo(mediaUrl)
-	log.Infof("video duration: %vs at %s", video.Duration.Seconds(), time.Now().Format(util.DateTimeFormat))
+	log.Debugf("video duration: %vs at %s", video.Duration.Seconds(), time.Now().Format(util.DateTimeFormat))
 	if err != nil {
 		return -1, fmt.Errorf("failed to get video, error:%s, mediaUrl:%s", err, mediaUrl)
 	}
 	var videoMetaDataArray []VideoMetaData
 	for _, f := range video.Formats {
-		log.Infof("ItagNo:%v, ADM:%s, FPS:%v, QL:%s, AQ:%s, AC:%v, AverBit:%v, Bit:%v, Size:%v",
+		log.Debugf("ItagNo:%v, ADM:%s, FPS:%v, QL:%s, AQ:%s, AC:%v, AverBit:%v, Bit:%v, Size:%v",
 			f.ItagNo, f.ApproxDurationMs, f.FPS, f.QualityLabel, f.AudioQuality, f.AudioChannels, f.AverageBitrate, f.Bitrate, f.ContentLength)
 		if f.FPS == 0 {
 			videoMetaData := VideoMetaData{f.FPS, f.ItagNo, f.Bitrate, f.AverageBitrate, f.ContentLength,
@@ -213,10 +212,10 @@ func RetrieveITagOfMinimumSizeAudio(mediaUrl string) (int, error) {
 	if len(videoMetaDataArray) == 0 {
 		return -1, fmt.Errorf("proper audio track not found:%s", mediaUrl)
 	} else if len(videoMetaDataArray) == 1 {
-		log.Infof("Found only 1 proper audio track for %s, iTagNo: %v at %s", mediaUrl, videoMetaDataArray[0].ITagNo, time.Now().Format(util.DateTimeFormat))
+		log.Debugf("Found only 1 proper audio track for %s, iTagNo: %v at %s", mediaUrl, videoMetaDataArray[0].ITagNo, time.Now().Format(util.DateTimeFormat))
 		minSizeVideoMetaData = videoMetaDataArray[0]
 	} else {
-		log.Infof("Found %v proper audio tracks for %s, at %s", len(videoMetaDataArray), mediaUrl, time.Now().Format(util.DateTimeFormat))
+		log.Debugf("Found %v proper audio tracks for %s, at %s", len(videoMetaDataArray), mediaUrl, time.Now().Format(util.DateTimeFormat))
 		for _, v := range videoMetaDataArray {
 			if v.ContentLength < minSizeVideoMetaData.ContentLength {
 				minSizeVideoMetaData = v
@@ -224,9 +223,9 @@ func RetrieveITagOfMinimumSizeAudio(mediaUrl string) (int, error) {
 				maxSizeVideoMetaData = v
 			}
 		}
-		log.Infof("maxSizeVideoMetaData: %v", maxSizeVideoMetaData)
+		log.Debugf("maxSizeVideoMetaData: %v", maxSizeVideoMetaData)
 	}
-	log.Infof("minSizeVideoMetaData: %v", minSizeVideoMetaData)
+	log.Debugf("minSizeVideoMetaData: %v", minSizeVideoMetaData)
 	if util.UploadAudioMaxLength < minSizeVideoMetaData.ContentLength {
 		return -1, fmt.Errorf("the min size %v of audio track EXCEEDS the max %v, url:%s",
 			minSizeVideoMetaData.ContentLength, util.UploadAudioMaxLength, mediaUrl)
@@ -236,7 +235,7 @@ func RetrieveITagOfMinimumSizeAudio(mediaUrl string) (int, error) {
 
 func DownloadYouTubeAudioToPath(mediaUrl string) (Parcel, error) {
 	var parcel Parcel
-	log.Infof("Ready to download media %s at %s", mediaUrl, time.Now().Format(util.DateTimeFormat))
+	log.Debugf("Ready to download media %s at %s", mediaUrl, time.Now().Format(util.DateTimeFormat))
 	result, err := goutubedl.New(context.Background(), mediaUrl, goutubedl.Options{})
 	if err != nil {
 		log.Errorf("goutubedl error:%s", err)
@@ -248,13 +247,13 @@ func DownloadYouTubeAudioToPath(mediaUrl string) (Parcel, error) {
 		return parcel, err
 	}
 	parcel = GenerateParcel(fmt.Sprintf("%s%s", util.GetYouTubeFetchBase().DownloadedFilesPath, validMediaFileName), result.Info.Title, mediaUrl)
-	log.Infof("generated parcel: %v", parcel)
+	log.Debugf("generated parcel: %v", parcel)
 
-	log.Infof("ready to CREATE media file %s at %s", parcel.FilePath, time.Now().Format(util.DateTimeFormat))
+	log.Debugf("ready to CREATE media file %s at %s", parcel.FilePath, time.Now().Format(util.DateTimeFormat))
 	parcelFile, err := os.Create(parcel.FilePath)
-	log.Infof("media file %s CREATED at %s", parcel.FilePath, time.Now().Format(util.DateTimeFormat))
+	log.Debugf("media file %s CREATED at %s", parcel.FilePath, time.Now().Format(util.DateTimeFormat))
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("creating file error: %v", err)
 	}
 
 	iTagNo, err := RetrieveITagOfMinimumSizeAudio(mediaUrl)
@@ -270,9 +269,9 @@ func DownloadYouTubeAudioToPath(mediaUrl string) (Parcel, error) {
 	defer func(downloadedResult *goutubedl.DownloadResult) {
 		_ = downloadedResult.Close()
 	}(downloadedResult)
-	log.Infof("downloading media %s from %s", result.Info.Title, time.Now().Format(util.DateTimeFormat))
+	log.Debugf("downloading media %s from %s", result.Info.Title, time.Now().Format(util.DateTimeFormat))
 
-	log.Infof("ready to COPY media file %s at %s", parcel.FilePath, time.Now().Format(util.DateTimeFormat))
+	log.Debugf("ready to COPY media file %s at %s", parcel.FilePath, time.Now().Format(util.DateTimeFormat))
 	written, err := io.Copy(parcelFile, downloadedResult)
 	log.Infof("media file %s DOWNLOADED & COPIED at %s", parcel.FilePath, time.Now().Format(util.DateTimeFormat))
 	if err != nil {
@@ -318,7 +317,7 @@ func GenerateFetchHistory(deliveries []Delivery) []util.HistoryProps {
 					}
 				}
 			}
-			log.Infof("newSubscribers: %v", newSubscribers)
+			log.Debugf("newSubscribers: %v", newSubscribers)
 			playlistMap[delivery.PlaylistId] = newSubscribers
 		} else {
 			log.Infof("playlist id %s NOT FOUND from playlistMap: %v", delivery.PlaylistId, playlistMap)
@@ -336,7 +335,7 @@ func GenerateFetchHistory(deliveries []Delivery) []util.HistoryProps {
 			playlistMap[delivery.PlaylistId] = subscriberItems
 		}
 	}
-	log.Infof("playlistMap: %v", playlistMap)
+	log.Debugf("playlistMap: %v", playlistMap)
 	var historyPropsArray []util.HistoryProps
 	for playlistId := range playlistMap {
 		historyProps := util.HistoryProps{Id: playlistId, Subscribers: playlistMap[playlistId]}
@@ -347,10 +346,10 @@ func GenerateFetchHistory(deliveries []Delivery) []util.HistoryProps {
 
 func MergeHistoryFetchesInto(newDeliveries []Delivery) []Delivery {
 	historyProps := util.MediaHistory
-	log.Infof("newDeliveries count: %v, historyProps count: %v", len(newDeliveries), len(historyProps))
+	log.Debugf("newDeliveries count: %v, historyProps count: %v", len(newDeliveries), len(historyProps))
 	var mergedDeliveries []Delivery
 	for _, newDelivery := range newDeliveries {
-		log.Infof("newDelivery: %v", newDelivery)
+		log.Debugf("newDelivery: %v", newDelivery)
 		isNewPlayListId := true
 		for _, historyProp := range historyProps {
 			if newDelivery.PlaylistId == historyProp.Id {
@@ -391,7 +390,7 @@ func GetYouTubeVideosFromPlaylists() []PlaylistMetaData {
 	for _, param := range util.GetYouTubeFetchBase().Params {
 		playlistMetaData := GetPlaylistMetaDataBy(param.Id)
 		if param.SortByPosition {
-			log.Infof("SORT the playlist:%s", param.Id)
+			log.Debugf("SORT the playlist:%s", param.Id)
 			sort.Sort(playlistMetaData)
 		}
 		playlistMetaDataArray = append(playlistMetaDataArray, playlistMetaData)
@@ -426,9 +425,4 @@ func GenerateYouTubeCredentials() (YouTubeCredentials, error) {
 	youTubeCredentials.Key = youtubeKey
 
 	return youTubeCredentials, nil
-}
-
-func TestMergeHistoryFetchesInto(t *testing.T) {
-	deliveries := MergeHistoryFetchesInto(AssembleDeliveriesFromPlaylists())
-	log.Infof("merged deliveries: %v", deliveries)
 }

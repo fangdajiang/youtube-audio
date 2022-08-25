@@ -1,9 +1,9 @@
 package util
 
 import (
-	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"testing"
+	"youtube-audio/pkg/util/log"
 )
 
 func TestListBuckets(t *testing.T) {
@@ -15,11 +15,11 @@ func TestGetAliCloudEnvName(t *testing.T) {
 
 	accessKeyName, err := GetEnvVariable(EnvAliCloudAccessKeyName)
 	r.NoError(err)
-	log.Infof("accessKeyName: %s", accessKeyName)
+	log.Debugf("accessKeyName: %s", accessKeyName)
 
 	secretKeyName, err := GetEnvVariable(EnvAliCloudSecretKeyName)
 	r.NoError(err)
-	log.Infof("secretKeyName: %s", secretKeyName)
+	log.Debugf("secretKeyName: %s", secretKeyName)
 }
 
 func TestGetResourceJson(t *testing.T) {
@@ -27,11 +27,11 @@ func TestGetResourceJson(t *testing.T) {
 
 	fetchBaseJson, err := GetResourceJson(FetchBaseFileName)
 	r.NoError(err)
-	log.Infof("fetchBaseJson: %s", fetchBaseJson)
+	log.Debugf("fetchBaseJson: %s", fetchBaseJson)
 
 	fetchHistoryJson, err := GetResourceJson(FetchHistoryFileName)
 	r.NoError(err)
-	log.Infof("fetchHistoryJson: %s", fetchHistoryJson)
+	log.Debugf("fetchHistoryJson: %s", fetchHistoryJson)
 }
 
 func TestUpdateResourceJson(t *testing.T) {

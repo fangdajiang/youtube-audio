@@ -2,12 +2,12 @@ package handler
 
 import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"os"
 	"testing"
 	"time"
 	"youtube-audio/pkg/util"
+	"youtube-audio/pkg/util/log"
 )
 
 const (
@@ -22,7 +22,7 @@ var (
 )
 
 func init() {
-	log.Infof("initing deliveryman test")
+	log.Debugf("initing deliveryman test")
 
 	telegramBot, _ = GenerateTelegramBot()
 	parcel = GenerateParcel(LocalFilePath, LocalFileCaption+time.Now().Format(util.DateTimeFormat), UselessUrl)
@@ -36,7 +36,7 @@ func TestTelegramBot_RetrieveUpdates(t *testing.T) {
 	r.NoError(err)
 	bot.Debug = true
 
-	log.Printf("Authorized on account %s", bot.Self.UserName)
+	log.Infof("Authorized on account %s", bot.Self.UserName)
 
 }
 

@@ -1,9 +1,9 @@
 package reporter
 
 import (
-	log "github.com/sirupsen/logrus"
 	"time"
 	"youtube-audio/pkg/util"
+	"youtube-audio/pkg/util/log"
 )
 
 type GeneralStats struct {
@@ -14,7 +14,7 @@ type GeneralStats struct {
 	FailedFetch     int64
 }
 
-var TotalFetch = GeneralStats{}
+var BriefSummary = GeneralStats{}
 
 const (
 	SummaryReportTemplate string = "Brief Summary: \n start at: %v\n duration seconds: %v\n successful fetch: %v\n failed fetch: %v"
@@ -22,12 +22,12 @@ const (
 
 func InitGeneralStats() {
 	now := time.Now()
-	TotalFetch.StartDatetime = now.Format(util.DateTimeFormat)
-	TotalFetch.StartTimestamp = now.Unix()
+	BriefSummary.StartDatetime = now.Format(util.DateTimeFormat)
+	BriefSummary.StartTimestamp = now.Unix()
 }
 
 func EndGeneralStats() {
 	now := time.Now()
-	TotalFetch.DurationSecs = now.Unix() - TotalFetch.StartTimestamp
-	log.Infof("TotalFetch2: %v", TotalFetch)
+	BriefSummary.DurationSecs = now.Unix() - BriefSummary.StartTimestamp
+	log.Infof("BriefSummary: %v", BriefSummary)
 }

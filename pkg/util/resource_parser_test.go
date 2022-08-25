@@ -2,20 +2,20 @@ package util
 
 import (
 	"encoding/json"
-	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"testing"
+	"youtube-audio/pkg/util/log"
 )
 
 func TestInitResources(t *testing.T) {
 	InitResources()
-	log.Infof("base: %v", MediaBase[0])
-	log.Infof("history: %v", MediaHistory[0])
+	log.Debugf("base: %v", MediaBase[0])
+	log.Debugf("history: %v", MediaHistory[0])
 }
 
 func TestFetchBase_DecodePlaylistJson(t *testing.T) {
 	MediaBase = getBaseProps()
-	log.Infof("base: %v", MediaBase[0])
+	log.Debugf("base: %v", MediaBase[0])
 }
 
 func TestMarshalUnMarshalJson(t *testing.T) {
@@ -25,7 +25,7 @@ func TestMarshalUnMarshalJson(t *testing.T) {
 	bytes1, err := json.Marshal(&fetchHistory)
 	r.NoError(err)
 
-	log.Infof("fetchHistory: %v", string(bytes1))
+	log.Debugf("fetchHistory: %v", string(bytes1))
 
 	var unknownTypeData = []byte(string(bytes1))
 	var f interface{}
@@ -33,16 +33,16 @@ func TestMarshalUnMarshalJson(t *testing.T) {
 	r.NoError(err)
 
 	rootMap := f.(map[string]interface{})
-	log.Infof("rootMap: %s", rootMap)
+	log.Debugf("rootMap: %s", rootMap)
 	r.Equal(nil, rootMap["not_exist_field"])
 	var playlistsValue = rootMap["playlists"]
-	log.Infof("playlistsValue: %s", playlistsValue)
+	log.Debugf("playlistsValue: %s", playlistsValue)
 
 	playlistsArray := playlistsValue.([]interface{})
-	log.Infof("playlistsArray[0]: %s", playlistsArray[0])
+	log.Debugf("playlistsArray[0]: %s", playlistsArray[0])
 
 	playlistsMap := playlistsArray[0].(map[string]interface{})
-	log.Infof("playlistsMap: %s", playlistsMap)
+	log.Debugf("playlistsMap: %s", playlistsMap)
 	r.Equal("PL", playlistsMap["id"])
 
 }

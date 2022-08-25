@@ -12,6 +12,7 @@ require (
 	github.com/stretchr/testify v1.7.1
 	github.com/wader/goutubedl v0.0.0-20220718162155-70296032d992
 	google.golang.org/api v0.88.0
+	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 )
 
 require (

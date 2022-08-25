@@ -2,8 +2,8 @@ package util
 
 import (
 	"encoding/json"
-	log "github.com/sirupsen/logrus"
 	"strings"
+	"youtube-audio/pkg/util/log"
 )
 
 var MediaBase []BaseProps
@@ -91,7 +91,7 @@ func MarshalPlaylistJson(fetchHistory FetchHistory) {
 	if err != nil {
 		log.Fatalf("marshal indent error:%v, ossFileName:%s, fetchHistory:%v", err, FetchHistoryFileName, fetchHistory)
 	}
-	log.Infof("fetchHistory json: %v", string(jsonBytes))
+	log.Debugf("fetchHistory json: %v", string(jsonBytes))
 	UpdateResourceJson(FetchHistoryFileName, string(jsonBytes))
 }
 
