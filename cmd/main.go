@@ -15,6 +15,9 @@ func main() {
 
 	incomingDeliveries := handler.AssembleDeliveriesFromPlaylists()
 	mergedDeliveries := handler.MergeHistoryFetchesInto(incomingDeliveries)
+	for _, delivery := range mergedDeliveries {
+		log.Debugf("merged delivery: %v", delivery)
+	}
 	process(mergedDeliveries)
 
 }
@@ -48,7 +51,9 @@ func process(deliveries []handler.Delivery) {
 	}
 	reporter.EndGeneralStats()
 	handler.SendSummary()
-	log.Debugf("updatedDeliveries: %v", updatedDeliveries)
+	for _, delivery := range updatedDeliveries {
+		log.Debugf("processed delivery: %v", delivery)
+	}
 	handler.FlushFetchHistory(updatedDeliveries)
 	util.UploadLog2Oss()
 }

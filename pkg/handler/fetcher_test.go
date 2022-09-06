@@ -9,10 +9,11 @@ import (
 	"youtube-audio/pkg/util"
 	"youtube-audio/pkg/util/log"
 	"youtube-audio/pkg/util/myio"
+	"youtube-audio/pkg/util/resource"
 )
 
 func init() {
-	util.InitResources()
+	resource.InitResources()
 }
 
 func TestGetYouTubeVideosFromPlaylists(t *testing.T) {
@@ -109,7 +110,7 @@ func TestDownloadYouTubeAudioToPath(t *testing.T) {
 	r.NoError(err)
 	r.Equal("摸着石头过河，后来呢？/王剑每日观察/短视频", parcel.Caption)
 
-	myio.Cleanup(parcel)
+	myio.Cleanup(parcel.FilePath)
 }
 
 func TestRetrieveITagOfMinimumAudioSize(t *testing.T) {

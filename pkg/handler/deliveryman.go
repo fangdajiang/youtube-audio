@@ -68,7 +68,7 @@ func SendWarningMessage(template string, key ...any) {
 	if err != nil {
 		log.Errorf("%s", err)
 	}
-	telegramBot.SendToBot(template, key)
+	telegramBot.SendToBot(template, key...)
 }
 
 func SendSummary() {
@@ -165,7 +165,7 @@ func AppendDeliveries(deliveries *[]Delivery, fetchItems resource.FetchItems, pl
 		if len(fetchItems.Urls) > 0 {
 			fetchTime := time.Unix(fetchTimestamp, 0)
 			durationTillNow := time.Since(fetchTime)
-			log.Debugf("playlistId: %s, fetchDatetime: %s, fetch time till now hours: %v", playlistId, fetchDatetime, durationTillNow.Hours())
+			log.Debugf("playlistId: %s, including urls: %v at fetchDatetime: %s, fetch time till now hours: %v", playlistId, fetchItems.Urls, fetchDatetime, durationTillNow.Hours())
 			if durationTillNow.Hours() > 48 {
 				log.Warnf("fetch block time has EXPIRED: %s, playlistId: %s, urls: %v, drop it", fetchDatetime, playlistId, fetchItems.Urls)
 				return

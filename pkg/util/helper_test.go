@@ -7,6 +7,7 @@ import (
 	"time"
 	"youtube-audio/pkg/util/log"
 	"youtube-audio/pkg/util/myio"
+	"youtube-audio/pkg/util/resource"
 )
 
 func TestGetLocalDateTime(t *testing.T) {
@@ -44,9 +45,9 @@ func TestFileExists(t *testing.T) {
 }
 
 func TestDeleteSliceElms(t *testing.T) {
-	historyProps := MediaHistory
+	historyProps := resource.MediaHistory
 	log.Debugf("historyProps count: %v, historyProps: %v", len(historyProps), historyProps)
-	hp := HistoryProps{Id: "PLt-jD7OCbLJ0ZMwvQFZCSuNaUbT3GMqVJ"}
+	hp := resource.HistoryProps{Id: "PLt-jD7OCbLJ0ZMwvQFZCSuNaUbT3GMqVJ"}
 	result := DeleteSliceElms(historyProps, hp)
 	log.Debugf("result count: %v, result: %v", len(result), result)
 	log.Debugf("historyProps count2: %v", len(historyProps))

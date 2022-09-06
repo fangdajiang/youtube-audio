@@ -294,9 +294,10 @@ func GenerateFetchHistory(deliveries []Delivery) []resource.HistoryProps {
 	var playlistMap map[string][]resource.SubscriberItems
 	playlistMap = make(map[string][]resource.SubscriberItems)
 	for _, delivery := range deliveries {
+		log.Debugf("delivery to be generated: %v", delivery)
 		subscribers, ok := playlistMap[delivery.PlaylistId]
 		if ok {
-			log.Infof("playlist id %s FOUND from playlistMap: %v", delivery.PlaylistId, playlistMap)
+			log.Infof("playlist id %s FOUND from playlistMap, length: %v", delivery.PlaylistId, len(playlistMap))
 			var newSubscribers []resource.SubscriberItems
 			if delivery.Done {
 				for _, sub := range subscribers {
@@ -306,10 +307,12 @@ func GenerateFetchHistory(deliveries []Delivery) []resource.HistoryProps {
 					}
 				}
 			} else {
+				log.Debugf("delivery.done FALSE: %v", delivery)
 				now := time.Now()
 				for _, sub := range subscribers {
-					nextFetchTimestamp := sub.NextFetch.Timestamp
-					nextFetchDatetime := sub.NextFetch.Datetime
+					log.Debugf("sub: %v", sub)
+					nextFetchTimestamp := delivery.Timestamp
+					nextFetchDatetime := delivery.Datetime
 					if nextFetchTimestamp == 0 {
 						nextFetchTimestamp = now.Unix()
 						nextFetchDatetime = now.Format(util.DateTimeFormat)
@@ -330,8 +333,10 @@ func GenerateFetchHistory(deliveries []Delivery) []resource.HistoryProps {
 			thisFetch := resource.FetchItems{Datetime: delivery.Datetime, Timestamp: delivery.Timestamp, Urls: urls}
 			if delivery.Done {
 				lastFetch = thisFetch
+				log.Debugf("lastFetch: %v", lastFetch)
 			} else {
 				nextFetch = thisFetch
+				log.Debugf("nextFetch: %v", nextFetch)
 			}
 			subscriberItem := resource.SubscriberItems{Id: subscriberId, LastFetch: lastFetch, NextFetch: nextFetch}
 			subscriberItems := []resource.SubscriberItems{subscriberItem}

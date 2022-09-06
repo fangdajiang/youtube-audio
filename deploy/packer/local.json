@@ -79,7 +79,7 @@
         "type": "docker-tag",
         "repository": "{{user `docker_id`}}/youtube-audio",
         "tags": [
-          "v0.1.9"
+          "v0.1.11"
         ]
       },
       "docker-push"
