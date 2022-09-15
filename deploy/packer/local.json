@@ -39,7 +39,7 @@
     {
       "type": "shell",
       "inline": [
-        "mkdir /app"
+        "mkdir /app/"
       ]
     },
     {
@@ -79,7 +79,7 @@
         "type": "docker-tag",
         "repository": "{{user `docker_id`}}/youtube-audio",
         "tags": [
-          "v0.1.11"
+          "v0.1.12"
         ]
       },
       "docker-push"

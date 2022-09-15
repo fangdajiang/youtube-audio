@@ -21,7 +21,7 @@
     "secret_key":"{{user `secret_key`}}",
     "region":"{{user `region`}}",
     "image_name":"centos_youtube_audio",
-    "source_image":"centos_7_9_x64_20G_alibase_20220727.vhd",
+    "source_image":"centos_7_9_x64_20G_alibase_20220824.vhd",
     "ssh_username":"root",
     "instance_type":"ecs.t5-lc1m2.small",
     "internet_charge_type":"PayByTraffic",

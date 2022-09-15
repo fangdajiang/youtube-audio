@@ -230,8 +230,8 @@ func RetrieveITagOfMinimumSizeAudio(mediaUrl string) (int, error) {
 	}
 	log.Debugf("minSizeVideoMetaData: %v", minSizeVideoMetaData)
 	if util.UploadAudioMaxLength < minSizeVideoMetaData.ContentLength {
-		return -1, fmt.Errorf("the min size %v of audio track EXCEEDS the max %v, url:%s",
-			minSizeVideoMetaData.ContentLength, util.UploadAudioMaxLength, mediaUrl)
+		return -1, fmt.Errorf("the min size %v of audio track EXCEEDS the max %v",
+			minSizeVideoMetaData.ContentLength, util.UploadAudioMaxLength)
 	}
 	return minSizeVideoMetaData.ITagNo, nil
 }
