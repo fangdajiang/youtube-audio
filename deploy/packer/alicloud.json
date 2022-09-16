@@ -20,7 +20,7 @@
     "access_key":"{{user `access_key`}}",
     "secret_key":"{{user `secret_key`}}",
     "region":"{{user `region`}}",
-    "image_name":"centos_youtube_audio",
+    "image_name":"centos_youtube_audio_20220915",
     "source_image":"centos_7_9_x64_20G_alibase_20220824.vhd",
     "ssh_username":"root",
     "instance_type":"ecs.t5-lc1m2.small",

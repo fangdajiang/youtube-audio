@@ -1,6 +1,7 @@
 package log
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/natefinch/lumberjack.v2"
@@ -16,6 +17,12 @@ const (
 	FileNameDir          string = "logs/"
 )
 
+var logAsJSON bool
+
+func EnableJSONFormat() {
+	logAsJSON = true
+}
+
 var log = logrus.New()
 var LoggingFilePath = getLogFilePath()
 
@@ -27,7 +34,7 @@ func getLogFileName() string {
 	return FileNamePrefix + time.Now().Format(FileNameSuffixFormat) + FileNameExt
 }
 
-func init() {
+func InitLogging() {
 	fmt.Println("INIT LOGGING...")
 	log.SetLevel(logrus.DebugLevel)
 	log.SetFormatter(&logrus.TextFormatter{
@@ -65,5 +72,36 @@ func Fatalf(format string, args ...interface{}) {
 }
 
 func Printf(format string, args ...interface{}) {
-	log.Printf(format, args...)
+	if logAsJSON {
+		logJSON("normal", fmt.Sprintf(format, args...))
+	} else {
+		log.Printf(format, args...)
+	}
+}
+
+func logJSON(status, msg string) {
+	type jsonLog struct {
+		Time    time.Time `json:"time"`
+		Status  string    `json:"status"`
+		Message string    `json:"msg"`
+	}
+
+	l := jsonLog{
+		Time:    time.Now().UTC(),
+		Status:  status,
+		Message: msg,
+	}
+	jsonBytes, err := json.Marshal(&l)
+	if err != nil {
+		_, err2 := fmt.Fprintf(os.Stderr, msg)
+		if err2 != nil {
+			fmt.Printf("Error2: %v\n", err)
+		}
+		return
+	}
+
+	_, err = fmt.Fprintf(os.Stdout, "%s\n", string(jsonBytes))
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+	}
 }
