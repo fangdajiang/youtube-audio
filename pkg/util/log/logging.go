@@ -35,7 +35,7 @@ func getLogFileName() string {
 }
 
 func InitLogging() {
-	fmt.Println("INIT LOGGING...")
+	log.Infof("INIT LOGGING...")
 	log.SetLevel(logrus.DebugLevel)
 	log.SetFormatter(&logrus.TextFormatter{
 		TimestampFormat: "2006-01-02 15:04:05",
