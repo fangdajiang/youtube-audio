@@ -19,6 +19,6 @@ RUN /bin/cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
     && echo 'Asia/Shanghai' >/etc/timezone
 
 ADD bin/dependency/youtube-dl /usr/local/sbin/
-ADD bin/youtube-audio /app/youtube-audio
+ADD bin/ya /app/ya
 
-ENTRYPOINT ["/app/youtube-audio"]
+ENTRYPOINT ["/app/ya", "run", "-m", "all"]

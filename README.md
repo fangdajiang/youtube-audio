@@ -24,7 +24,7 @@ sudo chmod a+rx /usr/local/bin/youtube-dl
 # 设置环境变量 BOT_TOKEN, BOT_CHAT_ID, CHAT_ID, YOUTUBE_KEY
 git clone https://github.com/fangdajiang/youtube-audio.git
 cd youtube-audio
-go run ./cmd/main.go
+go run main.go run -m all
 ```
 > * 通过 Packer(Docker) 安装并推到 Docker Hub 中
 ```shell
@@ -64,7 +64,7 @@ terraform init/plan/apply
 ## 注意事项
 > * 编译时，假如本机是 ARM 架构的 CPU(如 Apple M1/M2)，须加参数
 ```shell
-CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/youtube-audio cmd/main.go
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/ya main.go
 docker build -t youtube-audio:latest -f ./Dockerfile .
 ```
 > *

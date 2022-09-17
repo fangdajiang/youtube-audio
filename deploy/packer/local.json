@@ -2,12 +2,12 @@
   "variables": {
     "docker_id": "{{env `DOCKER_ID`}}",
 
-    "youtube_audio_source_file": "bin/youtube-audio",
+    "youtube_audio_source_file": "bin/ya",
     "youtube_dl_source_file": "bin/dependency/youtube-dl",
     "configure_source_file": "deploy/script/configure.sh",
     "start_source_file": "deploy/script/start.sh",
 
-    "youtube_audio_target_file": "/app/youtube-audio",
+    "youtube_audio_target_file": "/app/ya",
     "youtube_dl_target_file": "/usr/local/sbin/youtube-dl",
     "configure_target_file": "/configure.sh",
     "start_target_file": "/start.sh",
@@ -32,7 +32,7 @@
       "ENV ALICLOUD_REGION ${ALICLOUD_REGION}",
       "ENV DOCKER_ID ${DOCKER_ID}",
 
-      "ENTRYPOINT [\"/app/youtube-audio\"]"
+      "ENTRYPOINT [\"/app/ya\", \"run\", \"-m\", \"all\"]",
     ]
   }],
   "provisioners": [
