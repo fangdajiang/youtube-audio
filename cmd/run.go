@@ -45,7 +45,7 @@ ya run -m all
 			for _, delivery := range mergedDeliveries {
 				log.Debugf("merged delivery: %v", delivery)
 			}
-			//process(mergedDeliveries)
+			process(mergedDeliveries)
 		case "single":
 			if len(args) == 0 {
 				fmt.Printf("YouTube Url Not Specified\n")
