@@ -14,17 +14,16 @@
     -> Python 2.7.5+
     -> Packer
     -> (Docker, Terraform, [Linux 仓库设置](https://www.hashicorp.com/blog/announcing-the-hashicorp-linux-repository))
+    -> OSS ([youtube-audio/fetch_base.json](https://youtube-audio.oss-cn-hongkong.aliyuncs.com/fetch_base.json) 和 [youtube-audio/fetch_history.json](https://youtube-audio.oss-cn-hongkong.aliyuncs.com/fetch_history.json))
 ```shell
 sudo curl -L https://yt-dl.org/downloads/latest/youtube-dl -o /usr/local/bin/youtube-dl
 sudo chmod a+rx /usr/local/bin/youtube-dl
 ```
 > * 从源码安装
 ```shell
-# 拷贝 bin/dependency/youtube-dl 到 $PATH
-# 设置环境变量 BOT_TOKEN, BOT_CHAT_ID, CHAT_ID, YOUTUBE_KEY
 git clone https://github.com/fangdajiang/youtube-audio.git
 cd youtube-audio
-go run main.go run -m all
+go build -o bin/ya main.go
 ```
 > * 通过 Packer(Docker) 安装并推到 Docker Hub 中
 ```shell
@@ -38,9 +37,18 @@ packer build deploy/packer/alicloud.json
 ```
 
 ## 例子
+### 拷贝 bin/dependency/youtube-dl 到 $PATH
+### 设置环境变量 BOT_TOKEN, BOT_CHAT_ID, CHAT_ID, YOUTUBE_KEY
 Docker:
 ```shell
 docker run -d -e BOT_TOKEN= -e BOT_CHAT_ID= -e CHAT_ID= -e YOUTUBE_KEY= -e ALICLOUD_ACCESS_KEY= -e ALICLOUD_SECRET_KEY= youtube-audio:latest
+```
+Dev:
+```shell
+# 拉取所有音频
+go run main.go run -m all
+# 拉取单条音频
+go run main.go run -m single https://www.youtube.com/watch?v=xxx
 ```
 Terraform:
 ```shell
@@ -50,9 +58,10 @@ terraform init/plan/apply
 ```
 
 ## 功能
-- [x] 一键拉取 YouTuber 最近发布的 1 条音频内容到 Telegram 的指定频道
-- [x] 支持 Packer 在阿里云平台上构建镜像
-- [x] 支持 Terraform 在阿里云平台上构建虚拟机
+- ✅ CLI 支持一键拉取所有自定义 YouTuber Playlist 最近发布的 2 条视频的音频到 Telegram 的指定频道
+- ✅ 支持 Packer 在阿里云平台上构建镜像
+- ✅ 支持 Terraform 在阿里云平台上构建虚拟机
+- ✅ CLI 支持拉取单条视频的音轨到 Telegram 指定频道
 - [ ] 使用 Bot 进行订阅
 - [ ] 略延时获取发布内容的音频（由于 YouTube 会延时发布视频中的单独音轨，故暂时无法做到实时）
 - [ ] 支持订阅多 YouTuber

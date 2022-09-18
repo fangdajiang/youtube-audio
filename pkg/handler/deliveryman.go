@@ -44,7 +44,6 @@ func SendAudio(delivery *Delivery) error {
 	err = telegramBot.Send(delivery.Parcel)
 	if err == nil {
 		markDelivered(delivery)
-		reporter.BriefSummary.SuccessfulFetch++
 	}
 	return err
 }

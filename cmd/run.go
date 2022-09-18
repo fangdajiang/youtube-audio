@@ -53,8 +53,10 @@ ya run -m all
 			}
 			url := args[0]
 			if strings.HasPrefix(url, "https://www.youtube.com/watch?v=") {
-				log.Infof("url: %s", url)
-
+				initSetting()
+				de := handler.AssembleDeliveryFromSingleUrl(url)
+				log.Infof("processing one SINGLE url: %v", de)
+				handler.ProcessOneVideo(&de)
 			} else {
 				fmt.Printf("Invalid YouTube Url Format\n")
 				os.Exit(1)

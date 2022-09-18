@@ -12,6 +12,7 @@ import (
 	"sort"
 	"strconv"
 	"time"
+	"youtube-audio/pkg/reporter"
 	"youtube-audio/pkg/util"
 	"youtube-audio/pkg/util/env"
 	"youtube-audio/pkg/util/log"
@@ -85,6 +86,8 @@ func ProcessOneVideo(delivery *Delivery) {
 				log.Warnf("Failed to send file %s to telegram channel, error: %v", audioFile.FilePath, err)
 				audioFile.Caption = audioFile.Caption + fmt.Sprintf("%s", err)
 				SendWarningMessage(util.FailedToSendAudioWarningTemplate, audioFile.Caption)
+			} else {
+				reporter.BriefSummary.SuccessfulFetch++
 			}
 		}
 		if audioFile.FilePath != "" {
@@ -404,6 +407,11 @@ func GetYouTubeVideosFromPlaylists() []PlaylistMetaData {
 		playlistMetaDataArray = append(playlistMetaDataArray, playlistMetaData)
 	}
 	return playlistMetaDataArray
+}
+
+func AssembleDeliveryFromSingleUrl(url string) Delivery {
+	parcel := Parcel{Url: url}
+	return Delivery{Parcel: parcel}
 }
 
 func AssembleDeliveriesFromPlaylists() []Delivery {
