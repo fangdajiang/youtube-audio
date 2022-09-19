@@ -5,16 +5,16 @@
 ## 演示
 > * 注册 Telegram（俗称电报，中国大陆须科学上网，或使用其内置的代理）
 > * 在 Telegram 中订阅频道 @YouTubeCnPoliticsAudio
-> * 不定时获得某 YouTuber 发布的音频内容
+> * 从 Telegram 不定时获得 YouTuber(s) 发布的音频内容（因 Telegram 的限制，不拉取大小超过 50M 的音轨）
 > * 在 Telegram 的机器人 @you_audio_bot 中查看告警通知
 
 ## 构建
 > * 依赖
-    -> Go 1.17+
-    -> Python 2.7.5+
-    -> Packer
-    -> (Docker, Terraform, [Linux 仓库设置](https://www.hashicorp.com/blog/announcing-the-hashicorp-linux-repository))
-    -> OSS ([youtube-audio/fetch_base.json](https://youtube-audio.oss-cn-hongkong.aliyuncs.com/fetch_base.json) 和 [youtube-audio/fetch_history.json](https://youtube-audio.oss-cn-hongkong.aliyuncs.com/fetch_history.json))
+>   * Go 1.17+
+>   * Python 2.7.5+
+>   * Packer
+>   * (Docker, Terraform, [Linux 仓库设置](https://www.hashicorp.com/blog/announcing-the-hashicorp-linux-repository))
+>   * OSS ([youtube-audio/fetch_base.json](https://youtube-audio.oss-cn-hongkong.aliyuncs.com/fetch_base.json) 和 [youtube-audio/fetch_history.json](https://youtube-audio.oss-cn-hongkong.aliyuncs.com/fetch_history.json))
 ```shell
 sudo curl -L https://yt-dl.org/downloads/latest/youtube-dl -o /usr/local/bin/youtube-dl
 sudo chmod a+rx /usr/local/bin/youtube-dl
@@ -58,10 +58,10 @@ terraform init/plan/apply
 ```
 
 ## 功能
-- ✅ CLI 支持一键拉取所有自定义 YouTuber Playlist 最近发布的 2 条视频的音频到 Telegram 的指定频道
-- ✅ 支持 Packer 在阿里云平台上构建镜像
-- ✅ 支持 Terraform 在阿里云平台上构建虚拟机
-- ✅ CLI 支持拉取单条视频的音轨到 Telegram 指定频道
+- [x] CLI 支持一键拉取所有自定义 YouTuber Playlist 最近发布的 2 条视频的音轨到 Telegram 的指定频道
+- [x] 支持 Packer 在阿里云平台上构建镜像
+- [x] 支持 Terraform 在阿里云平台上构建虚拟机
+- [x] CLI 支持拉取单条视频的音轨到 Telegram 指定频道
 - [ ] 使用 Bot 进行订阅
 - [ ] 略延时获取发布内容的音频（由于 YouTube 会延时发布视频中的单独音轨，故暂时无法做到实时）
 - [ ] 支持订阅多 YouTuber
