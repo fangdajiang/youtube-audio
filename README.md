@@ -12,50 +12,57 @@
 > * 依赖
 >   * Go 1.17+
 >   * Python 2.7.5+
+>   * Docker
 >   * Packer
->   * (Docker, Terraform, [Linux 仓库设置](https://www.hashicorp.com/blog/announcing-the-hashicorp-linux-repository))
+>   * (Terraform, [Linux 仓库设置](https://www.hashicorp.com/blog/announcing-the-hashicorp-linux-repository))
 >   * OSS ([youtube-audio/fetch_base.json](https://youtube-audio.oss-cn-hongkong.aliyuncs.com/fetch_base.json) 和 [youtube-audio/fetch_history.json](https://youtube-audio.oss-cn-hongkong.aliyuncs.com/fetch_history.json))
-```shell
-sudo curl -L https://yt-dl.org/downloads/latest/youtube-dl -o /usr/local/bin/youtube-dl
-sudo chmod a+rx /usr/local/bin/youtube-dl
-```
-> * 从源码安装
-```shell
-git clone https://github.com/fangdajiang/youtube-audio.git
-cd youtube-audio
-go build -o bin/ya main.go
-```
-> * 通过 Packer(Docker) 安装并推到 Docker Hub 中
-```shell
-# 设置环境变量 DOCKER_ID
-packer build deploy/packer/local.json
-```
-> * 通过 Terraform 安装
-```shell
-# 还须设置环境变量 ALICLOUD_ACCESS_KEY, ALICLOUD_SECRET_KEY, ALICLOUD_REGION
-packer build deploy/packer/alicloud.json
-```
+>   * ```shell
+>     sudo curl -L https://yt-dl.org/downloads/latest/youtube-dl -o /usr/local/bin/youtube-dl
+>     sudo chmod a+rx /usr/local/bin/youtube-dl
+>     ```
+> * 从源码构建
+> ```shell
+> git clone https://github.com/fangdajiang/youtube-audio.git
+> cd youtube-audio
+> go build -o bin/ya main.go
+> ```
+> * 通过 Docker 构建
+> ```shell
+> docker build -t youtube-audio:latest -f ./Dockerfile .
+> ```
+> * 通过 Packer 构建并推到 Docker Hub 中
+> ```shell
+> # 设置环境变量 DOCKER_ID
+> packer build deploy/packer/local.json
+> ```
+> * 通过 Terraform 来 Provision
+> ```shell
+> # 设置环境变量 ALICLOUD_ACCESS_KEY, ALICLOUD_SECRET_KEY, ALICLOUD_REGION
+> # 
+> # 先在阿里云构建基础镜像，获取所生成的镜像 ID
+> packer build deploy/packer/alicloud.json
+> # 将该 ID 更新到 main.tf 的 image_id
+> ```
 
-## 例子
-### 拷贝 bin/dependency/youtube-dl 到 $PATH
-### 设置环境变量 BOT_TOKEN, BOT_CHAT_ID, CHAT_ID, YOUTUBE_KEY
-Docker:
-```shell
-docker run -d -e BOT_TOKEN= -e BOT_CHAT_ID= -e CHAT_ID= -e YOUTUBE_KEY= -e ALICLOUD_ACCESS_KEY= -e ALICLOUD_SECRET_KEY= youtube-audio:latest
-```
-Dev:
-```shell
-# 拉取所有音频
-go run main.go run -m all
-# 拉取单条音频
-go run main.go run -m single https://www.youtube.com/watch?v=xxx
-```
-Terraform:
-```shell
-# 在云平台上获取所生成的镜像 ID
-cd deploy/terraform
-terraform init/plan/apply
-```
+## 运行
+> * Docker
+> ```shell
+> docker run -d -e BOT_TOKEN= -e BOT_CHAT_ID= -e CHAT_ID= -e YOUTUBE_KEY= -e ALICLOUD_ACCESS_KEY= -e ALICLOUD_SECRET_KEY= youtube-audio:latest
+> ```
+> * Terraform
+> ```shell
+> cd deploy/terraform/alicloud
+> terraform init/plan/apply
+> ```
+> * Dev
+>   * 拷贝 bin/dependency/youtube-dl 到本机 $PATH
+>   * 设置本机环境变量 BOT_TOKEN, BOT_CHAT_ID, CHAT_ID, YOUTUBE_KEY
+> ```shell
+> # 拉取所有音频
+> go run main.go run -m all
+> # 拉取单条音频
+> go run main.go run -m single https://www.youtube.com/watch?v=xxx
+> ```
 
 ## 功能
 - [x] CLI 支持一键拉取所有自定义 YouTuber Playlist 最近发布的 2 条视频的音轨到 Telegram 的指定频道
@@ -74,7 +81,6 @@ terraform init/plan/apply
 > * 编译时，假如本机是 ARM 架构的 CPU(如 Apple M1/M2)，须加参数
 ```shell
 CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/ya main.go
-docker build -t youtube-audio:latest -f ./Dockerfile .
 ```
 > *
 

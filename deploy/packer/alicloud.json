@@ -10,9 +10,9 @@
     "youtube_key": "{{env `YOUTUBE_KEY`}}",
 
     "youtube_dl_source_file": "bin/dependency/youtube-dl",
-    "youtube_audio_source_file": "bin/ya",
-
     "youtube_dl_target_file": "/usr/local/sbin/youtube-dl",
+
+    "youtube_audio_source_file": "bin/ya",
     "youtube_audio_target_file": "/app/ya"
   },
   "builders": [{
