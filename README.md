@@ -20,6 +20,7 @@
 >     sudo curl -L https://yt-dl.org/downloads/latest/youtube-dl -o /usr/local/bin/youtube-dl
 >     sudo chmod a+rx /usr/local/bin/youtube-dl
 >     ```
+>   * 建立 Telegram 机器人 和 频道，并将该机器人加入到频道中并设为管理员
 > * 从源码构建
 > ```shell
 > git clone https://github.com/fangdajiang/youtube-audio.git
@@ -58,14 +59,14 @@
 >   * 拷贝 bin/dependency/youtube-dl 到本机 $PATH
 >   * 设置本机环境变量 BOT_TOKEN, BOT_CHAT_ID, CHAT_ID, YOUTUBE_KEY
 > ```shell
-> # 拉取所有音频
-> go run main.go run -m all
+> # 拉取近期音频
+> go run main.go run -m latest
 > # 拉取单条音频
 > go run main.go run -m single https://www.youtube.com/watch?v=xxx
 > ```
 
 ## 功能
-- [x] CLI 支持一键拉取所有自定义 YouTuber Playlist 最近发布的 2 条视频的音轨到 Telegram 的指定频道
+- [x] CLI 支持一键拉取自定义 YouTuber Playlist 近期发布的 2 条视频的音轨到 Telegram 的指定频道
 - [x] 支持 Packer 在阿里云平台上构建镜像
 - [x] 支持 Terraform 在阿里云平台上构建虚拟机
 - [x] CLI 支持拉取单条视频的音轨到 Telegram 指定频道

@@ -24,10 +24,10 @@ var RunCmd = &cobra.Command{
 	Example: `
 # Start to process YouTube Playlists.
 ya run -m single YOUTUBE_URL
-ya run -m all
+ya run -m latest
 `,
 	Run: func(cmd *cobra.Command, args []string) {
-		if mode == "" || (mode != "" && mode != "all" && mode != "single") {
+		if mode == "" || (mode != "" && mode != "latest" && mode != "single") {
 			_, err := fmt.Fprintf(os.Stdout, "An invalid mode was specified.\n")
 			if err != nil {
 				fmt.Printf("Error: %v\n", err)
@@ -35,7 +35,7 @@ ya run -m all
 			os.Exit(1)
 		}
 		switch mode {
-		case "all":
+		case "latest":
 			initSetting()
 
 			log.Infof("Start fetching, converting, sending... from %s\n", time.Now().Format(util.DateTimeFormat))
@@ -105,7 +105,7 @@ func initSetting() {
 }
 
 func init() {
-	RunCmd.Flags().StringVarP(&mode, "mode", "m", "", "Mode for running: all or single.")
+	RunCmd.Flags().StringVarP(&mode, "mode", "m", "", "Mode for running: latest or single.")
 	RunCmd.Flags().BoolP("help", "h", false, "Print this help message.")
 	_ = RunCmd.MarkFlagRequired("mode")
 	RootCmd.AddCommand(RunCmd)

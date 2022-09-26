@@ -12,7 +12,7 @@ var RootCmd = &cobra.Command{
 	Use:     "ya",
 	Short:   "Youtube Audio CLI",
 	Long:    "CLI TOOL FOR SENDING YOUTUBE AUDIO TO TELEGRAM",
-	Example: "ya run -m all",
+	Example: "ya run -m latest",
 }
 
 type yaVersion struct {

@@ -21,4 +21,4 @@ RUN /bin/cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
 ADD bin/dependency/youtube-dl /usr/local/sbin/
 ADD bin/ya /app/ya
 
-ENTRYPOINT ["/app/ya", "run", "-m", "all"]
+ENTRYPOINT ["/app/ya", "run", "-m", "latest"]
