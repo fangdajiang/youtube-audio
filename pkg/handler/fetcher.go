@@ -259,7 +259,7 @@ func DownloadYouTubeAudioToPath(mediaUrl string) (Parcel, error) {
 	parcelFile, err := os.Create(parcel.FilePath)
 	log.Debugf("media file %s CREATED at %s", parcel.FilePath, time.Now().Format(util.DateTimeFormat))
 	if err != nil {
-		log.Fatalf("creating file error: %v", err)
+		log.Errorf("creating file error: %v", err)
 	}
 
 	iTagNo, err := RetrieveITagOfMinimumSizeAudio(mediaUrl)

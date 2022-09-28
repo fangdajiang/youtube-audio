@@ -19,7 +19,7 @@ const (
 	EnvBotChatIdName                      string = "BOT_CHAT_ID"
 	EnvYouTubeKeyName                     string = "YOUTUBE_KEY"
 	IllegalCharacterReplacementInFilename string = "_"
-	FilenameMaxLength                     int    = 512
+	FilenameMaxLength                     int    = 250 // 255 - 5, 5 means length of .webm
 	UploadAudioMaxLength                  int64  = 52428800
 	YouTubeDefaultMaxResults              int64  = 1
 	FetchYouTubeMaxResultsLimit           int64  = 50
@@ -113,19 +113,18 @@ func MakeYouTubeRawUrl(videoId string) string {
 }
 
 func FilenamifyMediaTitle(title string) (string, error) {
-	rawMediaTitle := fmt.Sprintf("%s%s", title, GetYouTubeFetchBase().MediaExtension)
-	log.Debugf("rawMediaTitle %s", rawMediaTitle)
-	validMediaFileName, err := filenamify.Filenamify(rawMediaTitle, filenamify.Options{
+	log.Debugf("rawMediaTitle %s, length: %v", title, len(title))
+	validMediaFileName, err := filenamify.Filenamify(title, filenamify.Options{
 		Replacement: IllegalCharacterReplacementInFilename,
 		MaxLength:   FilenameMaxLength,
 	})
 	if err != nil {
 		log.Errorf("convert raw media title to a valid file name error:%s", err)
-		return "", fmt.Errorf("filenamify error: %s", rawMediaTitle)
+		return "", fmt.Errorf("filenamify error: %s", title)
 	}
 	validMediaFileName = strings.ReplaceAll(validMediaFileName, "#", IllegalCharacterReplacementInFilename)
 	validMediaFileName = strings.ReplaceAll(validMediaFileName, " ", "")
-	log.Debugf("validMediaFileName %s", validMediaFileName)
+	validMediaFileName = fmt.Sprintf("%s%s", validMediaFileName, GetYouTubeFetchBase().MediaExtension)
 
 	return validMediaFileName, nil
 }
