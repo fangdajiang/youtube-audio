@@ -55,13 +55,32 @@ func TestDeleteSliceElms(t *testing.T) {
 }
 
 func TestContainString(t *testing.T) {
+	r := require.New(t)
+
+	// test single youtube url
 	sl := []string{"https://www.youtube.com/watch?v=jQZ36-zERtM"}
 	log.Debugf("sl: %v", sl)
 
-	sl2 := StringSlice2Interface(sl)
+	s1 := StringSlice2Interface(sl)
 
-	set := mapset.NewSetFromSlice(sl2)
-	log.Debugf("contains https://www.youtube.com/watch?v=jQZ36-zERtM: %v", set.Contains("https://www.youtube.com/watch?v=jQZ36-zERtM"))
-	log.Debugf("contains https://www.youtube.com/watch?v=JOj-k2UE2Bs: %v", set.Contains("https://www.youtube.com/watch?v=JOj-k2UE2Bs"))
+	set := mapset.NewSetFromSlice(s1)
 
+	r.True(set.Contains("https://www.youtube.com/watch?v=jQZ36-zERtM"), "contains https://www.youtube.com/watch?v=jQZ36-zERtM")
+	r.False(set.Contains("https://www.youtube.com/watch?v=123"), "NOT contains https://www.youtube.com/watch?v=123")
+
+	// test playlist url
+	sl2 := []string{"https://www.youtube.com/playlist?list=PLstzraCE5l2j_Sih-L9CoFq-r71NflIfi"}
+	log.Debugf("sl2: %v", sl2)
+
+	s2 := StringSlice2Interface(sl2)
+
+	set2 := mapset.NewSetFromSlice(s2)
+
+	r.True(set2.Contains("https://www.youtube.com/playlist?list=PLstzraCE5l2j_Sih-L9CoFq-r71NflIfi"), "contains https://www.youtube.com/playlist?list=")
+	r.False(set2.Contains("https://www.youtube.com/playlist?list2="), "NOT contains https://www.youtube.com/playlist?list2=")
+
+}
+
+func init() {
+	log.InitLogging()
 }

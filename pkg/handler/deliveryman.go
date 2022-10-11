@@ -175,7 +175,7 @@ func AppendDeliveries(deliveries *[]Delivery, fetchItems resource.FetchItems, pl
 		}
 	}
 	// always keep the fetch block, but under maximum count of urls, drop random(?) ones
-	for len(fetchItems.Urls) > util.FetchMaxUrlsLimit {
+	for len(fetchItems.Urls) > util.FetchBlockMaxUrlsLimit {
 		fetchItems.Urls = append(fetchItems.Urls[:0], fetchItems.Urls[1:]...)
 	}
 	for _, fetchUrl := range fetchItems.Urls {

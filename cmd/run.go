@@ -14,6 +14,10 @@ import (
 	"youtube-audio/pkg/util/resource"
 )
 
+const (
+	YOUTUBE_PLAYLIST_PREFIX_URL string = "https://www.youtube.com/playlist?list="
+)
+
 var (
 	mode string
 )
@@ -25,35 +29,54 @@ var RunCmd = &cobra.Command{
 # Start to process YouTube Playlists.
 ya run -m single YOUTUBE_URL
 ya run -m latest
+ya run -m playlist YOUTUBE_PLAYLIST_URL
 `,
 	Run: func(cmd *cobra.Command, args []string) {
-		if mode == "" || (mode != "" && mode != "latest" && mode != "single") {
+		if mode == "" || (mode != "" && mode != "latest" && mode != "single" && mode != "playlist") {
 			_, err := fmt.Fprintf(os.Stdout, "An invalid mode was specified.\n")
 			if err != nil {
 				fmt.Printf("Error: %v\n", err)
 			}
 			os.Exit(1)
 		}
+		initSetting()
 		switch mode {
 		case "latest":
-			initSetting()
-
 			log.Infof("Start fetching, converting, sending... from %s\n", time.Now().Format(util.DateTimeFormat))
 
-			incomingDeliveries := handler.AssembleDeliveriesFromPlaylists()
+			incomingDeliveries := handler.AssembleDeliveriesFromPlaylists(handler.GetYouTubeVideosFromPlaylists())
 			mergedDeliveries := handler.MergeHistoryFetchesInto(incomingDeliveries)
 			for _, delivery := range mergedDeliveries {
 				log.Debugf("merged delivery: %v", delivery)
 			}
 			process(mergedDeliveries)
+		case "playlist":
+			if len(args) == 0 {
+				fmt.Printf("YouTube Playlist Url Not Specified\n")
+				os.Exit(1)
+			}
+			url := args[0]
+			if strings.HasPrefix(url, YOUTUBE_PLAYLIST_PREFIX_URL) {
+				log.Infof("processing one PLAYLIST url: %v", url)
+				playlistId := strings.TrimPrefix(url, YOUTUBE_PLAYLIST_PREFIX_URL)
+				if len(playlistId) < 20 {
+					fmt.Printf("Invalid Playlist Id's length of YouTube Playlist Url\n")
+					os.Exit(1)
+				}
+				playlistMetaData := handler.GetYouTubeVideosFromPlaylistId(playlistId)
+				incomingDeliveries := handler.AssembleDeliveriesFromPlaylists(playlistMetaData)
+				process(incomingDeliveries)
+			} else {
+				fmt.Printf("Invalid YouTube Playlist Url Format\n")
+				os.Exit(1)
+			}
 		case "single":
 			if len(args) == 0 {
 				fmt.Printf("YouTube Url Not Specified\n")
 				os.Exit(1)
 			}
 			url := args[0]
-			if strings.HasPrefix(url, "https://www.youtube.com/watch?v=") {
-				initSetting()
+			if strings.HasPrefix(url, util.GetYouTubeFetchBase().PrefixUrl) {
 				de := handler.AssembleDeliveryFromSingleUrl(url)
 				log.Infof("processing one SINGLE url: %v", de)
 				handler.ProcessOneVideo(&de)
@@ -105,7 +128,7 @@ func initSetting() {
 }
 
 func init() {
-	RunCmd.Flags().StringVarP(&mode, "mode", "m", "", "Mode for running: latest or single.")
+	RunCmd.Flags().StringVarP(&mode, "mode", "m", "", "Mode for running: latest or single or playlist.")
 	RunCmd.Flags().BoolP("help", "h", false, "Print this help message.")
 	_ = RunCmd.MarkFlagRequired("mode")
 	RootCmd.AddCommand(RunCmd)

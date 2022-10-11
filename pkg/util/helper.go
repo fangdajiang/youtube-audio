@@ -21,9 +21,9 @@ const (
 	IllegalCharacterReplacementInFilename string = "_"
 	FilenameMaxLength                     int    = 250 // 255 - 5, 5 means length of .webm
 	UploadAudioMaxLength                  int64  = 52428800
-	YouTubeDefaultMaxResults              int64  = 1
-	FetchYouTubeMaxResultsLimit           int64  = 50
-	FetchMaxUrlsLimit                     int    = 10
+	YouTubeDefaultMaxResults              int64  = 3
+	FetchYouTubeMaxResultsLimit           int64  = 15
+	FetchBlockMaxUrlsLimit                int    = 10
 	FailedToSendAudioWarningTemplate      string = "FAILED TO SEND AUDIO %s TO THE CHANNEL"
 	FailedToFetchAudioWarningTemplate     string = "FAILED TO FETCH AUDIO %v"
 	FileNotExistWarningTemplate           string = "FILE NOT EXIST: *%s*"
@@ -89,13 +89,18 @@ func GetYouTubePlaylistMaxResultsCount(playlistId string) int64 {
 	youtube := GetYouTubeFetchBase()
 	for _, scope := range youtube.Params {
 		if scope.Id == playlistId {
-			return scope.MaxResultsCount
+			maxResults := scope.MaxResultsCount
+			if maxResults <= 0 || maxResults > FetchYouTubeMaxResultsLimit {
+				log.Errorf("illegal maxResults error:%v", maxResults)
+				maxResults = YouTubeDefaultMaxResults
+			}
+			return maxResults
 		}
 	}
 	if youtube.Owner == "" {
 		log.Errorf("getting youtube playlist max results count from json error, scopes:%v", youtube.Params)
 	}
-	return 1
+	return YouTubeDefaultMaxResults
 }
 
 func GetLocalDateTime(formattedDateTime string) string {

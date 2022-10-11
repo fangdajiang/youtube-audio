@@ -130,7 +130,7 @@ func GetPlaylistMetaDataBy(playlistId string) PlaylistMetaData {
 		return playlistMetaData
 	}
 
-	playlistResponse := playlistItemsList(svc, util.YouTubePart, playlistId, util.GetYouTubePlaylistMaxResultsCount(playlistId))
+	playlistResponse := playlistItemsList(svc, util.YouTubePart, playlistId)
 
 	playlistMetaData.PlaylistId = playlistId
 	for _, playlistItem := range playlistResponse.Items {
@@ -159,14 +159,10 @@ func GetPlaylistMetaDataBy(playlistId string) PlaylistMetaData {
 //	return qp.key, qp.value
 //}
 
-func playlistItemsList(service *youtubeapi.Service, part []string, playlistId string, maxResults int64) *youtubeapi.PlaylistItemListResponse {
+func playlistItemsList(service *youtubeapi.Service, part []string, playlistId string) *youtubeapi.PlaylistItemListResponse {
 	call := service.PlaylistItems.List(part)
 	call = call.PlaylistId(playlistId)
-	if maxResults <= 0 || maxResults > util.FetchYouTubeMaxResultsLimit {
-		log.Errorf("illegal maxResults error:%v", maxResults)
-		maxResults = util.YouTubeDefaultMaxResults
-	}
-	call = call.MaxResults(maxResults)
+	call = call.MaxResults(util.GetYouTubePlaylistMaxResultsCount(playlistId))
 	//lastUpdated := queryParamOpt{key: "order", value: "time"}
 	response, err := call.Do()
 	if err != nil {
@@ -396,6 +392,10 @@ func MergeHistoryFetchesInto(newDeliveries []Delivery) []Delivery {
 	return mergedDeliveriesWithoutDuplicated
 }
 
+func GetYouTubeVideosFromPlaylistId(playlistId string) []PlaylistMetaData {
+	return []PlaylistMetaData{GetPlaylistMetaDataBy(playlistId)}
+}
+
 func GetYouTubeVideosFromPlaylists() []PlaylistMetaData {
 	var playlistMetaDataArray []PlaylistMetaData
 	for _, param := range util.GetYouTubeFetchBase().Params {
@@ -414,8 +414,7 @@ func AssembleDeliveryFromSingleUrl(url string) Delivery {
 	return Delivery{Parcel: parcel}
 }
 
-func AssembleDeliveriesFromPlaylists() []Delivery {
-	playlistMetaDataArray := GetYouTubeVideosFromPlaylists()
+func AssembleDeliveriesFromPlaylists(playlistMetaDataArray []PlaylistMetaData) []Delivery {
 	var deliveries []Delivery
 	for _, playlistMetaData := range playlistMetaDataArray {
 		delivery := Delivery{}

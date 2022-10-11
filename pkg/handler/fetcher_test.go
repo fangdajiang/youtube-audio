@@ -14,6 +14,18 @@ import (
 
 func init() {
 	resource.InitResources()
+	log.InitLogging()
+}
+
+func TestGetYouTubeVideosFromPlaylist(t *testing.T) {
+	playlistMetaDataArray := GetYouTubeVideosFromPlaylistId("PLD_nomDtqAAc-v9CctRQEOSPXQPIy_JD2")
+	var videoMetaDataArray []*PlaylistVideoMetaData
+	for _, playlistMetaData := range playlistMetaDataArray {
+		videoMetaDataArray = append(videoMetaDataArray, playlistMetaData.PlaylistVideoMetaDataArray...)
+	}
+	for _, video := range videoMetaDataArray {
+		log.Debugf("id:%v, position:%v", video.VideoId, video.Position)
+	}
 }
 
 func TestGetYouTubeVideosFromPlaylists(t *testing.T) {
@@ -31,7 +43,7 @@ func TestGetYouTubeVideosFromPlaylists(t *testing.T) {
 func TestFlushFetchHistory(t *testing.T) {
 	r := require.New(t)
 
-	deliveries := AssembleDeliveriesFromPlaylists()
+	deliveries := AssembleDeliveriesFromPlaylists(GetYouTubeVideosFromPlaylists())
 	r.True(len(deliveries) > 0)
 	log.Debugf("count: %v, deliveries: %v", len(deliveries), deliveries)
 
@@ -50,7 +62,7 @@ func TestFlushFetchHistory(t *testing.T) {
 }
 
 func TestAssembleDeliveriesFromPlaylists(t *testing.T) {
-	deliveries := AssembleDeliveriesFromPlaylists()
+	deliveries := AssembleDeliveriesFromPlaylists(GetYouTubeVideosFromPlaylistId("PLstzraCE5l2j_Sih-L9CoFq-r71NflIfi"))
 	log.Debugf("deliveries: %v", deliveries)
 }
 
@@ -123,6 +135,6 @@ func TestRetrieveITagOfMinimumAudioSize(t *testing.T) {
 }
 
 func TestMergeHistoryFetchesInto(t *testing.T) {
-	deliveries := MergeHistoryFetchesInto(AssembleDeliveriesFromPlaylists())
+	deliveries := MergeHistoryFetchesInto(AssembleDeliveriesFromPlaylists(GetYouTubeVideosFromPlaylists()))
 	log.Debugf("merged deliveries: %v", deliveries)
 }
