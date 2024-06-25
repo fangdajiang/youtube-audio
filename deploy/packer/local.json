@@ -3,12 +3,12 @@
     "docker_id": "{{env `DOCKER_ID`}}",
 
     "youtube_audio_source_file": "bin/ya",
-    "youtube_dl_source_file": "bin/dependency/youtube-dl",
+    "youtube_dl_source_file": "bin/dependency/yt-dlp",
     "configure_source_file": "deploy/script/configure.sh",
     "start_source_file": "deploy/script/start.sh",
 
     "youtube_audio_target_file": "/app/ya",
-    "youtube_dl_target_file": "/usr/local/sbin/youtube-dl",
+    "youtube_dl_target_file": "/usr/local/sbin/yt-dlp",
     "configure_target_file": "/configure.sh",
     "start_target_file": "/start.sh",
 

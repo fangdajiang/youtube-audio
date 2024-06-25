@@ -19,7 +19,7 @@ const (
 	EnvBotChatIdName                      string = "BOT_CHAT_ID"
 	EnvYouTubeKeyName                     string = "YOUTUBE_KEY"
 	IllegalCharacterReplacementInFilename string = "_"
-	FilenameMaxLength                     int    = 250 // 255 - 5, 5 means length of .webm
+	FilenameMaxLength                     int    = 120
 	UploadAudioMaxLength                  int64  = 52428800
 	YouTubeDefaultMaxResults              int64  = 3
 	FetchYouTubeMaxResultsLimit           int64  = 15

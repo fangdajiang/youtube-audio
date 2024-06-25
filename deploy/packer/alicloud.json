@@ -9,8 +9,8 @@
     "chat_id": "{{env `CHAT_ID`}}",
     "youtube_key": "{{env `YOUTUBE_KEY`}}",
 
-    "youtube_dl_source_file": "bin/dependency/youtube-dl",
-    "youtube_dl_target_file": "/usr/local/sbin/youtube-dl",
+    "youtube_dl_source_file": "bin/dependency/yt-dlp",
+    "youtube_dl_target_file": "/usr/local/sbin/yt-dlp",
 
     "youtube_audio_source_file": "bin/ya",
     "youtube_audio_target_file": "/app/ya"

@@ -17,8 +17,8 @@
 >   * (Terraform, [Linux 仓库设置](https://www.hashicorp.com/blog/announcing-the-hashicorp-linux-repository))
 >   * OSS ([youtube-audio/fetch_base.json](https://youtube-audio.oss-cn-hongkong.aliyuncs.com/fetch_base.json) 和 [youtube-audio/fetch_history.json](https://youtube-audio.oss-cn-hongkong.aliyuncs.com/fetch_history.json))
 >   * ```shell
->     sudo curl -L https://yt-dl.org/downloads/latest/youtube-dl -o /usr/local/bin/youtube-dl
->     sudo chmod a+rx /usr/local/bin/youtube-dl
+>     sudo curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp
+>     sudo chmod a+rx /usr/local/bin/yt-dlp
 >     ```
 >   * 建立 Telegram 机器人 和 频道，并将该机器人加入到频道中并设为管理员
 > * 从源码构建
@@ -56,7 +56,7 @@
 > terraform init/plan/apply
 > ```
 > * Dev
->   * 拷贝 bin/dependency/youtube-dl 到本机 $PATH
+>   * 拷贝 bin/dependency/yt-dlp 到本机 $PATH
 >   * 设置本机环境变量 BOT_TOKEN, BOT_CHAT_ID, CHAT_ID, YOUTUBE_KEY
 > ```shell
 > # 拉取近期音频
@@ -86,6 +86,7 @@ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/ya main.go
 > *
 
 ## 受以下项目启发并表示感谢
+* [yt-dlp](https://github.com/yt-dlp/yt-dlp)
 * [youtube-dl](https://github.com/ytdl-org/youtube-dl)
 * [youtube](https://github.com/kkdai/youtube)
 * [YouTube中文時政精選](https://t.me/YouTubePoliTalk)
