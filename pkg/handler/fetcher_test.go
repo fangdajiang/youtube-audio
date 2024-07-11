@@ -118,7 +118,8 @@ func TestYouTube_GetItagInfo(t *testing.T) {
 func TestDownloadYouTubeAudioToPath(t *testing.T) {
 	r := require.New(t)
 
-	parcel, err := DownloadYouTubeAudioToPath("https://www.youtube.com/watch?v=gqVnTo7aLEE")
+	de := AssembleDeliveryFromSingleUrl("https://www.youtube.com/watch?v=gqVnTo7aLEE")
+	parcel, err := DownloadYouTubeAudioToPath(&de)
 	r.NoError(err)
 	r.Equal("摸着石头过河，后来呢？/王剑每日观察/短视频", parcel.Caption)
 
@@ -137,4 +138,18 @@ func TestRetrieveITagOfMinimumAudioSize(t *testing.T) {
 func TestMergeHistoryFetchesInto(t *testing.T) {
 	deliveries := MergeHistoryFetchesInto(AssembleDeliveriesFromPlaylists(GetYouTubeVideosFromPlaylists()))
 	log.Debugf("merged deliveries: %v", deliveries)
+}
+
+func Test_setAudioMetadata(t *testing.T) {
+	// 创建一个临时文件路径
+	filePath := "/Users/fangdajiang/Desktop/test.mp4"
+	caption := "摸着石头过河"
+	artist := "FDJ"
+	album := "千钧一发"
+	parcel = GenerateParcel(filePath, caption, artist, album, "mediaUrl")
+
+	// 测试ffmpeg命令成功执行的情况
+	parcel, _ = convertToMp3AndFillMetadata(parcel)
+	log.Debugf("parcel: %v", parcel)
+
 }

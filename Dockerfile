@@ -19,6 +19,7 @@ RUN /bin/cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
     && echo 'Asia/Shanghai' >/etc/timezone
 
 ADD bin/dependency/yt-dlp /usr/local/sbin/
+ADD bin/dependency/ffmpeg /usr/local/sbin/
 ADD bin/ya /app/ya
 
 ENTRYPOINT ["/app/ya", "run", "-m", "latest"]

@@ -27,6 +27,7 @@ require (
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/bitly/go-simplejson v0.5.1 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
+	github.com/dhowden/tag v0.0.0-20240417053706-3d75831295e8 // indirect
 	github.com/dlclark/regexp2 v1.11.0 // indirect
 	github.com/dop251/goja v0.0.0-20240610225006-393f6d42497b // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect

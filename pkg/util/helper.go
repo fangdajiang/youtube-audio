@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 	"youtube-audio/pkg/util/log"
-	"youtube-audio/pkg/util/oss"
 	"youtube-audio/pkg/util/resource"
 )
 
@@ -33,9 +32,9 @@ const (
 
 var YouTubePart = []string{"snippet"}
 
-func UploadLog2Oss() {
-	oss.Upload2Oss(log.LoggingFilePath)
-}
+//func UploadLog2Oss() {
+//	oss.Upload2Oss(log.LoggingFilePath)
+//}
 
 func StringSliceContains(sl []string, s string) bool {
 	sl2 := StringSlice2Interface(sl)
@@ -102,6 +101,29 @@ func GetYouTubePlaylistMaxResultsCount(playlistId string) int64 {
 	}
 	return YouTubeDefaultMaxResults
 }
+func GetYouTubePlaylistArtist(playlistId string) string {
+	return GetYouTubePlaylistField(playlistId, "Artist")
+}
+func GetYouTubePlaylistAlbum(playlistId string) string {
+	return GetYouTubePlaylistField(playlistId, "Album")
+}
+func GetYouTubePlaylistField(playlistId string, field string) string {
+	youtube := GetYouTubeFetchBase()
+	log.Printf("playlistId: %s, field: %s, youtube.Params: %v", playlistId, field, youtube.Params)
+	for _, scope := range youtube.Params {
+		if scope.Id == playlistId {
+			if field == "Artist" {
+				return scope.Artist
+			} else if field == "Album" {
+				return scope.Album
+			}
+		}
+	}
+	if youtube.Owner == "" {
+		log.Errorf("getting youtube playlist field from json error, scopes:%v", youtube.Params)
+	}
+	return "UNKNOWN ARTIST"
+}
 
 func GetLocalDateTime(formattedDateTime string) string {
 	youtubeTime, err := time.Parse(YouTubeDateTimeFormat, formattedDateTime)
@@ -129,7 +151,7 @@ func FilenamifyMediaTitle(title string) (string, error) {
 	}
 	validMediaFileName = strings.ReplaceAll(validMediaFileName, "#", IllegalCharacterReplacementInFilename)
 	validMediaFileName = strings.ReplaceAll(validMediaFileName, " ", "")
-	validMediaFileName = fmt.Sprintf("%s%s", validMediaFileName, GetYouTubeFetchBase().MediaExtension)
+	//validMediaFileName = fmt.Sprintf("%s%s", validMediaFileName, GetYouTubeFetchBase().MediaExtension)
 
 	return validMediaFileName, nil
 }

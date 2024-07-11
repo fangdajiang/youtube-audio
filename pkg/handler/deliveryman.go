@@ -25,6 +25,8 @@ type Delivery struct {
 type Parcel struct {
 	FilePath string
 	Caption  string
+	Artist   string
+	Album    string
 	Url      string
 }
 
@@ -147,7 +149,7 @@ func (t *TelegramBot) SendToBot(template string, key ...any) {
 		log.Errorf("sending message error: %s", err)
 		return
 	}
-	log.Infof("message %s has been sent", msg.Text)
+	log.Infof("end of sending message to telegram bot, message: %s", msg.Text)
 
 }
 
@@ -180,7 +182,7 @@ func AppendDeliveries(deliveries *[]Delivery, fetchItems resource.FetchItems, pl
 	}
 	for _, fetchUrl := range fetchItems.Urls {
 		historyFetch := Delivery{
-			Parcel:     GenerateParcel("", "", fetchUrl),
+			Parcel:     GenerateParcel("", "", "", "", fetchUrl),
 			PlaylistId: playlistId,
 			Done:       done,
 			Timestamp:  fetchTimestamp,
@@ -208,10 +210,12 @@ func RemoveDuplicatedUrlsByLoop(slc []Delivery) []Delivery {
 	return result
 }
 
-func GenerateParcel(filePath string, caption string, url string) Parcel {
+func GenerateParcel(filePath string, caption string, artist string, album string, url string) Parcel {
 	parcel := Parcel{
 		FilePath: filePath,
 		Caption:  caption,
+		Artist:   artist,
+		Album:    album,
 		Url:      url,
 	}
 	return parcel

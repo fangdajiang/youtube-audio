@@ -116,7 +116,7 @@ func process(deliveries []handler.Delivery) {
 		log.Debugf("processed delivery: %v", delivery)
 	}
 	handler.FlushFetchHistory(updatedDeliveries)
-	util.UploadLog2Oss()
+	//util.UploadLog2Oss()
 }
 
 func initSetting() {

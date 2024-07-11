@@ -30,6 +30,8 @@ type HistoryProps struct {
 type ParamItems struct {
 	Id              string `json:"id"`
 	MaxResultsCount int64  `json:"max_results_count"`
+	Artist          string `json:"artist"`
+	Album           string `json:"album"`
 	SortByPosition  bool   `json:"sort_by_position"`
 }
 

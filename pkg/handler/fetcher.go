@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"github.com/kkdai/youtube/v2"
@@ -9,8 +10,11 @@ import (
 	youtubeapi "google.golang.org/api/youtube/v3"
 	"io"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 	"youtube-audio/pkg/reporter"
 	"youtube-audio/pkg/util"
@@ -20,10 +24,9 @@ import (
 	"youtube-audio/pkg/util/resource"
 )
 
-//ITagNo format id
-//  for _, f := range result.Formats() {
-//		log.Debugf("format id:%s", f.FormatID)
-//	}
+const (
+	QUALITY_SCALE_0_9 string = "6"
+)
 
 type YouTubeCredentials struct {
 	Key string
@@ -40,6 +43,8 @@ type VideoMetaData struct {
 }
 
 type PlaylistVideoMetaData struct {
+	Artist   string
+	Album    string
 	VideoId  string
 	RawUrl   string
 	Position int64
@@ -68,7 +73,7 @@ func FlushFetchHistory(deliveries []Delivery) {
 
 func ProcessOneVideo(delivery *Delivery) {
 	if !delivery.Done {
-		audioFile, err := fetchAudio(delivery.Parcel.Url)
+		audioFile, err := fetchAudio(delivery)
 		if err != nil {
 			log.Warnf("Failed to download audio url %s from YouTube, error: %v", delivery.Parcel.Url, err)
 			SendWarningMessage(util.FailedToFetchAudioWarningTemplate, err.Error())
@@ -100,9 +105,9 @@ func ProcessOneVideo(delivery *Delivery) {
 	fmt.Println()
 }
 
-func fetchAudio(rawUrl string) (Parcel, error) {
+func fetchAudio(delivery *Delivery) (Parcel, error) {
 	// download a video
-	return DownloadYouTubeAudioToPath(rawUrl)
+	return DownloadYouTubeAudioToPath(delivery)
 }
 
 func GetYouTubeService() (*youtubeapi.Service, error) {
@@ -142,28 +147,28 @@ func GetPlaylistMetaDataBy(playlistId string) PlaylistMetaData {
 
 		videoId := playlistItem.Snippet.ResourceId.VideoId
 		position := playlistItem.Snippet.Position
-		log.Debugf("%s(%s) from %s(%s) on position %v was published at %s", title, videoId, channelTitle, channelId, position, localPublishedAt)
+		log.Debugf("%s(%s) from %s(%s) on position %v artist(%s/%s) was published at %s",
+			title, videoId, channelTitle, channelId, position,
+			util.GetYouTubePlaylistArtist(playlistId),
+			util.GetYouTubePlaylistAlbum(playlistId),
+			localPublishedAt)
 
-		videoMetaData := PlaylistVideoMetaData{videoId, util.MakeYouTubeRawUrl(videoId), position}
+		videoMetaData := PlaylistVideoMetaData{
+			util.GetYouTubePlaylistArtist(playlistId),
+			util.GetYouTubePlaylistAlbum(playlistId),
+			videoId,
+			util.MakeYouTubeRawUrl(videoId),
+			position}
 		playlistMetaData.PlaylistVideoMetaDataArray = append(playlistMetaData.PlaylistVideoMetaDataArray, &videoMetaData)
 	}
 
 	return playlistMetaData
 }
 
-//type queryParamOpt struct {
-//	key, value string
-//}
-
-//func (qp queryParamOpt) Get() (string, string) {
-//	return qp.key, qp.value
-//}
-
 func playlistItemsList(service *youtubeapi.Service, part []string, playlistId string) *youtubeapi.PlaylistItemListResponse {
 	call := service.PlaylistItems.List(part)
 	call = call.PlaylistId(playlistId)
 	call = call.MaxResults(util.GetYouTubePlaylistMaxResultsCount(playlistId))
-	//lastUpdated := queryParamOpt{key: "order", value: "time"}
 	response, err := call.Do()
 	if err != nil {
 		log.Errorf("get playlist items error:%v, playlistId:%s", err, playlistId)
@@ -182,8 +187,8 @@ func RetrieveITagOfMinimumSizeAudio(mediaUrl string) (int, error) {
 	}
 	var videoMetaDataArray []VideoMetaData
 	for _, f := range video.Formats {
-		log.Debugf("ItagNo:%v, ADM:%s, FPS:%v, QL:%s, AQ:%s, AC:%v, AverBit:%v, Bit:%v, Size:%v",
-			f.ItagNo, f.ApproxDurationMs, f.FPS, f.QualityLabel, f.AudioQuality, f.AudioChannels, f.AverageBitrate, f.Bitrate, f.ContentLength)
+		log.Debugf("ItagNo:%v, MimeType:%s, ADM:%s, FPS:%v, QL:%s, AQ:%s, AC:%v, AverBit:%v, Bit:%v, Size:%v",
+			f.ItagNo, f.MimeType, f.ApproxDurationMs, f.FPS, f.QualityLabel, f.AudioQuality, f.AudioChannels, f.AverageBitrate, f.Bitrate, f.ContentLength)
 		if f.FPS == 0 {
 			videoMetaData := VideoMetaData{f.FPS, f.ItagNo, f.Bitrate, f.AverageBitrate, f.ContentLength,
 				f.ApproxDurationMs, f.AudioChannels}
@@ -232,24 +237,30 @@ func RetrieveITagOfMinimumSizeAudio(mediaUrl string) (int, error) {
 		return -1, fmt.Errorf("the min size %v of audio track EXCEEDS the max %v",
 			minSizeVideoMetaData.ContentLength, util.UploadAudioMaxLength)
 	}
-	return minSizeVideoMetaData.ITagNo, nil
+	return 139, nil
 }
 
-func DownloadYouTubeAudioToPath(mediaUrl string) (Parcel, error) {
+func DownloadYouTubeAudioToPath(delivery *Delivery) (Parcel, error) {
 	var parcel Parcel
-	log.Debugf("Ready to download media %s at %s", mediaUrl, time.Now().Format(util.DateTimeFormat))
-	result, err := goutubedl.New(context.Background(), mediaUrl, goutubedl.Options{})
+	log.Debugf("Ready to download media %s(playlistId: %s) at %s", delivery.Parcel.Url, delivery.PlaylistId, time.Now().Format(util.DateTimeFormat))
+	result, err := goutubedl.New(context.Background(), delivery.Parcel.Url, goutubedl.Options{})
 	if err != nil {
 		log.Errorf("goutubedl error:%s", err)
-		return parcel, fmt.Errorf("goutubedl new error: %v, url: %s", err, mediaUrl)
+		return parcel, fmt.Errorf("goutubedl new error: %v, url: %s", err, delivery.Parcel.Url)
 	}
 
-	validMediaFileName, err := util.FilenamifyMediaTitle(result.Info.Title)
+	fileExtension := getFileExtension(result.Info.ACodec)
+	validMediaFileName, err := util.FilenamifyMediaTitle(result.Info.Title + fileExtension)
 	if err != nil {
 		return parcel, err
 	}
-	parcel = GenerateParcel(fmt.Sprintf("%s%s", util.GetYouTubeFetchBase().DownloadedFilesPath, validMediaFileName), result.Info.Title, mediaUrl)
-	log.Debugf("generated parcel: %v", parcel)
+	parcelFilePath := fmt.Sprintf("%s%s", util.GetYouTubeFetchBase().DownloadedFilesPath, validMediaFileName)
+	parcel = GenerateParcel(parcelFilePath,
+		result.Info.Title,
+		util.GetYouTubePlaylistArtist(delivery.PlaylistId),
+		util.GetYouTubePlaylistAlbum(delivery.PlaylistId),
+		delivery.Parcel.Url)
+	log.Debugf("ext: %s, generated parcel: %v", fileExtension, parcel)
 
 	log.Debugf("ready to CREATE media file %s at %s", parcel.FilePath, time.Now().Format(util.DateTimeFormat))
 	parcelFile, err := os.Create(parcel.FilePath)
@@ -258,15 +269,15 @@ func DownloadYouTubeAudioToPath(mediaUrl string) (Parcel, error) {
 		log.Errorf("creating file error: %v", err)
 	}
 
-	iTagNo, err := RetrieveITagOfMinimumSizeAudio(mediaUrl)
+	iTagNo, err := RetrieveITagOfMinimumSizeAudio(delivery.Parcel.Url)
 	if err != nil {
 		log.Errorf("retrieve iTag error, iTagNo: %v, error: %s", iTagNo, err)
-		return parcel, fmt.Errorf("goutubedl download error: %v, url: %s, ITagNo: %v", err, mediaUrl, iTagNo)
+		return parcel, fmt.Errorf("goutubedl download error: %v, url: %s, ITagNo: %v", err, delivery.Parcel.Url, iTagNo)
 	}
 	downloadedResult, err := result.Download(context.Background(), strconv.Itoa(iTagNo))
 	if err != nil {
 		log.Errorf("download error:%s", err)
-		return parcel, fmt.Errorf("goutubedl download error: %v, url: %s, ITagNo: %v", err, mediaUrl, iTagNo)
+		return parcel, fmt.Errorf("goutubedl download error: %v, url: %s, ITagNo: %v", err, delivery.Parcel.Url, iTagNo)
 	}
 	defer func(downloadedResult *goutubedl.DownloadResult) {
 		_ = downloadedResult.Close()
@@ -283,7 +294,49 @@ func DownloadYouTubeAudioToPath(mediaUrl string) (Parcel, error) {
 		_ = f.Close()
 	}(parcelFile)
 
+	log.Printf("Title: %s, Artist: %s, Album: %s, Url: %s", parcel.Caption, parcel.Artist, parcel.Album, parcel.Url)
+	parcel, _ = convertToMp3AndFillMetadata(parcel)
+
 	return parcel, nil
+}
+func convertToMp3AndFillMetadata(parcel Parcel) (Parcel, error) {
+	// 生成新的文件路径，使用.mp3作为扩展名
+	newFilePath := strings.TrimSuffix(parcel.FilePath, filepath.Ext(parcel.FilePath)) + ".mp3"
+	// 构建ffmpeg命令
+	cmd := exec.Command("ffmpeg", "-i", parcel.FilePath,
+		"-codec:a", "libmp3lame", "-qscale:a", QUALITY_SCALE_0_9,
+		"-metadata", "artist="+parcel.Artist,
+		"-metadata", "title="+parcel.Caption,
+		"-metadata", "album="+parcel.Album,
+		newFilePath)
+
+	fullCommand := strings.Join(cmd.Args, " ")
+	log.Printf("Executing command: %s", fullCommand)
+
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		log.Errorf("ffmpeg error: %s, stderr: %s", err, stderr.String())
+		return parcel, fmt.Errorf("ffmpeg error: %s, command: %s", err, fullCommand)
+	}
+
+	parcel.FilePath = newFilePath
+	log.Printf("ffmpeg command executed successfully, new file: %s", parcel.FilePath)
+
+	return parcel, nil
+}
+func getFileExtension(mimeType string) string {
+	// 简单的MimeType到文件扩展名的映射
+	switch {
+	case strings.Contains(mimeType, "audio/mp4"):
+		return ".m4a"
+	case strings.Contains(mimeType, "audio/webm"):
+		return ".webm"
+	case strings.Contains(mimeType, "audio/ogg"):
+		return ".ogg"
+	default:
+		return ".mp4" // 默认情况下使用.mp4，适用于不确定的情况
+	}
 }
 
 func GenerateFetchHistory(deliveries []Delivery) []resource.HistoryProps {
@@ -420,7 +473,7 @@ func AssembleDeliveriesFromPlaylists(playlistMetaDataArray []PlaylistMetaData) [
 		delivery := Delivery{}
 		delivery.PlaylistId = playlistMetaData.PlaylistId
 		for _, playlistVideoMetaData := range playlistMetaData.PlaylistVideoMetaDataArray {
-			delivery.Parcel = GenerateParcel("", "", playlistVideoMetaData.RawUrl)
+			delivery.Parcel = GenerateParcel("", "", playlistVideoMetaData.Artist, playlistVideoMetaData.Album, playlistVideoMetaData.RawUrl)
 			deliveries = append(deliveries, delivery)
 		}
 	}
