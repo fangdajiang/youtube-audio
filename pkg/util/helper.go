@@ -1,7 +1,6 @@
 package util
 
 import (
-	"fmt"
 	mapset "github.com/deckarep/golang-set"
 	"github.com/flytam/filenamify"
 	"strings"
@@ -139,19 +138,19 @@ func MakeYouTubeRawUrl(videoId string) string {
 	return GetYouTubeFetchBase().PrefixUrl + videoId
 }
 
-func FilenamifyMediaTitle(title string) (string, error) {
+func FilenamifyMediaTitle(title string) string {
 	log.Debugf("rawMediaTitle %s, length: %v", title, len(title))
 	validMediaFileName, err := filenamify.Filenamify(title, filenamify.Options{
 		Replacement: IllegalCharacterReplacementInFilename,
 		MaxLength:   FilenameMaxLength,
 	})
 	if err != nil {
-		log.Errorf("convert raw media title to a valid file name error:%s", err)
-		return "", fmt.Errorf("filenamify error: %s", title)
+		log.Errorf("convert raw media title {%s} to a valid file name error:%s", title, err)
+		return "CONVERT_ERROR"
 	}
 	validMediaFileName = strings.ReplaceAll(validMediaFileName, "#", IllegalCharacterReplacementInFilename)
 	validMediaFileName = strings.ReplaceAll(validMediaFileName, " ", "")
 	//validMediaFileName = fmt.Sprintf("%s%s", validMediaFileName, GetYouTubeFetchBase().MediaExtension)
 
-	return validMediaFileName, nil
+	return validMediaFileName
 }

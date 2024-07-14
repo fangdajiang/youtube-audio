@@ -140,7 +140,7 @@ func TestMergeHistoryFetchesInto(t *testing.T) {
 	log.Debugf("merged deliveries: %v", deliveries)
 }
 
-func Test_setAudioMetadata(t *testing.T) {
+func Test_convertToMp3AndFillMetadata(t *testing.T) {
 	// 创建一个临时文件路径
 	filePath := "/Users/fangdajiang/Desktop/test.mp4"
 	caption := "摸着石头过河"

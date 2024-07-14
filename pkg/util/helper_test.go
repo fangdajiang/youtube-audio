@@ -27,8 +27,7 @@ func TestFilenamifyMediaTitle(t *testing.T) {
 
 	mediaTitle := "中文abc/标题\\_123!_def`_gh'_done #shorts"
 
-	namifiedMediaTitle, err := FilenamifyMediaTitle(mediaTitle)
-	r.NoError(err)
+	namifiedMediaTitle := FilenamifyMediaTitle(mediaTitle)
 	r.Greater(len(namifiedMediaTitle), len(mediaTitle))
 	log.Debugf("mediaTitle: %v", len(mediaTitle))
 	log.Debugf("namifiedMediaTitle: %v", len(namifiedMediaTitle))

@@ -234,10 +234,7 @@ func DownloadYouTubeAudioToPath(delivery *Delivery) (Parcel, error) {
 	}
 
 	fileExtension := getFileExtension(result.Info.ACodec)
-	validMediaFileName, err := util.FilenamifyMediaTitle(result.Info.Title + fileExtension)
-	if err != nil {
-		return parcel, err
-	}
+	validMediaFileName := util.FilenamifyMediaTitle(result.Info.Title + fileExtension)
 	parcelFilePath := fmt.Sprintf("%s%s", util.GetYouTubeFetchBase().DownloadedFilesPath, validMediaFileName)
 	parcel = GenerateParcel(parcelFilePath,
 		result.Info.Title,
@@ -265,6 +262,7 @@ func DownloadYouTubeAudioToPath(delivery *Delivery) (Parcel, error) {
 	for _, iTagNo := range iTagNos {
 		downloadedResult, err = result.Download(context.Background(), strconv.Itoa(iTagNo))
 		if err == nil {
+			log.Debugf("iTagNo is %v at %s", iTagNo, time.Now().Format(util.DateTimeFormat))
 			break
 		}
 		log.Errorf("download error with iTagNo %v: %s", iTagNo, err)
@@ -277,7 +275,7 @@ func DownloadYouTubeAudioToPath(delivery *Delivery) (Parcel, error) {
 	defer func(downloadedResult *goutubedl.DownloadResult) {
 		_ = downloadedResult.Close()
 	}(downloadedResult)
-	log.Debugf("downloading media %s from %s", result.Info.Title, time.Now().Format(util.DateTimeFormat))
+	log.Debugf("downloading media %s at %s", result.Info.Title, time.Now().Format(util.DateTimeFormat))
 
 	log.Debugf("ready to COPY media file %s at %s", parcel.FilePath, time.Now().Format(util.DateTimeFormat))
 	written, err := io.Copy(parcelFile, downloadedResult)
@@ -301,9 +299,15 @@ func convertToMp3AndFillMetadata(parcel Parcel) (Parcel, error) {
 	cmd := exec.Command("ffmpeg", "-i", parcel.FilePath,
 		"-codec:a", "libmp3lame", "-qscale:a", QualityScaleFrom0To9,
 		"-metadata", "artist="+parcel.Artist,
-		"-metadata", "title="+parcel.Caption,
+		"-metadata", "title="+util.FilenamifyMediaTitle(parcel.Caption),
 		"-metadata", "album="+parcel.Album,
 		newFilePath)
+	//cmd := exec.Command("ffmpeg", "-i", parcel.FilePath,
+	//	"-codec:a", "aac", "-b:a", "64k",
+	//	"-metadata", "artist="+parcel.Artist,
+	//	"-metadata", "title="+util.FilenamifyMediaTitle(parcel.Caption),
+	//	"-metadata", "album="+parcel.Album,
+	//	newFilePath)
 
 	fullCommand := strings.Join(cmd.Args, " ")
 	log.Printf("Executing command: %s", fullCommand)
@@ -314,6 +318,15 @@ func convertToMp3AndFillMetadata(parcel Parcel) (Parcel, error) {
 		log.Errorf("ffmpeg error: %s, stderr: %s", err, stderr.String())
 		return parcel, fmt.Errorf("ffmpeg error: %s, command: %s", err, fullCommand)
 	}
+
+	ffprobeCmd := exec.Command("ffprobe", "-show_format", newFilePath)
+	output, err := ffprobeCmd.CombinedOutput()
+	if err != nil {
+		log.Errorf("ffprobe error: %s", err)
+		return parcel, fmt.Errorf("ffprobe error: %s", err)
+	}
+	log.Printf("ffprobe output: %s", string(output))
+	time.Sleep(5 * time.Second)
 
 	parcel.FilePath = newFilePath
 	log.Printf("ffmpeg command executed successfully, new file: %s", parcel.FilePath)
