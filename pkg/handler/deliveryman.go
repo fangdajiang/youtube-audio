@@ -117,6 +117,8 @@ func (t *TelegramBot) Send(parcel Parcel) error {
 	log.Debugf("ready to new audio to channel")
 	msg := tgbotapi.NewAudioToChannel(t.ChannelChatId, tgbotapi.FilePath(parcel.FilePath))
 	msg.Caption = parcel.Caption
+	msg.Title = parcel.Caption
+	msg.Performer = parcel.Artist
 	log.Debugf("ready to send audio")
 
 	_, err = bot.Send(msg)

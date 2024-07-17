@@ -326,7 +326,6 @@ func convertToMp3AndFillMetadata(parcel Parcel) (Parcel, error) {
 		return parcel, fmt.Errorf("ffprobe error: %s", err)
 	}
 	log.Printf("ffprobe output: %s", string(output))
-	time.Sleep(5 * time.Second)
 
 	parcel.FilePath = newFilePath
 	log.Printf("ffmpeg command executed successfully, new file: %s", parcel.FilePath)
