@@ -5,6 +5,7 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"os"
 	"strconv"
+	"sync"
 	"time"
 	"youtube-audio/pkg/reporter"
 	"youtube-audio/pkg/util"
@@ -23,15 +24,17 @@ type Delivery struct {
 }
 
 type Parcel struct {
-	FilePath string
-	Caption  string
-	Artist   string
-	Album    string
-	Url      string
+	FilePath       string
+	Caption        string
+	Artist         string
+	Album          string
+	Url            string
+	Duration       float64
+	ThumbnailBytes []byte
 }
 
 type TelegramBot struct {
-	//sync.Mutex
+	sync.Mutex
 	Token         string //tg bot token, should be an admin in tg channel
 	ChannelChatId string //tg channel's username only
 	BotChatId     int64  //tg bot chat id
@@ -102,8 +105,8 @@ func IsAudioValid(parcel Parcel) (bool, string) {
 }
 
 func (t *TelegramBot) Send(parcel Parcel) error {
-	//t.Lock()
-	//defer t.Unlock()
+	t.Lock()
+	defer t.Unlock()
 
 	log.Infof("%s is going to be sent", parcel.FilePath)
 	var err error
@@ -115,13 +118,21 @@ func (t *TelegramBot) Send(parcel Parcel) error {
 	}
 
 	log.Debugf("ready to new audio to channel")
-	msg := tgbotapi.NewAudioToChannel(t.ChannelChatId, tgbotapi.FilePath(parcel.FilePath))
-	msg.Caption = parcel.Caption
-	msg.Title = parcel.Caption
-	msg.Performer = parcel.Artist
-	log.Debugf("ready to send audio")
+	audioFile := tgbotapi.NewInputMediaAudio(tgbotapi.FilePath(parcel.FilePath))
+	audioFile.Caption = parcel.Caption
+	audioFile.Title = parcel.Caption
+	audioFile.Performer = parcel.Artist
+	audioFile.Duration = int(parcel.Duration)
+	audioFile.Thumb = tgbotapi.FileBytes{
+		Name:  "cover.jpg",
+		Bytes: parcel.ThumbnailBytes,
+	}
+	channelChatId, _ := strconv.ParseInt(t.ChannelChatId, 10, 64)
+	mediaGroup := tgbotapi.NewMediaGroup(channelChatId, []interface{}{audioFile})
+	log.Debugf("ready to send audio, filePath: %s, caption: %s, performer: %s, duration: %d",
+		parcel.FilePath, audioFile.Caption, audioFile.Performer, audioFile.Duration)
 
-	_, err = bot.Send(msg)
+	_, err = bot.Send(mediaGroup)
 	if err != nil {
 		log.Errorf("bot send error, %s", err)
 		return fmt.Errorf("sending audio error: %s", err)
@@ -132,8 +143,8 @@ func (t *TelegramBot) Send(parcel Parcel) error {
 }
 
 func (t *TelegramBot) SendToBot(template string, key ...any) {
-	//t.Lock()
-	//defer t.Unlock()
+	t.Lock()
+	defer t.Unlock()
 
 	log.Warnf("Ready to send message about %v to telegram bot", key)
 	var err error
@@ -184,7 +195,7 @@ func AppendDeliveries(deliveries *[]Delivery, fetchItems resource.FetchItems, pl
 	}
 	for _, fetchUrl := range fetchItems.Urls {
 		historyFetch := Delivery{
-			Parcel:     GenerateParcel("", "", "", "", fetchUrl),
+			Parcel:     GenerateParcel("", "", "", "", fetchUrl, 0.0, nil),
 			PlaylistId: playlistId,
 			Done:       done,
 			Timestamp:  fetchTimestamp,
@@ -212,13 +223,15 @@ func RemoveDuplicatedUrlsByLoop(slc []Delivery) []Delivery {
 	return result
 }
 
-func GenerateParcel(filePath string, caption string, artist string, album string, url string) Parcel {
+func GenerateParcel(filePath string, caption string, artist string, album string, url string, duration float64, thumbnailBytes []byte) Parcel {
 	parcel := Parcel{
-		FilePath: filePath,
-		Caption:  caption,
-		Artist:   artist,
-		Album:    album,
-		Url:      url,
+		FilePath:       filePath,
+		Caption:        caption,
+		Artist:         artist,
+		Album:          album,
+		Url:            url,
+		Duration:       duration,
+		ThumbnailBytes: thumbnailBytes,
 	}
 	return parcel
 }

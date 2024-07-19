@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	LocalFilePath    string = "/tmp/test.txt"
+	LocalFilePath    string = "/Users/fangdajiang/Desktop/test.mp4"
 	LocalFileCaption string = "春眠不觉晓"
 	LocalFileArtist  string = "周杰伦"
 	LocalFileAlbum   string = "七里香"
@@ -32,7 +32,9 @@ func init() {
 		LocalFileCaption+time.Now().Format(util.DateTimeFormat),
 		LocalFileArtist,
 		LocalFileAlbum,
-		UselessUrl)
+		UselessUrl,
+		123.0,
+		nil)
 
 }
 

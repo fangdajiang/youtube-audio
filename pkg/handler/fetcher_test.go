@@ -146,7 +146,7 @@ func Test_convertToMp3AndFillMetadata(t *testing.T) {
 	caption := "摸着石头过河"
 	artist := "FDJ"
 	album := "千钧一发"
-	parcel = GenerateParcel(filePath, caption, artist, album, "mediaUrl")
+	parcel = GenerateParcel(filePath, caption, artist, album, "mediaUrl", 111.0, nil)
 
 	// 测试ffmpeg命令成功执行的情况
 	parcel, _ = convertToMp3AndFillMetadata(parcel)

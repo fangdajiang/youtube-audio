@@ -236,12 +236,19 @@ func DownloadYouTubeAudioToPath(delivery *Delivery) (Parcel, error) {
 	fileExtension := getFileExtension(result.Info.ACodec)
 	validMediaFileName := util.FilenamifyMediaTitle(result.Info.Title + fileExtension)
 	parcelFilePath := fmt.Sprintf("%s%s", util.GetYouTubeFetchBase().DownloadedFilesPath, validMediaFileName)
-	parcel = GenerateParcel(parcelFilePath,
+	log.Debugf("ext: %s, parcelFilePath: %s, thumbnailBytes: %v, result.Info.ACodec: %s",
+		fileExtension, parcelFilePath, len(result.Info.ThumbnailBytes), result.Info.ACodec)
+	parcel = GenerateParcel(
+		parcelFilePath,
 		result.Info.Title,
 		util.GetYouTubePlaylistArtist(delivery.PlaylistId),
 		util.GetYouTubePlaylistAlbum(delivery.PlaylistId),
-		delivery.Parcel.Url)
-	log.Debugf("ext: %s, generated parcel: %v", fileExtension, parcel)
+		delivery.Parcel.Url,
+		result.Info.Duration,
+		result.Info.ThumbnailBytes)
+	log.Debugf("ext: %s, title: %s, artist: %s, album: %s, url: %s, duration: %v, thumbnailBytes: %v",
+		fileExtension, parcel.Caption, parcel.Artist, parcel.Album, parcel.Url,
+		parcel.Duration, len(parcel.ThumbnailBytes))
 
 	log.Debugf("ready to CREATE media file %s at %s", parcel.FilePath, time.Now().Format(util.DateTimeFormat))
 	parcelFile, err := os.Create(parcel.FilePath)
@@ -297,10 +304,13 @@ func convertToMp3AndFillMetadata(parcel Parcel) (Parcel, error) {
 	newFilePath := strings.TrimSuffix(parcel.FilePath, filepath.Ext(parcel.FilePath)) + ".mp3"
 	// 构建ffmpeg命令
 	cmd := exec.Command("ffmpeg", "-i", parcel.FilePath,
+		//"-i", parcel.ThumbnailFilePath,
 		"-codec:a", "libmp3lame", "-qscale:a", QualityScaleFrom0To9,
 		"-metadata", "artist="+parcel.Artist,
 		"-metadata", "title="+util.FilenamifyMediaTitle(parcel.Caption),
 		"-metadata", "album="+parcel.Album,
+		//"-map", "0", "-map", "1", "-c", "copy", "-id3v2_version", "3",
+		//"-metadata:s:v", "title=Album cover", "-metadata:s:v", "comment=Cover (front)",
 		newFilePath)
 	//cmd := exec.Command("ffmpeg", "-i", parcel.FilePath,
 	//	"-codec:a", "aac", "-b:a", "64k",
@@ -480,7 +490,8 @@ func AssembleDeliveriesFromPlaylists(playlistMetaDataArray []PlaylistMetaData) [
 		delivery := Delivery{}
 		delivery.PlaylistId = playlistMetaData.PlaylistId
 		for _, playlistVideoMetaData := range playlistMetaData.PlaylistVideoMetaDataArray {
-			delivery.Parcel = GenerateParcel("", "", playlistVideoMetaData.Artist, playlistVideoMetaData.Album, playlistVideoMetaData.RawUrl)
+			delivery.Parcel = GenerateParcel("", "", playlistVideoMetaData.Artist,
+				playlistVideoMetaData.Album, playlistVideoMetaData.RawUrl, 0.0, nil)
 			deliveries = append(deliveries, delivery)
 		}
 	}
