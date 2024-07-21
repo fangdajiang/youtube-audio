@@ -105,8 +105,8 @@ func IsAudioValid(parcel Parcel) (bool, string) {
 }
 
 func (t *TelegramBot) Send(parcel Parcel) error {
-	t.Lock()
-	defer t.Unlock()
+	//t.Lock()
+	//defer t.Unlock()
 
 	log.Infof("%s is going to be sent", parcel.FilePath)
 	var err error
@@ -143,8 +143,8 @@ func (t *TelegramBot) Send(parcel Parcel) error {
 }
 
 func (t *TelegramBot) SendToBot(template string, key ...any) {
-	t.Lock()
-	defer t.Unlock()
+	//t.Lock()
+	//defer t.Unlock()
 
 	log.Warnf("Ready to send message about %v to telegram bot", key)
 	var err error
