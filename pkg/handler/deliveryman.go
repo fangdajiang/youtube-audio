@@ -118,7 +118,7 @@ func (t *TelegramBot) Send(parcel Parcel) error {
 	}
 
 	log.Debugf("ready to new audio to channel")
-	audioFile := tgbotapi.NewInputMediaAudio(tgbotapi.FilePath(parcel.FilePath))
+	audioFile := tgbotapi.NewAudioToChannel(t.ChannelChatId, tgbotapi.FilePath(parcel.FilePath))
 	audioFile.Caption = parcel.Caption
 	audioFile.Title = parcel.Caption
 	audioFile.Performer = parcel.Artist
@@ -127,12 +127,12 @@ func (t *TelegramBot) Send(parcel Parcel) error {
 		Name:  "cover.jpg",
 		Bytes: parcel.ThumbnailBytes,
 	}
-	channelChatId, _ := strconv.ParseInt(t.ChannelChatId, 10, 64)
-	mediaGroup := tgbotapi.NewMediaGroup(channelChatId, []interface{}{audioFile})
-	log.Debugf("ready to send audio, filePath: %s, caption: %s, performer: %s, duration: %d",
-		parcel.FilePath, audioFile.Caption, audioFile.Performer, audioFile.Duration)
+	//channelChatId, _ := strconv.ParseInt(t.ChannelChatId, 10, 64)
+	//mediaGroup := tgbotapi.NewMediaGroup(channelChatId, []interface{}{audioFile})
+	//log.Debugf("ready to send audio, filePath: %s, caption: %s, performer: %s, duration: %d",
+	//	parcel.FilePath, audioFile.Caption, audioFile.Performer, audioFile.Duration)
 
-	_, err = bot.Send(mediaGroup)
+	_, err = bot.Send(audioFile)
 	if err != nil {
 		log.Errorf("bot send error, %s", err)
 		return fmt.Errorf("sending audio error: %s", err)
