@@ -31,6 +31,7 @@ type Parcel struct {
 	Url            string
 	Duration       float64
 	ThumbnailBytes []byte
+	FilesizeApprox float64
 }
 
 type TelegramBot struct {
@@ -195,7 +196,7 @@ func AppendDeliveries(deliveries *[]Delivery, fetchItems resource.FetchItems, pl
 	}
 	for _, fetchUrl := range fetchItems.Urls {
 		historyFetch := Delivery{
-			Parcel:     GenerateParcel("", "", "", "", fetchUrl, 0.0, nil),
+			Parcel:     GenerateParcel("", "", "", "", fetchUrl, 0.0, nil, 0.0),
 			PlaylistId: playlistId,
 			Done:       done,
 			Timestamp:  fetchTimestamp,
@@ -223,7 +224,7 @@ func RemoveDuplicatedUrlsByLoop(slc []Delivery) []Delivery {
 	return result
 }
 
-func GenerateParcel(filePath string, caption string, artist string, album string, url string, duration float64, thumbnailBytes []byte) Parcel {
+func GenerateParcel(filePath string, caption string, artist string, album string, url string, duration float64, thumbnailBytes []byte, fileSizeApprox float64) Parcel {
 	parcel := Parcel{
 		FilePath:       filePath,
 		Caption:        caption,
@@ -232,6 +233,7 @@ func GenerateParcel(filePath string, caption string, artist string, album string
 		Url:            url,
 		Duration:       duration,
 		ThumbnailBytes: thumbnailBytes,
+		FilesizeApprox: fileSizeApprox,
 	}
 	return parcel
 }

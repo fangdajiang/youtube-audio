@@ -245,10 +245,11 @@ func DownloadYouTubeAudioToPath(delivery *Delivery) (Parcel, error) {
 		util.GetYouTubePlaylistAlbum(delivery.PlaylistId),
 		delivery.Parcel.Url,
 		result.Info.Duration,
-		result.Info.ThumbnailBytes)
-	log.Debugf("ext: %s, title: %s, artist: %s, album: %s, url: %s, duration: %v, thumbnailBytes: %v",
+		result.Info.ThumbnailBytes,
+		result.Info.FilesizeApprox)
+	log.Debugf("ext: %s, title: %s, artist: %s, album: %s, url: %s, duration: %v, thumbnailBytes: %v, filesizeApprox: %v",
 		fileExtension, parcel.Caption, parcel.Artist, parcel.Album, parcel.Url,
-		parcel.Duration, len(parcel.ThumbnailBytes))
+		parcel.Duration, len(parcel.ThumbnailBytes), parcel.FilesizeApprox)
 
 	log.Debugf("ready to CREATE media file %s at %s", parcel.FilePath, time.Now().Format(util.DateTimeFormat))
 	parcelFile, err := os.Create(parcel.FilePath)
@@ -491,7 +492,7 @@ func AssembleDeliveriesFromPlaylists(playlistMetaDataArray []PlaylistMetaData) [
 		delivery.PlaylistId = playlistMetaData.PlaylistId
 		for _, playlistVideoMetaData := range playlistMetaData.PlaylistVideoMetaDataArray {
 			delivery.Parcel = GenerateParcel("", "", playlistVideoMetaData.Artist,
-				playlistVideoMetaData.Album, playlistVideoMetaData.RawUrl, 0.0, nil)
+				playlistVideoMetaData.Album, playlistVideoMetaData.RawUrl, 0.0, nil, 0.0)
 			deliveries = append(deliveries, delivery)
 		}
 	}
