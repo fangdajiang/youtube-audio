@@ -120,7 +120,8 @@ func (t *TelegramBot) Send(parcel Parcel) error {
 
 	log.Debugf("ready to new audio to channel")
 	audioFile := tgbotapi.NewAudioToChannel(t.ChannelChatId, tgbotapi.FilePath(parcel.FilePath))
-	audioFile.Caption = parcel.Caption
+	audioFile.Caption = fmt.Sprintf("<a href=\"%s\">%s</a>", parcel.Url, parcel.Caption)
+	audioFile.ParseMode = "HTML"
 	audioFile.Title = parcel.Caption
 	audioFile.Performer = parcel.Artist
 	audioFile.Duration = int(parcel.Duration)
