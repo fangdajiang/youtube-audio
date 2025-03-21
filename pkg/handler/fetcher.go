@@ -181,7 +181,7 @@ func RetrieveITagOfMinimumSizeAudio(mediaUrl string) ([]int, error) {
 
 	log.Debugf("Ready to get video: %s at %s", mediaUrl, time.Now().Format(util.DateTimeFormat))
 	video, err := client.GetVideo(mediaUrl)
-	log.Debugf("video duration: %vs at %s", video.Duration.Seconds(), time.Now().Format(util.DateTimeFormat))
+	//log.Debugf("video duration: %vs at %s", video.Duration.Seconds(), time.Now().Format(util.DateTimeFormat))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get video, error:%s, mediaUrl:%s", err, mediaUrl)
 	}
