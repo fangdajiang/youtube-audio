@@ -15,7 +15,7 @@ require (
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.0
 	github.com/stretchr/testify v1.10.0
-	github.com/wader/goutubedl v0.0.0-20250322161357-344051d12a1b
+	github.com/wader/goutubedl v0.0.0-20250923165229-f8b4ce67125a
 	google.golang.org/api v0.227.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 )

@@ -193,6 +193,8 @@ github.com/wader/goutubedl v0.0.0-20240605165152-8598c9e6bb43 h1:nM6MSJquCrZIUXc
 github.com/wader/goutubedl v0.0.0-20240605165152-8598c9e6bb43/go.mod h1:5KXd5tImdbmz4JoVhePtbIokCwAfEhUVVx3WLHmjYuw=
 github.com/wader/goutubedl v0.0.0-20250322161357-344051d12a1b h1:UHcabl2wbLXdjHr3Z6Q41VZqXOop+vnrlokyHcEUZF0=
 github.com/wader/goutubedl v0.0.0-20250322161357-344051d12a1b/go.mod h1:5KXd5tImdbmz4JoVhePtbIokCwAfEhUVVx3WLHmjYuw=
+github.com/wader/goutubedl v0.0.0-20250923165229-f8b4ce67125a h1:yWYZ1DZf8CBYUdy9HPnE8AxFAKCxOKG7Ya6qkD0VfO8=
+github.com/wader/goutubedl v0.0.0-20250923165229-f8b4ce67125a/go.mod h1:5KXd5tImdbmz4JoVhePtbIokCwAfEhUVVx3WLHmjYuw=
 github.com/wader/osleaktest v0.0.0-20191111175233-f643b0fed071 h1:QkrG4Zr5OVFuC9aaMPmFI0ibfhBZlAgtzDYWfu7tqQk=
 github.com/wader/osleaktest v0.0.0-20191111175233-f643b0fed071/go.mod h1:XD6emOFPHVzb0+qQpiNOdPL2XZ0SRUM0N5JHuq6OmXo=
 go.opencensus.io v0.24.0 h1:y73uSU6J157QMP2kn2r30vwW1A2W2WFwSCGnAVxeaD0=
