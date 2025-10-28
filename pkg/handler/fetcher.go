@@ -9,6 +9,7 @@ import (
 	"google.golang.org/api/option"
 	youtubeapi "google.golang.org/api/youtube/v3"
 	"io"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -227,7 +228,7 @@ func RetrieveITagOfMinimumSizeAudio(mediaUrl string) ([]int, error) {
 func DownloadYouTubeAudioToPath(delivery *Delivery) (Parcel, error) {
 	var parcel Parcel
 	log.Debugf("Ready to download media %s(playlistId: %s) at %s", delivery.Parcel.Url, delivery.PlaylistId, time.Now().Format(util.DateTimeFormat))
-	result, err := goutubedl.New(context.Background(), delivery.Parcel.Url, goutubedl.Options{})
+	result, err := goutubedl.New(context.Background(), delivery.Parcel.Url, goutubedl.Options{DownloadThumbnail: true})
 	if err != nil {
 		log.Errorf("goutubedl error:%s", err)
 		return parcel, fmt.Errorf("goutubedl new error: %v, url: %s", err, delivery.Parcel.Url)
@@ -236,8 +237,13 @@ func DownloadYouTubeAudioToPath(delivery *Delivery) (Parcel, error) {
 	fileExtension := getFileExtension(result.Info.ACodec)
 	validMediaFileName := util.FilenamifyMediaTitle(result.Info.Title + fileExtension)
 	parcelFilePath := fmt.Sprintf("%s%s", util.GetYouTubeFetchBase().DownloadedFilesPath, validMediaFileName)
+	thumbnailBytes, thumbErr := normalizeThumbnail(result.Info.ThumbnailBytes)
+	if thumbErr != nil {
+		log.Warnf("normalize thumbnail error: %v", thumbErr)
+		thumbnailBytes = nil
+	}
 	log.Debugf("ext: %s, parcelFilePath: %s, thumbnailBytes: %v, result.Info.ACodec: %s",
-		fileExtension, parcelFilePath, len(result.Info.ThumbnailBytes), result.Info.ACodec)
+		fileExtension, parcelFilePath, len(thumbnailBytes), result.Info.ACodec)
 	parcel = GenerateParcel(
 		parcelFilePath,
 		result.Info.Title,
@@ -245,7 +251,7 @@ func DownloadYouTubeAudioToPath(delivery *Delivery) (Parcel, error) {
 		util.GetYouTubePlaylistAlbum(delivery.PlaylistId),
 		delivery.Parcel.Url,
 		result.Info.Duration,
-		result.Info.ThumbnailBytes,
+		thumbnailBytes,
 		result.Info.FilesizeApprox)
 	log.Debugf("ext: %s, title: %s, artist: %s, album: %s, url: %s, duration: %v, thumbnailBytes: %v, filesizeApprox: %v",
 		fileExtension, parcel.Caption, parcel.Artist, parcel.Album, parcel.Url,
@@ -256,6 +262,7 @@ func DownloadYouTubeAudioToPath(delivery *Delivery) (Parcel, error) {
 	log.Debugf("media file %s CREATED at %s", parcel.FilePath, time.Now().Format(util.DateTimeFormat))
 	if err != nil {
 		log.Errorf("creating file error: %v", err)
+		return parcel, fmt.Errorf("creating file error: %v", err)
 	}
 
 	// Retrieve the list of iTagNos
@@ -289,19 +296,26 @@ func DownloadYouTubeAudioToPath(delivery *Delivery) (Parcel, error) {
 	written, err := io.Copy(parcelFile, downloadedResult)
 	log.Infof("media file %s DOWNLOADED & COPIED at %s", parcel.FilePath, time.Now().Format(util.DateTimeFormat))
 	if err != nil {
+		_ = parcelFile.Close()
+		_ = os.Remove(parcel.FilePath)
 		return parcel, fmt.Errorf("copy error: %s, parcel: %v, written: %v", err, parcel, written)
 	}
-	defer func(f *os.File) {
-		_ = f.Close()
-	}(parcelFile)
+	if err := parcelFile.Close(); err != nil {
+		log.Warnf("closing downloaded file error: %v", err)
+	}
 
 	log.Printf("Title: %s, Artist: %s, Album: %s, Url: %s", parcel.Caption, parcel.Artist, parcel.Album, parcel.Url)
-	parcel, _ = convertToMp3AndFillMetadata(parcel)
+	parcel, err = convertToMp3AndFillMetadata(parcel)
+	if err != nil {
+		_ = os.Remove(parcel.FilePath)
+		return Parcel{}, fmt.Errorf("convert to mp3 error: %w", err)
+	}
 
 	return parcel, nil
 }
 func convertToMp3AndFillMetadata(parcel Parcel) (Parcel, error) {
 	// 生成新的文件路径，使用.mp3作为扩展名
+	originalFilePath := parcel.FilePath
 	newFilePath := strings.TrimSuffix(parcel.FilePath, filepath.Ext(parcel.FilePath)) + ".mp3"
 	// 构建ffmpeg命令
 	cmd := exec.Command("ffmpeg", "-i", parcel.FilePath,
@@ -327,6 +341,7 @@ func convertToMp3AndFillMetadata(parcel Parcel) (Parcel, error) {
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
 		log.Errorf("ffmpeg error: %s, stderr: %s", err, stderr.String())
+		_ = os.Remove(newFilePath)
 		return parcel, fmt.Errorf("ffmpeg error: %s, command: %s", err, fullCommand)
 	}
 
@@ -334,11 +349,21 @@ func convertToMp3AndFillMetadata(parcel Parcel) (Parcel, error) {
 	output, err := ffprobeCmd.CombinedOutput()
 	if err != nil {
 		log.Errorf("ffprobe error: %s", err)
+		_ = os.Remove(newFilePath)
 		return parcel, fmt.Errorf("ffprobe error: %s", err)
 	}
 	log.Printf("ffprobe output: %s", string(output))
 
 	parcel.FilePath = newFilePath
+	if err := os.Remove(originalFilePath); err != nil && !os.IsNotExist(err) {
+		log.Warnf("remove original media error: %v", err)
+	}
+	fileInfo, err := os.Stat(newFilePath)
+	if err != nil {
+		log.Warnf("stat converted file error: %v", err)
+	} else {
+		parcel.FilesizeApprox = float64(fileInfo.Size())
+	}
 	log.Printf("ffmpeg command executed successfully, new file: %s", parcel.FilePath)
 
 	return parcel, nil
@@ -355,6 +380,60 @@ func getFileExtension(mimeType string) string {
 	default:
 		return ".mp4" // 默认情况下使用.mp4，适用于不确定的情况
 	}
+}
+
+func normalizeThumbnail(thumbnail []byte) ([]byte, error) {
+	if len(thumbnail) == 0 {
+		return nil, nil
+	}
+
+	contentType := http.DetectContentType(thumbnail)
+	if contentType == "image/jpeg" || contentType == "image/png" {
+		return thumbnail, nil
+	}
+
+	srcFile, err := os.CreateTemp("", "ya-thumb-src-*")
+	if err != nil {
+		return nil, fmt.Errorf("create temp thumbnail source error: %w", err)
+	}
+	defer func(name string) {
+		_ = os.Remove(name)
+	}(srcFile.Name())
+
+	if _, err = srcFile.Write(thumbnail); err != nil {
+		_ = srcFile.Close()
+		return nil, fmt.Errorf("write temp thumbnail source error: %w", err)
+	}
+	if err = srcFile.Close(); err != nil {
+		return nil, fmt.Errorf("close temp thumbnail source error: %w", err)
+	}
+
+	dstFile, err := os.CreateTemp("", "ya-thumb-out-*.png")
+	if err != nil {
+		return nil, fmt.Errorf("create temp thumbnail output error: %w", err)
+	}
+	dstPath := dstFile.Name()
+	_ = dstFile.Close()
+	defer func(name string) {
+		_ = os.Remove(name)
+	}(dstPath)
+
+	cmd := exec.Command("ffmpeg", "-y", "-i", srcFile.Name(), dstPath)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	if err = cmd.Run(); err != nil {
+		return nil, fmt.Errorf("ffmpeg thumbnail conversion error: %w, stderr: %s", err, stderr.String())
+	}
+
+	converted, err := os.ReadFile(dstPath)
+	if err != nil {
+		return nil, fmt.Errorf("read converted thumbnail error: %w", err)
+	}
+	if len(converted) == 0 {
+		return nil, fmt.Errorf("converted thumbnail is empty")
+	}
+
+	return converted, nil
 }
 
 func GenerateFetchHistory(deliveries []Delivery) []resource.HistoryProps {
