@@ -317,22 +317,62 @@ func convertToMp3AndFillMetadata(parcel Parcel) (Parcel, error) {
 	// 生成新的文件路径，使用.mp3作为扩展名
 	originalFilePath := parcel.FilePath
 	newFilePath := strings.TrimSuffix(parcel.FilePath, filepath.Ext(parcel.FilePath)) + ".mp3"
+	var coverTempPath string
+	if len(parcel.ThumbnailBytes) > 0 {
+		tempFile, err := os.CreateTemp("", "ya-cover-*.png")
+		if err != nil {
+			log.Warnf("create temp cover file error: %v", err)
+		} else {
+			writeOK := true
+			if _, err := tempFile.Write(parcel.ThumbnailBytes); err != nil {
+				log.Warnf("write temp cover file error: %v", err)
+				writeOK = false
+			}
+			if err := tempFile.Close(); err != nil {
+				log.Warnf("close temp cover file error: %v", err)
+				writeOK = false
+			}
+			if writeOK {
+				coverTempPath = tempFile.Name()
+				defer func(name string) {
+					_ = os.Remove(name)
+				}(coverTempPath)
+			} else {
+				_ = os.Remove(tempFile.Name())
+			}
+		}
+	}
+
 	// 构建ffmpeg命令
-	cmd := exec.Command("ffmpeg", "-i", parcel.FilePath,
-		//"-i", parcel.ThumbnailFilePath,
-		"-codec:a", "libmp3lame", "-qscale:a", QualityScaleFrom0To9,
-		"-metadata", "artist="+parcel.Artist,
-		"-metadata", "title="+util.FilenamifyMediaTitle(parcel.Caption),
-		"-metadata", "album="+parcel.Album,
-		//"-map", "0", "-map", "1", "-c", "copy", "-id3v2_version", "3",
-		//"-metadata:s:v", "title=Album cover", "-metadata:s:v", "comment=Cover (front)",
-		newFilePath)
-	//cmd := exec.Command("ffmpeg", "-i", parcel.FilePath,
-	//	"-codec:a", "aac", "-b:a", "64k",
-	//	"-metadata", "artist="+parcel.Artist,
-	//	"-metadata", "title="+util.FilenamifyMediaTitle(parcel.Caption),
-	//	"-metadata", "album="+parcel.Album,
-	//	newFilePath)
+	args := []string{"-y", "-i", parcel.FilePath}
+	baseMetadata := []string{
+		"-metadata", "artist=" + parcel.Artist,
+		"-metadata", "title=" + util.FilenamifyMediaTitle(parcel.Caption),
+		"-metadata", "album=" + parcel.Album,
+		"-id3v2_version", "3",
+	}
+	if coverTempPath != "" {
+		args = append(args,
+			"-i", coverTempPath,
+			"-map", "0:a",
+			"-map", "1:v",
+			"-codec:a", "libmp3lame",
+			"-qscale:a", QualityScaleFrom0To9,
+			"-codec:v", "png",
+			"-disposition:v:0", "attached_pic",
+			"-metadata:s:v", "title=Album cover",
+			"-metadata:s:v", "comment=Cover (front)",
+		)
+	} else {
+		args = append(args,
+			"-codec:a", "libmp3lame",
+			"-qscale:a", QualityScaleFrom0To9,
+		)
+	}
+	args = append(args, baseMetadata...)
+	args = append(args, newFilePath)
+
+	cmd := exec.Command("ffmpeg", args...)
 
 	fullCommand := strings.Join(cmd.Args, " ")
 	log.Printf("Executing command: %s", fullCommand)
