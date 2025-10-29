@@ -1,3 +1,18 @@
+FROM golang:1.25 as builder
+
+WORKDIR /src
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+
+ENV CGO_ENABLED=0 \
+    GOOS=linux \
+    GOARCH=amd64
+
+RUN go build -o /out/ya main.go
+
 FROM fangdajiang/centos:centos7.9.2022.07
 
 MAINTAINER "fangdajiang@gmail.com"
@@ -18,9 +33,9 @@ ENV LC_ALL   en_US.UTF-8
 RUN /bin/cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
     && echo 'Asia/Shanghai' >/etc/timezone
 
-ADD bin/dependency/yt-dlp /usr/local/sbin/
-ADD bin/dependency/ffmpeg /usr/local/sbin/
-ADD bin/dependency/ffprobe /usr/local/sbin/
-ADD bin/ya /app/ya
+COPY bin/dependency/yt-dlp /usr/local/sbin/
+COPY bin/dependency/ffmpeg /usr/local/sbin/
+COPY bin/dependency/ffprobe /usr/local/sbin/
+COPY --from=builder /out/ya /app/ya
 
 ENTRYPOINT ["/app/ya", "run", "-m", "latest"]
