@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/subosito/gotenv"
+	"github.com/wader/goutubedl"
 
 	"youtube-audio/cmd"
 )
@@ -16,5 +17,6 @@ func main() {
 	if err := gotenv.Load(); err != nil {
 		log.Printf("dotenv load warning: %v", err)
 	}
+	goutubedl.Path = "yt-dlp"
 	cmd.Execute(version)
 }
