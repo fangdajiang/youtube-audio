@@ -1,8 +1,9 @@
 package handler
 
 import (
-	"github.com/kkdai/youtube/v2"
+	"context"
 	"github.com/stretchr/testify/require"
+	"github.com/wader/goutubedl"
 	"math/rand"
 	"testing"
 	"time"
@@ -100,18 +101,17 @@ func TestGetVideoMetaDataArrayBy(t *testing.T) {
 	}
 }
 
-func TestYouTube_GetItagInfo(t *testing.T) {
+func TestRetrieveAudioFormatIDs(t *testing.T) {
 	r := require.New(t)
-	client := youtube.Client{}
 
-	url := "https://www.youtube.com/watch?v=Y-EX1u34E2M"
-	video, err := client.GetVideo(url)
+	// 使用 goutubedl 获取视频信息
+	result, err := goutubedl.New(context.Background(), "https://www.youtube.com/watch?v=Y-EX1u34E2M", goutubedl.Options{})
 	r.NoError(err)
-	//r.Len(video.Formats, 24)
 
-	for i, f := range video.Formats {
-		log.Debugf("i: %v, ItagNo:%v, ADM:%s, FPS:%v, QL:%s, AQ:%s, AC:%v, AverBit:%v, Bit:%v, Size:%v",
-			i, f.ItagNo, f.ApproxDurationMs, f.FPS, f.QualityLabel, f.AudioQuality, f.AudioChannels, f.AverageBitrate, f.Bitrate, f.ContentLength)
+	formatIDs := retrieveAudioFormatIDs(result.Info.Formats)
+	r.True(len(formatIDs) > 0, "应至少找到一个音频格式")
+	for _, id := range formatIDs {
+		log.Debugf("audio formatID: %s", id)
 	}
 }
 
@@ -126,15 +126,6 @@ func TestDownloadYouTubeAudioToPath(t *testing.T) {
 	myio.Cleanup(parcel.FilePath)
 }
 
-func TestRetrieveITagOfMinimumAudioSize(t *testing.T) {
-	r := require.New(t)
-
-	iTagNo, err := RetrieveITagOfMinimumSizeAudio("https://www.youtube.com/watch?v=Y-EX1u34E2M")
-	r.NoError(err)
-	//r.Equal(249, iTagNo)
-	log.Debugf("iTagNo:%v", iTagNo)
-}
-
 func TestMergeHistoryFetchesInto(t *testing.T) {
 	deliveries := MergeHistoryFetchesInto(AssembleDeliveriesFromPlaylists(GetYouTubeVideosFromPlaylists()))
 	log.Debugf("merged deliveries: %v", deliveries)
@@ -146,10 +137,11 @@ func Test_convertToMp3AndFillMetadata(t *testing.T) {
 	caption := "摸着石头过河"
 	artist := "FDJ"
 	album := "千钧一发"
-	parcel = GenerateParcel(filePath, caption, artist, album, "mediaUrl", 111.0, nil)
+	parcel = GenerateParcel(filePath, caption, artist, album, "mediaUrl", 111.0, nil, 0.0)
 
 	// 测试ffmpeg命令成功执行的情况
 	parcel, _ = convertToMp3AndFillMetadata(parcel)
 	log.Debugf("parcel: %v", parcel)
 
 }
+

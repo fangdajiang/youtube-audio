@@ -34,7 +34,8 @@ func init() {
 		LocalFileAlbum,
 		UselessUrl,
 		123.0,
-		nil)
+		nil,
+		0.0)
 
 }
 

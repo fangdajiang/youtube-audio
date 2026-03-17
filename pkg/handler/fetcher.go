@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/kkdai/youtube/v2"
 	"github.com/wader/goutubedl"
 	"google.golang.org/api/option"
 	youtubeapi "google.golang.org/api/youtube/v3"
@@ -33,14 +32,13 @@ type YouTubeCredentials struct {
 	Key string
 }
 
-type VideoMetaData struct {
-	FPS              int
-	ITagNo           int
-	Bitrate          int
-	AverageBitrate   int
-	ContentLength    int64
-	ApproxDurationMs string
-	AudioChannels    int
+// AudioFormatInfo 保存音频格式筛选所需的信息
+type AudioFormatInfo struct {
+	FormatID       string
+	ABR            float64 // 平均音频比特率 (KBit/s)
+	Filesize       float64 // 文件大小（字节）
+	FilesizeApprox float64 // 估计文件大小（字节）
+	ACodec         string
 }
 
 type PlaylistVideoMetaData struct {
@@ -177,52 +175,61 @@ func playlistItemsList(service *youtubeapi.Service, part []string, playlistId st
 	return response
 }
 
-func RetrieveITagOfMinimumSizeAudio(mediaUrl string) ([]int, error) {
-	client := youtube.Client{}
-
-	log.Debugf("Ready to get video: %s at %s", mediaUrl, time.Now().Format(util.DateTimeFormat))
-	video, err := client.GetVideo(mediaUrl)
-	//log.Debugf("video duration: %vs at %s", video.Duration.Seconds(), time.Now().Format(util.DateTimeFormat))
-	if err != nil {
-		return nil, fmt.Errorf("failed to get video, error:%s, mediaUrl:%s", err, mediaUrl)
-	}
-	var videoMetaDataArray []VideoMetaData
-	for _, f := range video.Formats {
-		log.Debugf("ItagNo:%v, MimeType:%s, ADM:%s, FPS:%v, QL:%s, AQ:%s, AC:%v, AverBit:%v, Bit:%v, Size:%v",
-			f.ItagNo, f.MimeType, f.ApproxDurationMs, f.FPS, f.QualityLabel, f.AudioQuality, f.AudioChannels, f.AverageBitrate, f.Bitrate, f.ContentLength)
-		if f.FPS == 0 {
-			videoMetaData := VideoMetaData{f.FPS, f.ItagNo, f.Bitrate, f.AverageBitrate, f.ContentLength,
-				f.ApproxDurationMs, f.AudioChannels}
-			bitrate := videoMetaData.AverageBitrate
-			if bitrate == 0 {
-				// Some formats don't have the average bitrate
-				bitrate = videoMetaData.Bitrate
+// retrieveAudioFormatIDs 从 goutubedl 返回的格式列表中筛选纯音频格式，
+// 按文件大小升序排列，返回格式 ID 列表（最小尺寸优先）
+func retrieveAudioFormatIDs(formats []goutubedl.Format) []string {
+	var audioFormats []AudioFormatInfo
+	for _, f := range formats {
+		log.Debugf("FormatID:%s, Ext:%s, ACodec:%s, VCodec:%s, ABR:%.0f, FPS:%.0f, Filesize:%.0f, FilesizeApprox:%.0f",
+			f.FormatID, f.Ext, f.ACodec, f.VCodec, f.ABR, f.FPS, f.Filesize, f.FilesizeApprox)
+		// 筛选纯音频格式：无视频编解码器，且有音频编解码器
+		if (f.VCodec == "none" || f.VCodec == "") && f.ACodec != "none" && f.ACodec != "" {
+			filesize := f.Filesize
+			if filesize == 0 {
+				filesize = f.FilesizeApprox
 			}
-			size := videoMetaData.ContentLength
-			if size == 0 {
-				// Some formats don't have this information
-				size = int64(float64(bitrate) * video.Duration.Seconds() / 8)
-				videoMetaData.ContentLength = size
-			}
-			videoMetaDataArray = append(videoMetaDataArray, videoMetaData)
+			audioFormats = append(audioFormats, AudioFormatInfo{
+				FormatID:       f.FormatID,
+				ABR:            f.ABR,
+				Filesize:       f.Filesize,
+				FilesizeApprox: f.FilesizeApprox,
+				ACodec:         f.ACodec,
+			})
 		}
 	}
-	if len(videoMetaDataArray) == 0 {
-		return nil, fmt.Errorf("proper audio track not found:%s", mediaUrl)
+	if len(audioFormats) == 0 {
+		log.Warnf("no audio-only formats found among %d total formats", len(formats))
+		return nil
 	}
 
-	// Sort videoMetaDataArray by ContentLength in ascending order
-	sort.Slice(videoMetaDataArray, func(i, j int) bool {
-		return videoMetaDataArray[i].ContentLength < videoMetaDataArray[j].ContentLength
+	// 按文件大小升序排列（最小文件优先）
+	sort.Slice(audioFormats, func(i, j int) bool {
+		sizeI := audioFormats[i].Filesize
+		if sizeI == 0 {
+			sizeI = audioFormats[i].FilesizeApprox
+		}
+		if sizeI == 0 {
+			sizeI = audioFormats[i].ABR // 无文件大小时用比特率近似
+		}
+		sizeJ := audioFormats[j].Filesize
+		if sizeJ == 0 {
+			sizeJ = audioFormats[j].FilesizeApprox
+		}
+		if sizeJ == 0 {
+			sizeJ = audioFormats[j].ABR
+		}
+		return sizeI < sizeJ
 	})
 
-	// Extract iTagNo values from sorted videoMetaDataArray
-	var iTagNos []int
-	for _, v := range videoMetaDataArray {
-		iTagNos = append(iTagNos, v.ITagNo)
+	// 提取格式 ID 列表
+	var formatIDs []string
+	for _, af := range audioFormats {
+		log.Debugf("audio format: ID=%s, ACodec=%s, ABR=%.0f, Filesize=%.0f, FilesizeApprox=%.0f",
+			af.FormatID, af.ACodec, af.ABR, af.Filesize, af.FilesizeApprox)
+		formatIDs = append(formatIDs, af.FormatID)
 	}
 
-	return iTagNos, nil
+	return formatIDs
 }
 
 func DownloadYouTubeAudioToPath(delivery *Delivery) (Parcel, error) {
@@ -265,22 +272,25 @@ func DownloadYouTubeAudioToPath(delivery *Delivery) (Parcel, error) {
 		return parcel, fmt.Errorf("creating file error: %v", err)
 	}
 
-	// Retrieve the list of iTagNos
-	iTagNos, err := RetrieveITagOfMinimumSizeAudio(delivery.Parcel.Url)
-	if err != nil {
-		log.Errorf("retrieve iTag error, error: %s", err)
-		return parcel, fmt.Errorf("retrieve iTag error: %v, url: %s", err, delivery.Parcel.Url)
-	}
+	// 从 goutubedl 获取的格式列表中筛选音频格式
+	formatIDs := retrieveAudioFormatIDs(result.Info.Formats)
+	log.Infof("found %d audio format(s) for url: %s", len(formatIDs), delivery.Parcel.Url)
 
 	var downloadedResult *goutubedl.DownloadResult
-	// Polling to download audio until no error occurs
-	for _, iTagNo := range iTagNos {
-		downloadedResult, err = result.Download(context.Background(), strconv.Itoa(iTagNo))
+	// 按文件大小从小到大尝试下载
+	for _, formatID := range formatIDs {
+		downloadedResult, err = result.Download(context.Background(), formatID)
 		if err == nil {
-			log.Debugf("iTagNo is %v at %s", iTagNo, time.Now().Format(util.DateTimeFormat))
+			log.Debugf("successfully selected formatID=%s at %s", formatID, time.Now().Format(util.DateTimeFormat))
 			break
 		}
-		log.Errorf("download error with iTagNo %v: %s", iTagNo, err)
+		log.Errorf("download error with formatID %s: %s", formatID, err)
+	}
+
+	// Fallback：如果所有格式都失败，让 yt-dlp 选择最小体积的音频
+	if err != nil {
+		log.Warnf("all format IDs failed, falling back to yt-dlp worstaudio mode for url: %s", delivery.Parcel.Url)
+		downloadedResult, err = result.Download(context.Background(), "worstaudio")
 	}
 
 	if err != nil {
