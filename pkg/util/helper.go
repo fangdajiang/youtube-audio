@@ -18,6 +18,7 @@ const (
 	EnvYouTubeKeyName                     string = "YOUTUBE_KEY"
 	IllegalCharacterReplacementInFilename string = "_"
 	FilenameMaxLength                     int    = 120
+	FilenameMaxBytesLength                int    = 200
 	UploadAudioMaxLength                  int64  = 52428800
 	YouTubeDefaultMaxResults              int64  = 3
 	FetchYouTubeMaxResultsLimit           int64  = 15
@@ -150,7 +151,27 @@ func FilenamifyMediaTitle(title string) string {
 	}
 	validMediaFileName = strings.ReplaceAll(validMediaFileName, "#", IllegalCharacterReplacementInFilename)
 	validMediaFileName = strings.ReplaceAll(validMediaFileName, " ", "")
-	//validMediaFileName = fmt.Sprintf("%s%s", validMediaFileName, GetYouTubeFetchBase().MediaExtension)
+
+	// 按字节数截断，确保不超过文件系统限制（255 字节）
+	// 预留 55 字节给路径前缀和扩展名（如 .mp4、.mp3）
+	validMediaFileName = truncateToByteLength(validMediaFileName, FilenameMaxBytesLength)
 
 	return validMediaFileName
+}
+
+// truncateToByteLength 在 UTF-8 字符边界处截断字符串，确保不超过 maxBytes 字节
+func truncateToByteLength(s string, maxBytes int) string {
+	if len(s) <= maxBytes {
+		return s
+	}
+	// 按完整 rune 逐个累加，避免截断到 UTF-8 多字节序列中间
+	byteCount := 0
+	for i, r := range s {
+		runeLen := len(string(r))
+		if byteCount+runeLen > maxBytes {
+			return s[:i]
+		}
+		byteCount += runeLen
+	}
+	return s
 }
